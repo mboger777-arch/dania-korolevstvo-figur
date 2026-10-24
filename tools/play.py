@@ -13,6 +13,7 @@ async def main():
     pg=await ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append('PAGE '+str(e)));pg.on('console',lambda m:errs.append(m.type+' '+m.text) if m.type in('error','warning') else None)
     await pg.goto(BASE+'?'+FLAGS+'&map');await pg.wait_for_function('typeof scene!=="undefined"&&scene==="map"',timeout=60000)
     for ci in CH:
+      [os.remove(f) for f in __import__('glob').glob(f'{out}/c{ci}_*.png')]
       await pg.evaluate(f'G.mistakes=0;VLOG=[];go("ch",{ci})');t0=time.time();n=0;last=-99;bad=[];fps=[];maxair=0
       while time.time()-t0<TMO:
         await pg.wait_for_timeout(250)
