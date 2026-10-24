@@ -190,7 +190,7 @@ function drawRotate(){const v=vis();X.fillStyle='#2a1a5a';X.fillRect(v.x0,v.y0,v
 // ---- главный цикл ----
 let last=performance.now(),FPS=60,fpsLog=[];
 function loop(now){requestAnimationFrame(loop);DT=clamp((now-last)/1000,0,.05);last=now;if(PORTRAIT()){X.setTransform(DPR,0,0,DPR,0,0);X.clearRect(0,0,W,H);X.setTransform(DPR*S,0,0,DPR*S,DPR*OX,DPR*OY);drawRotate();return}
- T+=DT;FPS=FPS*.95+(1/Math.max(DT,.001))*.05;fpsLog.push(DT);if(fpsLog.length>600)fpsLog.shift();
+ T+=DT;FPS=FPS*.95+(1/Math.max(DT,.001))*.05;fpsLog.push(DT);if(fpsLog.length>600)fpsLog.shift();if(typeof adaptPR==='function')adaptPR(DT);
  if(typeof botFrame==='function')botFrame();stepInput();stepTalk();stepWQ();musTick();
  if(typeof frame3D==='function'){try{frame3D(DT)}catch(e){console.error(e)}}
  X.setTransform(DPR,0,0,DPR,0,0);X.clearRect(0,0,W,H);X.setTransform(DPR*S,0,0,DPR*S,DPR*OX,DPR*OY);UI=[];if(G.auditReq){G.auditReq=0;AUD={t:[],scene}}else AUD=null;

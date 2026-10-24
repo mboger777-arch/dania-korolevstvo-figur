@@ -4,7 +4,9 @@ const GC=document.getElementById('g');
 const R3=new THREE.WebGLRenderer({canvas:GC,antialias:true,powerPreference:'high-performance'});
 R3.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));R3.outputColorSpace=THREE.SRGBColorSpace;
 const SCENE=new THREE.Scene();const CAM=new THREE.PerspectiveCamera(52,16/9,.1,420);
-function resize3D(){if(!W||!H)return;R3.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));R3.setSize(W,H,false);CAM.aspect=W/H;CAM.updateProjectionMatrix()}
+// адаптивное качество: если телефон не тянет 50 к/с — снижаем плотность пикселей (до 1.0)
+let PRMAX=1.5,lowT=0;function adaptPR(dt){if(G.test)return;if(FPS<48&&T>4){lowT+=dt;if(lowT>2.5&&PRMAX>1){PRMAX=Math.max(1,PRMAX-.25);lowT=0;resize3D()}}else lowT=0}
+function resize3D(){if(!W||!H)return;R3.setPixelRatio(Math.min(PRMAX,window.devicePixelRatio||1));R3.setSize(W,H,false);CAM.aspect=W/H;CAM.updateProjectionMatrix()}
 const HEMI=new THREE.HemisphereLight(0xe8f4ff,0x88b060,1.9);SCENE.add(HEMI);
 const SUN=new THREE.DirectionalLight(0xfff0d6,2.2);SUN.position.set(6,12,-4);SCENE.add(SUN);
 const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
