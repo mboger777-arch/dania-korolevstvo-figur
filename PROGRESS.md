@@ -20,7 +20,7 @@
 - [x] адаптивная плотность пикселей (FPS<48 → PR до 1.0)
 - [x] голоса: перегенерация, ASR, stress, voicepick, voicecheck; прогон без ?fast (реплики не обрываются)
   - voicecheck 844x390 без fast: 7/7 ok, 121 реплика, cut=[] noend=[], 0 ошибок (tests/voicecheck_844.log); ASR 116/116; stress 41 ok/22 BAD (эвристика, сомнительные — в отчёте)
-- [ ] setv.sh, push, проверка live
+- [x] setv.sh, push, проверка live
 
 ## Заметки
 - бот: js/bot.js (bGo/bPath/bKick/bJumpOn/BSTEER); тест `VP=844x390 CH=3 TMO=250 SHOT=5 python3 tools/play.py`
