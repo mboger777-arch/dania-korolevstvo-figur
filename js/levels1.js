@@ -9,7 +9,7 @@ function turnHero(dt,rate){const j=joyWorld();if(j){HERO.yaw+=clamp(adiff(j.a,HE
 function terrain(w,d,cx,cz,f,mat,seg){const g=new THREE.PlaneGeometry(w,d,seg||40,seg||40);g.rotateX(-Math.PI/2);const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i)+cx,z=p.getZ(i)+cz;p.setXYZ(i,x,f(x,z),z)}g.computeVertexNormals();const m=new THREE.Mesh(g,mat);WORLD.add(m);return m}
 function pad3D(x,z,col,r,lbl){r=r||.95;const g=new THREE.Group();g.position.set(x,groundAt(x,z)+.02,z);mesh(new THREE.CylinderGeometry(r,r*1.05,.1,32),M(col,{em:col,ei:.55}),0,.04,0,g);
  const ring=mesh(new THREE.TorusGeometry(r+.15,.07,8,36),M(0xffffff,{basic:1,op:.85}),0,.1,0,g);ring.rotation.x=Math.PI/2;WORLD.add(g);g.ring=ring;TICK.push(()=>{ring.scale.setScalar(1+Math.sin(T*4)*.07)});
- if(lbl)label3D(lbl,'#fff',1.1,{p:g,st:'#2a1050'}).position.set(0,2.6,0);return g}
+ if(lbl)label3D(lbl,'#fff',.8,{p:g,st:'#2a1050'}).position.set(-1,2.9,0);return g}
 function star3D(x,y,z,col,p){const m=mesh(starGeo(.55),M(col||0xffd84a,{em:col||0xffb000,ei:.7}),x,y,z,p);m.geometry.center();TICK.push(dt=>{m.rotation.y+=dt*1.6});return m}
 function goldHandle(){const g=new THREE.Group();mesh(GEO.sph,M(0xffd23a,{em:0xc08000,ei:.8}),0,0,0,g,.26);const r=mesh(new THREE.TorusGeometry(.5,.05,6,24),M(0xfff0a0,{basic:1,op:.8}),0,0,0,g);r.rotation.x=Math.PI/2;TICK.push(()=>{r.scale.setScalar(1+Math.sin(T*5)*.15)});WORLD.add(g);return g}
 function treeRing(cx,cz,rx,rz,n,snow){for(let i=0;i<n;i++){const a=i/n*6.283;const x=cx+Math.cos(a)*rx*rnd(.95,1.08),z=cz+Math.sin(a)*rz*rnd(.95,1.08);snow?pine(x,z,rnd(1,1.5),true):(i%3?tree(x,z,rnd(1,1.4)):pine(x,z,rnd(1,1.3)))}}
@@ -75,7 +75,7 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
     if(st.len>dAB+2.5){st.wait=true;st.len=0;beam.visible=glow.visible=false;const ray=segMesh(O,O.clone().addScaledVector(dir,80),.1,0xffffff,{op:.8});let t=0;TICK.push(d=>{t+=d;ray.material.opacity=Math.max(0,.8-t*.7);if(t>1.3)ray.visible=false});SFX.whoosh();mistake('c1_ray')}}
    else{if(st.len>0){const aB=Math.atan2(B.x-HERO.x,B.z-HERO.z);if(st.len>=dAB-.9&&Math.abs(adiff(HERO.yaw,aB))<st.wide+.05&&onA()){st.done=true}else{st.len=0;beam.visible=glow.visible=false}}
     if(!INP.hold)st.wait=false;HERO.mode='walk'}});
-  await until(()=>st.done);HERO.mode='walk';clearGesture();GOAL='';beam.visible=glow.visible=false;if(guide)guide.visible=false;
+  await until(()=>st.done);HERO.mode='walk';followCam();clearGesture();GOAL='';beam.visible=glow.visible=false;if(guide)guide.visible=false;
   // мост: отрезок от А до Б, доски
   const P=V3(A.x,.25,A.z),Q=V3(B.x,.25,B.z);segMesh(V3(A.x,1.1,A.z),V3(B.x,1.6,B.z),.06,0xffffff,{mat:M(0xffffff,{em:0xffffcc,ei:1})});for(const p of [V3(A.x,1.1,A.z),V3(B.x,1.6,B.z)])mesh(GEO.sph,M(0xff5a7a,{em:0xff2050,ei:.6}),p.x,p.y,p.z,null,.16);
   const ang=Math.atan2(B.x-A.x,B.z-A.z);for(let i=0;i<=12;i++){const t=i/12;const pl=mesh(GEO.box,0xb88a50,lerp(P.x,Q.x,t),.18,lerp(P.z,Q.z,t),null,[2,.12,.55]);pl.rotation.y=ang;pl.scale.x=.01;const t0=T+i*.07;TICK.push(()=>{pl.scale.x=clamp((T-t0)*6,0.01,1)*2})}
@@ -84,7 +84,7 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
   newTask('Встань на точку-фонарик и свети на туман','move');const mk2=marker(0,22);run(()=>sayAll('c1_t2','c1_t2b'));
   const rs={len:0,off:false,left:3,done:false};const rb=segMesh(V3(0,0,0),V3(0,1,0),.1,0xfff4b0,{mat:M(0xfff8c0,{em:0xffee80,ei:1})});const rg=segMesh(V3(0,0,0),V3(0,1,0),.32,0xfff080,{op:.3});rb.visible=rg.visible=false;
   TASK.help=async()=>{mk2.visible=true;await say('u_go')};
-  botTask(async()=>{const e0=TASK.err;await bGo(0,17,.6);bHold(true);await bUntil(()=>TASK.err>e0,6);bHold(false);await bGo(0,22,.3);bHold(true);for(const c of L.clouds){if(!c.alive)continue;bAim(c.position.x,c.position.z);await bUntil(()=>!c.alive,8)}bHold(false);bAimA(null)});
+  botTask(async()=>{const e0=TASK.err;await bPath([[.6,9.8],[3.2,14.2],[2,16.5]]);await bGo(0,17,.6);bHold(true);await bUntil(()=>TASK.err>e0,6);bHold(false);await bGo(0,22,.3);bHold(true);for(const c of L.clouds){if(!c.alive)continue;bAim(c.position.x,c.position.z);await bUntil(()=>!c.alive,8)}bHold(false);bAimA(null)});
   const onL=()=>hd(0,22)<1.2;
   TICK.push(dt=>{if(rs.done)return;if(onL()){mk2.visible=false;if(!rs.cam){rs.cam=1;shot(0,5.5,13.5,0,2,30,2.5)}}else if(rs.cam&&!INP.hold){rs.cam=0;followCam()}
    if(INP.hold&&onL()){HERO.mode='still';turnHero(dt,1.8);rs.len=Math.min(70,rs.len+dt*45);const O=wandPos();const dir=V3(Math.sin(HERO.yaw),.04,Math.cos(HERO.yaw));const end=O.clone().addScaledVector(dir,rs.len);rb.visible=rg.visible=true;setSeg(rb,O,end,.1);setSeg(rg,O,end,.32);
@@ -92,19 +92,19 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
    else{rb.visible=rg.visible=false;rs.len=0;HERO.mode='walk';
     }
    if(INP.hold&&!onL()&&!HERO.lock&&T-INP.holdT>.35&&!rs.off&&HERO.z>14.5){rs.off=true;mistake('c1_off')}if(!INP.hold)rs.off=false});
-  await until(()=>rs.done);rb.visible=rg.visible=false;HERO.mode='walk';clearGesture();GOAL='';L.fog=false;await good('c1_k2');
+  await until(()=>rs.done);rb.visible=rg.visible=false;HERO.mode='walk';followCam();clearGesture();GOAL='';L.fog=false;await good('c1_k2');
   // --- прямая-рельсы ---
   await cutscene(async()=>{L.rails.visible=true;L.train.visible=true;L.train.position.x=-30;QUEEN.root.visible=true;burst(V3(3,1.5,37),0xffe080,30);heroAt(1,34,0);shot(-1,3.2,31,3,1.6,37,2.5);await say('c1_t3');
    shot(8,1.5,38,-60,.6,40,1.2);await wait(1.5);shot(-8,1.5,38,60,.6,40,1.2);await say('c1_k3');await wait(.5)})}};
 
 // ===================== Глава 2: Ломаная гора (санки) =====================
 const SLOPE=z=>z<0?0:z<88?-.25*z:z<96?-22-(.25*8*((z-88)/8)-.25*8*((z-88)/8)**2/2):-23;
-LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.uniforms.b.value.set(0xeaf4ff);BASEF=(x,z)=>SLOPE(z);
+LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.uniforms.b.value.set(0xeaf4ff);BASEF=(x,z)=>SLOPE(z)+(Math.abs(x)>14?(Math.abs(x)-14)*.6:0);
  terrain(80,180,0,50,(x,z)=>(z>96.5&&z<109.5?-32:SLOPE(z))+(Math.abs(x)>14?(Math.abs(x)-14)*.6:0),new THREE.MeshLambertMaterial({map:TEX.snow,color:0xffffff}),60);
  terrain(160,90,0,165,(x,z)=>-23+(Math.abs(x)>16?(Math.abs(x)-16)*.4:0),new THREE.MeshLambertMaterial({color:0xcfe8ff}),20);
  for(let i=0;i<40;i++){const z=rnd(-8,150),s=Math.random()<.5?-1:1;const x=s*rnd(13,24);pine(x,z,rnd(1.2,1.8),true)}
- for(let i=0;i<8;i++){const a=i/8*Math.PI-Math.PI;mesh(GEO.cone,M(0xb8c8e8),Math.cos(a)*90,-10,-60+Math.sin(a)*20+200,null,[18,40,18])}
- BOUNDS=[-11,11,-6,128];this.chasm=true;const lb=[[0,95],[3,100],[-3,105],[0,111]];this.lb=lb;
+ for(let i=0;i<8;i++){const a=i/8*Math.PI-Math.PI;mesh(GEO.cone,M(0xb8c8e8),Math.cos(a)*110,-14,230+Math.sin(a)*30,null,[22,44,22])}
+ BOUNDS=[-11,11,-6,128];this.chasm=true;{const pit=mesh(new THREE.PlaneGeometry(80,13),M(0x1a2650,{basic:1}),0,-31,103);pit.rotation.x=-Math.PI/2}const lb=[[0,95],[3,100],[-3,105],[0,111]];this.lb=lb;
  NOGO.push((x,z)=>{if(z<96||z>110)return false;if(!this.chasm)return false;for(let i=0;i<3;i++){const[a,b]=[lb[i],lb[i+1]];const dx=b[0]-a[0],dz=b[1]-a[1];const t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);if(Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)<1.05&&this.bridge)return false}return true});
  
  this.sled=new THREE.Group();mesh(GEO.box,0xe0303a,0,.22,0,this.sled,[1,.14,1.9]);for(const s of [-.42,.42]){mesh(GEO.box,0x888899,s,.06,0,this.sled,[.08,.08,2]);const t=mesh(GEO.cylL,0x888899,s,.14,1,this.sled,[.05,.25,.05]);t.rotation.x=.6}WORLD.add(this.sled);
@@ -120,7 +120,7 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
      else if(f.blue&&!f.alt){res='miss';return}}}
    lastZ=HERO.z;if(HERO.z>90)res='ok'};
   TICK.push(tick);await until(()=>res);TICK.splice(TICK.indexOf(tick),1);DANIA.root.rotation.x=0;KRUG.root.rotation.x=0;
-  KRUG.anim='idle';if(res!=='ok'){for(const s of segs)s.visible=false;SFX.bump();HERO.mode='still';return res}
+  if(res!=='ok'){for(const s of segs)s.visible=false;SFX.bump();HERO.mode='still';return res}KRUG.anim='idle';
   HERO.mode='walk';KRUG.mode='follow';CAMS.dist=6.4;CAMS.h=3.1;L.sled.position.set(-2,SLOPE(92),92);L.sled.rotation.set(0,.4,0);return 'ok'},
  async play(){const L=this;
   await cutscene(async()=>{shot(4,3,-6,0,-6,30,2);await say('c2_s');shot(-1,2.4,-5,-3,1.7,-1,3);await say('c2_r')});
@@ -196,7 +196,7 @@ LEVELS[2]={cast:{queen:true},build(){SKY.material.uniforms.a.value.set(0xffa860)
   TASK.help=async()=>{const m=marker(.9,31.5);await say('u_go');await wait(3);m.visible=false};
   const slide=async()=>{KRUG.mode='none';const fz=34-L.d;const pts=[];for(let i=0;i<=20;i++)pts.push(i/20);KRUG.root.position.set(0,0,fz-.6);for(const t of pts){const z=lerp(fz-.4,lerp(fz,34,.45),t);KRUG.root.position.set(0,groundAt(0,z,9),z);await wait(.03)}SFX.boing();for(const t of pts){const z=lerp(lerp(fz,34,.45),fz-.8,t);KRUG.root.position.set(0,groundAt(0,z,9),z);await wait(.02)}KRUG.mode='go';KRUG.tgt={x:-1.6,z:30}};
   const g3=grabber({hp:()=>V3(.9,.4,34-L.d),move(){L.d=clamp(34-HERO.z,-1.2,4.5);L.layout();ANGCARD.deg=L.beta;if(Math.random()<.05)SFX.creak()},rel(){if(L.beta>=130)s3.done=true;else{TASK.err++;G.mistakes=(G.mistakes||0)+1;SFX.bad();run(async()=>{if(L.d>.3)await slide();else SFX.bump();await sayNext('c3_steep');if(TASK.err>=2&&TASK.help)await TASK.help()})}}});
-  botTask(async()=>{const e0=TASK.err;await bGo(1.4,35.6,.5);bHold(true);await bWait(.3);await bGo(1.4,33.5,.25);bHold(false);await bUntil(()=>TASK.err>e0,8);await bWait(2.5);await bGo(1.4,33.2,.5);bHold(true);await bWait(.3);await bGo(1.4,30.6,.25);bHold(false)});
+  botTask(async()=>{const e0=TASK.err;await bPath([[5,19.5],[5,31],[1.4,32.5]]);await bGo(1.4,35.6,.5);bHold(true);await bWait(.3);await bGo(1.4,33.5,.25);bHold(false);await bUntil(()=>TASK.err>e0,8);await bWait(2.5);await bGo(1.4,33.2,.5);bHold(true);await bWait(.3);await bGo(1.4,30.6,.25);bHold(false)});
   TICK.push(()=>{if(!s3.done&&HERO.z>26&&!s3.cam){s3.cam=1;shot(9,3.2,31.5,0,1.4,33.5,2.5)}});
   await until(()=>s3.done);g3.on=false;SFX.ok();clearGesture();GOAL='';HERO.lock=true;
   const fz=34-L.d;KRUG.mode='go';KRUG.tgt={x:0,z:fz-.8};await until(()=>Math.hypot(KRUG.root.position.x,KRUG.root.position.z-fz+.8)<.3,GEN);KRUG.tgt={x:0,z:37};await until(()=>KRUG.root.position.z>36.5);KRUG.cheerT=T;HERO.lock=false;await say('c3_k3');ANGCARD=null}};
