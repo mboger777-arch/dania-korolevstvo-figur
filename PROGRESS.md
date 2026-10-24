@@ -30,7 +30,7 @@
 - [x] большие цифры: обводка 26, ставятся на сторону экрана без героя
 - [x] c2_t2: «молния, у неё три звена» (ASR wer .07, ударение «звенА» ok)
 - [x] FULL 844x390, 667x375, 932x430: 7/7 ok, 0 ошибок консоли (tests/full_*.log); voicecheck 7/7, cut=[] noend=[] (tests/voicecheck_844.log); листы sheets/r2_*.png
-- [x] v20261024d2
+- [x] v20261024d2 live: FULL 844x390 7/7 ok, 0 ошибок консоли (tests/live_844.log)
 
 ## Заметки
 - бот: js/bot.js (bGo/bPath/bKick/bJumpOn/BSTEER); тест `VP=844x390 CH=3 TMO=250 SHOT=5 python3 tools/play.py`
