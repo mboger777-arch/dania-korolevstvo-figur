@@ -1,0 +1,35 @@
+# Прогон глав автопилотом: VP=844x390 CH=0,1,2 python3 tools/play.py   (FULL=1 — вся игра через интерфейс)
+import asyncio,os,sys,json,time
+from playwright.async_api import async_playwright
+BASE=os.environ.get('URL','http://127.0.0.1:8059/index.html')
+FLAGS=os.environ.get('FLAGS','test&fast&mute')
+async def main():
+  W,H=map(int,os.environ.get('VP','844x390').split('x'));out=f'shots/{W}x{H}';os.makedirs(out,exist_ok=True)
+  CH=[int(c) for c in os.environ.get('CH','0').split(',')];SHOT=float(os.environ.get('SHOT','4'));TMO=float(os.environ.get('TMO','300'))
+  rep={'vp':f'{W}x{H}','chapters':[]}
+  async with async_playwright() as p:
+    b=await p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'])
+    ctx=await b.new_context(viewport={'width':W,'height':H},has_touch=True,is_mobile=True,device_scale_factor=1)
+    pg=await ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append('PAGE '+str(e)));pg.on('console',lambda m:errs.append(m.type+' '+m.text) if m.type in('error','warning') else None)
+    await pg.goto(BASE+'?'+FLAGS+'&map');await pg.wait_for_function('typeof scene!=="undefined"&&scene==="map"',timeout=60000)
+    for ci in CH:
+      await pg.evaluate(f'G.mistakes=0;VLOG=[];go("ch",{ci})');t0=time.time();n=0;last=-99;bad=[];fps=[];maxair=0
+      while time.time()-t0<TMO:
+        await pg.wait_for_timeout(250)
+        st=await pg.evaluate('JSON.stringify({sc:scene,a:audit3D(),fps:FPS,talk:TALK&&TALK.k,cut:CUT,goal:GOAL,err:TASK.err,hero:[HERO.x.toFixed(1),HERO.z.toFixed(1),HERO.mode]})');st=json.loads(st)
+        if st['sc']!='ch':break
+        fps.append(st['fps'])
+        for c in st['a']:
+          if not c['air'] and not c['sit'] and abs(c['gap'])>0.06: bad.append((round(time.time()-t0,1),c['n'],c['gap'],st['hero']))
+          if c['n']=='dania': maxair=max(maxair,c['airT'])
+        if time.time()-last>SHOT:
+          last=time.time();n+=1;await pg.screenshot(path=f'{out}/c{ci}_{n:02d}.png')
+      ok=st['sc']=='map';el=round(time.time()-t0,1)
+      info=json.loads(await pg.evaluate('JSON.stringify({m:G.mistakes||0,bt:G.botTimeouts||0,done:SV.done})'))
+      r={'ch':ci,'ok':ok,'sec':el,'mistakes':info['m'],'botTimeouts':info['bt'],'feetBad':len(bad),'feetEx':bad[:5],'maxAir':maxair,'fpsMin':round(min(fps),1) if fps else 0,'fpsAvg':round(sum(fps)/len(fps),1) if fps else 0,'last':st}
+      rep['chapters'].append(r);print(json.dumps(r,ensure_ascii=False),flush=True)
+      if not ok: await pg.screenshot(path=f'{out}/c{ci}_FAIL.png')
+    rep['errors']=errs[:30];print('errors:',errs[:30])
+    json.dump(rep,open(f'{out}/report_ch.json','w'),ensure_ascii=False,indent=1)
+    await b.close()
+asyncio.run(main())
