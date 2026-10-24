@@ -18,7 +18,8 @@
 - [x] play.py FULL=1 (титул→интро→карта→7 глав→перезагрузка) 844x390 ок
 - [x] FULL 667x375, 932x430 — все 7 глав ок, 0 ошибок консоли, feetBad 0; листы sheets/667_*.png, sheets/932_*.png
 - [x] адаптивная плотность пикселей (FPS<48 → PR до 1.0)
-- [ ] голоса: перегенерация, ASR, stress, voicepick, voicecheck; прогон без ?fast (реплики не обрываются)
+- [x] голоса: перегенерация, ASR, stress, voicepick, voicecheck; прогон без ?fast (реплики не обрываются)
+  - voicecheck 844x390 без fast: 7/7 ok, 121 реплика, cut=[] noend=[], 0 ошибок (tests/voicecheck_844.log); ASR 116/116; stress 41 ok/22 BAD (эвристика, сомнительные — в отчёте)
 - [ ] setv.sh, push, проверка live
 
 ## Заметки
