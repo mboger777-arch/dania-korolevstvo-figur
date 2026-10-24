@@ -164,20 +164,20 @@ function drawHandShape(x,y,press){X.save();X.translate(x,y+(press?8:0));X.scale(
  X.beginPath();rr(-26,36,62,60,22);X.fill();X.stroke();X.beginPath();rr(10,32,18,30,9);X.fill();X.stroke();X.beginPath();rr(24,40,18,30,9);X.fill();X.stroke();
  X.fillStyle='rgba(255,255,255,.7)';X.beginPath();X.ellipse(-4,8,4,8,0,0,7);X.fill();X.restore()}
 // ---- облачко речи (субтитр) ----
-function drawTalk(){if(!TALK)return;const v=vis();const nm=NAMES[TALK.who];const mx=Math.min(1040,v.w-260);let bw=Math.min(860,mx),bh=nm?150:128;
- for(let k=0;k<10;k++){const f=fitText(TALK.text,bw-60,bh-(nm?58:30),40,BODY,32);if(f.L.length*f.lh<=bh-(nm?58:30)&&f.L.every(l=>X.measureText(l).width<=bw-60))break;if(bw<mx)bw=Math.min(mx,bw+60);else bh+=20}
+function drawTalk(){if(!TALK)return;const v=vis();const nm=NAMES[TALK.who];const mx=Math.min(1100,v.w-240);let bw=Math.min(960,mx),bh=nm?166:140;
+ for(let k=0;k<10;k++){const f=fitText(TALK.text,bw-60,bh-(nm?58:30),46,BODY,38);if(f.L.length*f.lh<=bh-(nm?58:30)&&f.L.every(l=>X.measureText(l).width<=bw-60))break;if(bw<mx)bw=Math.min(mx,bw+60);else bh+=20}
  const bx=clamp(640,safeL()+130+bw/2,safeR()-bw/2),top=safeT()+(SCN&&SCN.cut?0:0);const x0=bx-bw/2;
  panel(x0,top,bw,bh,{st:SPKC[TALK.who]||'#6a4bb8',lw:6});
- if(nm){txt(nm,x0+28,top+28,30,'#fff',{f:FONT,al:'left',st:SPKC[TALK.who],lw:8,id:'name',box:[x0,top,x0+bw,top+bh]})}
- textIn(TALK.text,bx,top+(nm?bh/2+18:bh/2),bw-60,bh-(nm?58:30),40,'#2b2440',{f:BODY,st:0,id:'talk',min:32});TALK.box=[x0,top,bw,bh];
+ if(nm){txt(nm,x0+28,top+30,38,'#fff',{f:FONT,al:'left',st:SPKC[TALK.who],lw:8,id:'name',box:[x0,top,x0+bw,top+bh]})}
+ textIn(TALK.text,bx,top+(nm?bh/2+18:bh/2),bw-60,bh-(nm?58:30),46,'#2b2440',{f:BODY,st:0,id:'talk',min:38});TALK.box=[x0,top,bw,bh];
  // полоска: реплика ещё звучит
  if(TALK.a&&TALK.a.duration){const p=clamp(TALK.a.currentTime/TALK.a.duration,0,1);X.fillStyle='rgba(106,75,184,.25)';rr(x0+20,top+bh-12,bw-40,6,3);X.fill();X.fillStyle=SPKC[TALK.who];rr(x0+20,top+bh-12,(bw-40)*p,6,3);X.fill()}}
 // ---- табличка задания и большие цифры ----
 let GOAL='';let BIG=null;// {n,t0,col}
 function bigNum(n,col){BIG={n:String(n),t0:T,col:col||'#ffd84a'}}
-function drawGoal(){if(!GOAL||TALK)return;const v=vis();const bw=Math.min(760,v.w-360),bh=78;const bx=clamp(640,safeL()+130+bw/2,safeR()-130-bw/2);panel(bx-bw/2,safeT(),bw,bh,{fill:'rgba(70,40,140,.9)',st:'#ffe08a',lw:5});
- textIn(GOAL,bx,safeT()+bh/2,bw-40,bh-16,40,'#fff6dc',{f:FONT,st:'#2a1050',lw:6,id:'goal',min:26})}
-function drawBig(){if(!BIG)return;const u=T-BIG.t0;if(u>1.4){BIG=null;return}const k=u<.2?ease(u/.2)*1.15:1.15-Math.min(.15,(u-.2));const v=vis();X.save();X.globalAlpha=u>1.1?(1.4-u)/.3:1;X.translate(v.x0+v.w/2,v.y0+v.h*.42);X.scale(k,k);txt(BIG.n,0,0,200,BIG.col,{f:NUM,st:'#2a1050',lw:22,id:'big'});X.restore()}
+function drawGoal(){if(!GOAL||TALK)return;const v=vis();const bw=Math.min(1000,v.w-300);const f=fitText(GOAL,bw-50,2*52*1.14,52,NUM,44);const bh=Math.max(86,f.L.length*f.lh+26);const bx=clamp(640,safeL()+118+bw/2,safeR()-118-bw/2);panel(bx-bw/2,safeT(),bw,bh,{fill:'rgba(30,14,78,.96)',st:'#ffe08a',lw:6});
+ textIn(GOAL,bx,safeT()+bh/2,bw-50,bh-18,52,'#ffffff',{f:NUM,st:'#0e0428',lw:7,id:'goal',min:44})}
+function drawBig(){if(!BIG)return;const u=T-BIG.t0;if(u>1.4){BIG=null;return}const k=u<.2?ease(u/.2)*1.15:1.15-Math.min(.15,(u-.2));const v=vis();X.save();X.globalAlpha=u>1.1?(1.4-u)/.3:1;let cx=v.x0+v.w/2,cy=v.y0+v.h*.42;if(SCN&&SCN.world&&typeof HERO!=='undefined'){const h=toScreen(HERO.x,HERO.y+1,HERO.z);if(h.vis){cx=h.x<v.x0+v.w/2?v.x0+v.w*.7:v.x0+v.w*.3;cy=v.y0+v.h*.46}}X.translate(cx,cy);X.scale(k,k);txt(BIG.n,0,0,180,BIG.col,{f:NUM,st:'#1a0840',lw:26,id:'big'});X.restore()}
 // ---- переход между сценами ----
 const SC={};let scene='',SCN=null,fade=1;
 function go(n,arg){GEN++;stopTalk();GOAL='';BIG=null;HINT.g=null;JOY=null;RT=null;BOT.hold=false;scene=n;SCN=SC[n];fade=1;INPMODE='ui';if(typeof onScene3D==='function')onScene3D(n);SCN.enter&&SCN.enter(arg)}

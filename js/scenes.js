@@ -46,7 +46,7 @@ function drawMedal(x,y,r){X.save();X.translate(x,y);X.fillStyle='#d23a4a';X.begi
 // ---- обёртка главы ----
 // LEVELS объявлен в world.js
 let LVDRAW=null;
-SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.8;CAMS.h=2.9;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();INPMODE='play';CAMS.snap=true;
+SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();INPMODE='play';CAMS.snap=true;
   run(async()=>{await L.play();await chapterWin(i)})},
  draw(){if(LVDRAW)LVDRAW();drawAngCard();if(this.win){const u=T-this.win;const v=vis();X.fillStyle=`rgba(40,20,90,${Math.min(.35,u)})`;X.fillRect(v.x0,v.y0,v.w,v.h);const k=ease(u*2);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.5);X.scale(k,k);for(let j=0;j<3;j++){txt('★',(j-1)*130,j==1?-30:0,j==1?170:130,'#ffd84a',{f:NUM,st:'#7a4a00',lw:14})}X.restore()}}};
 async function chapterWin(i){SFX.star();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;burst(V3(HERO.x,HERO.y+2,HERO.z),0xffe066,50,6);SC.ch.win=T;GOAL='';clearGesture();await say('g_win');await wait(1.2);SC.ch.win=0;SV.done[i]=1;save();go('map')}

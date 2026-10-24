@@ -44,14 +44,14 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
   await cutscene(async()=>{shot(6,4,2,0,1.4,13,2);await say('c4_s')});
   // T1 — треугольник в треугольную дырку
   L.open(L.hT);const sq=L.add('sq',-1.5,8.5),tri=L.add('tri',2.5,8.5);
-  newTask('Пни треугольник в треугольную дырку','kick');run(()=>sayAll('c4_t1','u_kick'));
+  newTask('Пни треугольник в его дырку','kick');run(()=>sayAll('c4_t1','u_kick'));
   let res=null;L.onWrong=(s,h)=>{mistake('c4_bad')};L.onPass=(s,h)=>{res=s};
   TASK.help=async()=>{await say('c4_help');await countAloud([V3(-4.8,.02,13.4),V3(-3.2,.02,13.4),V3(-4,1.37,13.4)])};
   botTask(async()=>{const e0=TASK.err;await bKick(L,sq,L.hT.x);await bUntil(()=>TASK.err>e0,5);await bWait(.5);for(let i=0;i<5&&!tri.passed;i++){await bKick(L,tri,L.hT.x);await bWait(1.2)}});
   await until(()=>res&&res.kind==='tri');clearGesture();GOAL='';await good('c4_k1');
   // T2 — квадрат против бруска
   L.open(L.hS);const bar=L.add('rect',3,8);res=null;
-  newTask('Найди квадрат: все стороны равные');run(()=>say('c4_t2'));L.onWrong=(s,h)=>{mistake(s.kind==='rect'?'c4_long':'c4_bad')};
+  newTask('Найди квадрат: стороны равны');run(()=>say('c4_t2'));L.onWrong=(s,h)=>{mistake(s.kind==='rect'?'c4_long':'c4_bad')};
   TASK.help=async()=>{await say('c4_help');await countAloud([V3(-.75,.02,13.4),V3(.75,.02,13.4),V3(.75,1.4,13.4),V3(-.75,1.4,13.4)])};
   botTask(async()=>{const e0=TASK.err;for(let i=0;i<4&&TASK.err===e0;i++){await bKick(L,bar,L.hS.x);await bWait(1.2)}await bWait(.5);for(let i=0;i<5&&!sq.passed;i++){await bKick(L,sq,L.hS.x);await bWait(1.2)}});
   await until(()=>res&&res.kind==='sq');GOAL='';await good('c4_k2');
@@ -59,7 +59,7 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
   await cutscene(async()=>{L.open(L.hG);L.sign.visible=true;shot(2,3,6,5.2,1.4,13.5,2.5);await wait(.6);await say('c4_t3')});
   const cube=L.add('sq',-2,8.5),t2=L.add('tri',1.5,7),disc=L.add('disc',-5,7);let nRect=0,saidSq=false;
   if(bar.passed){L.add('rect',6,8)}
-  newTask('Пни в ворота все прямоугольники');run(()=>say('c4_t3b'));L.onWrong=(s,h)=>{if(h.kind==='gate')mistake('c4_nope')};
+  newTask('Пни прямоугольники в ворота');run(()=>say('c4_t3b'));L.onWrong=(s,h)=>{if(h.kind==='gate')mistake('c4_nope')};
   L.onPass=(s,h)=>{if(h.kind!=='gate')return;nRect++;if(s.kind==='sq'&&!saidSq){saidSq=true;run(()=>sayNext('c4_sq'))}else run(()=>sayNext('g_good'))};
   TASK.help=async()=>{for(const s of L.shapes)if(!s.passed&&(s.kind==='sq'||s.kind==='rect'))burst(V3(s.b.position.x,1.6,s.b.position.z),0xffe066,30,3);await say('c4_t3b')};
   botTask(async()=>{const e0=TASK.err;for(let i=0;i<4&&TASK.err===e0;i++){await bKick(L,t2,L.hG.x);await bWait(1.2)}await bWait(.5);
@@ -100,11 +100,11 @@ LEVELS[4]={cast:{queen:true},build(){groundPlane(TEX.grass,0xd8e890);hills(0x8cc
   const pent=L.mkPlate(0,11,3.6,5,0xffb84a);
   for(const [pt,ask,kOk,nums,sz,right,lineT] of [[pent,'c5_ask','c5_k1',[4,5,6],4.4,5,'c5_t1'],[null,'c5_ask','c5_k2',[5,6,7],20.2,6,'c5_t2']]){
    const P=pt||L.mkPlate(0,27.5,3.8,6,0xffd060);if(!pt){burst(V3(0,1,27.5),0xffe066,40,5);SFX.magic()}
-   newTask('Обеги плиту по краю и держи палец','hold');run(()=>say(lineT));
+   newTask('Держи палец, обеги край плиты','hold');run(()=>say(lineT));
    TASK.help=async()=>{for(const e of P.edges)burst(e.position,0xffe066,8,2);await say('c5_off')};
    botTask(async()=>{const e0=TASK.err;await bGo(P.cx,P.cz,.8);bHold(true);await bUntil(()=>TASK.err>e0,4);bHold(false);await bWait(.3);await bGo(P.P[0].x,P.P[0].z,.4);bHold(true);for(let i=1;i<=P.n;i++)await bGo(P.P[i%P.n].x,P.P[i%P.n].z,.45);bHold(false)});
    await L.lightTask(P);GOAL='';clearGesture();await until(()=>!TALK);
-   newTask('Прыгни на камень с числом уголков','jump');const st=L.stones(nums,sz);run(()=>sayAll(ask,'u_jump'));
+   newTask('Прыгни на камень с числом углов','jump');const st=L.stones(nums,sz);run(()=>sayAll(ask,'u_jump'));
    TASK.help=async()=>{await say('c5_help');await countAloud(P.lamps.map(l=>V3(l.g.position.x,1.9,l.g.position.z)))};
    const wrong=st.find(s=>s.n!==right),good_=st.find(s=>s.n===right);
    botTask(async()=>{const e0=TASK.err;await bWait(.8);await bJumpOn(wrong.x,wrong.z);await bUntil(()=>TASK.err>e0&&!HERO.lock,5);await bWait(.4);await bJumpOn(good_.x,good_.z)});

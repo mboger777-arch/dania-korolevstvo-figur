@@ -59,7 +59,7 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
   newTask('Встань на точку А','move');const mk=marker(A.x,A.z);run(()=>say('u_move'));
   botTask(async()=>{await bGo(A.x,A.z,.4)});
   await until(()=>hd(A.x,A.z)<1);mk.visible=false;
-  newTask('Держи палец и целься в звёздочку Б','hold');run(()=>sayNext('c1_t1'));
+  newTask('Держи палец, целься в Б','hold');run(()=>sayNext('c1_t1'));
   const dAB=Math.hypot(B.x-A.x,B.z-A.z);const st={len:0,wait:false,done:false,saidB:false,wide:.17};
   const beam=segMesh(V3(0,0,0),V3(0,1,0),.08,0xffffff,{mat:M(0xffffff,{em:0xffffaa,ei:1})});const glow=segMesh(V3(0,0,0),V3(0,1,0),.2,0xfff080,{op:.35});beam.visible=glow.visible=false;
   let guide=null;
@@ -81,7 +81,7 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
   const ang=Math.atan2(B.x-A.x,B.z-A.z);for(let i=0;i<=12;i++){const t=i/12;const pl=mesh(GEO.box,0xb88a50,lerp(P.x,Q.x,t),.18,lerp(P.z,Q.z,t),null,[2,.12,.55]);pl.rotation.y=ang;pl.scale.x=.01;const t0=T+i*.07;TICK.push(()=>{pl.scale.x=clamp((T-t0)*6,0.01,1)*2})}
   L.bridge=true;SFX.magic();burst(V3((A.x+B.x)/2,1,(A.z+B.z)/2),0xffe066,40,5);await good('c1_k1');
   // --- луч-фонарик против тумана ---
-  newTask('Встань на точку-фонарик и свети на туман','move');const mk2=marker(0,22);run(()=>sayAll('c1_t2','c1_t2b'));
+  newTask('Свети с фонарика на туман','move');const mk2=marker(0,22);run(()=>sayAll('c1_t2','c1_t2b'));
   const rs={len:0,off:false,left:3,done:false};const rb=segMesh(V3(0,0,0),V3(0,1,0),.1,0xfff4b0,{mat:M(0xfff8c0,{em:0xffee80,ei:1})});const rg=segMesh(V3(0,0,0),V3(0,1,0),.32,0xfff080,{op:.3});rb.visible=rg.visible=false;
   TASK.help=async()=>{mk2.visible=true;await say('u_go')};
   botTask(async()=>{const e0=TASK.err;await bPath([[.6,9.8],[3.2,14.2],[2,16.5]]);await bGo(0,17,.6);bHold(true);await bUntil(()=>TASK.err>e0,6);bHold(false);await bGo(0,22,.3);bHold(true);for(const c of L.clouds){if(!c.alive)continue;bAim(c.position.x,c.position.z);await bUntil(()=>!c.alive,8)}bHold(false);bAimA(null)});
@@ -121,19 +121,19 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
    lastZ=HERO.z;if(HERO.z>90)res='ok'};
   TICK.push(tick);await until(()=>res);TICK.splice(TICK.indexOf(tick),1);DANIA.root.rotation.x=0;KRUG.root.rotation.x=0;
   if(res!=='ok'){for(const s of segs)s.visible=false;SFX.bump();HERO.mode='still';return res}KRUG.anim='idle';
-  HERO.mode='walk';KRUG.mode='follow';place(KRUG,HERO.x-1.2,HERO.z-.8);CAMS.dist=5.8;CAMS.h=2.9;L.sled.position.set(-2,SLOPE(92),92);L.sled.rotation.set(0,.4,0);return 'ok'},
+  HERO.mode='walk';KRUG.mode='follow';place(KRUG,HERO.x-1.2,HERO.z-.8);CAMS.dist=5.0;CAMS.h=2.4;L.sled.position.set(-2,SLOPE(92),92);L.sled.rotation.set(0,.4,0);return 'ok'},
  async play(){const L=this;
   await cutscene(async()=>{shot(4,3,-6,0,-6,30,2);await say('c2_s');shot(-1,2.4,-5,-3,1.7,-1,3);await say('c2_r')});
   // поездка 1: четыре флажка = четыре звена
   const run1=[[-5,20,0x3d7be0],[5,38,0x3d7be0],[-5,56,0x3d7be0],[5,74,0x3d7be0]];
-  newTask('Проедь через все четыре флажка','move');run(()=>say('c2_t1'));needGesture('move');
+  newTask('Проедь все 4 флажка','move');run(()=>say('c2_t1'));needGesture('move');
   TASK.help=async()=>{await say('c2_help')};
   botTask(async()=>{let first=true;while(true){const e0=TASK.err;await bUntil(()=>HERO.mode==='sled',20);await bSled(L,first?2:-1);if(!first)break;await bUntil(()=>TASK.err>e0||HERO.mode!=='sled',30);first=false}});
   for(;;){const r=await L.ride(1,run1);if(r==='ok')break;mistake('c2_miss');await wait(1.4)}
   clearGesture();GOAL='';await good('c2_k1');
   // поездка 2: три синих, красные объезжать
   const run2=[[6,25,0x3d7be0],[-6,25,0xff3030],[-6,50,0x3d7be0],[6,50,0xff3030],[5,75,0x3d7be0],[-5,75,0xff3030]];
-  newTask('Только синие флажки — три звена');await say('c2_t2');
+  newTask('Синие флажки — три звена');await say('c2_t2');
   botTask(async()=>{let first=true;while(true){const e0=TASK.err;await bUntil(()=>HERO.mode==='sled',20);await bSled(L,first?'red':-1);if(!first)break;await bUntil(()=>TASK.err>e0||HERO.mode!=='sled',30);first=false}});
   for(;;){const r=await L.ride(2,run2);if(r==='ok')break;mistake(r==='red'?'c2_red':'c2_miss');await wait(1.4)}
   GOAL='';await good();
@@ -181,7 +181,7 @@ LEVELS[2]={cast:{queen:true},build(){SKY.material.uniforms.a.value.set(0xffa860)
   const g1=grabber({hp:()=>V3(L.tip.x,1.3,L.tip.z),grab(){m1.visible=false;L.db.on=false},move(){const a=Math.atan2(HERO.z-L.H.z,HERO.x-L.H.x);L.ps=clamp(a,-Math.PI+.35,-.15);L.layout();ANGCARD.deg=L.deg1;if(Math.random()<.05)SFX.creak()},
    rel(){L.db.on=true;const d=L.deg1;if(d>=80&&d<=100){L.ps=-Math.PI/2;L.layout();ANGCARD.deg=90;s1.done=true;L.bar.visible=false;L.barB.on=false;burst(V3(.2,1.3,10),0xb070ff,40,4)}else if(d>100)mistake('c3_wide');else mistake('c3_narrow')}});
   botTask(async()=>{const e0=TASK.err;await bGo(L.tip.x+.3,L.tip.z-.8,.5);bHold(true);await bWait(.3);await bGo(L.H.x+2.72,L.H.z-1.27,.3);bHold(false);await bUntil(()=>TASK.err>e0,4);await bWait(.5);await bGo(L.tip.x+.3,L.tip.z-.8,.5);bHold(true);await bWait(.3);await bGo(L.H.x,L.H.z-3.3,.3);bHold(false)});
-  TICK.push(()=>{if(!s1.done&&hd(L.H.x,L.H.z)<6&&!s1.cam){s1.cam=1;shot(L.H.x+1,8.5,L.H.z-8.5,L.H.x-.5,0,L.H.z-1.5,2.5)}});
+  TICK.push(()=>{if(!s1.done&&hd(L.H.x,L.H.z)<6&&!s1.cam){s1.cam=1;shot(L.H.x+.8,6.4,L.H.z-6.4,L.H.x-.5,.3,L.H.z-1.3,2.5)}});
   await until(()=>s1.done);g1.on=false;SFX.ok();followCam();clearGesture();GOAL='';await good('c3_k1');
   // --- крыша: острый угол ---
   ANGCARD={deg:L.alpha};L.arc1.visible=false;L.arc2.visible=true;newTask('Сделай угол крыши острым','hold');run(()=>say('c3_t2'));const s2={done:false};
@@ -192,7 +192,7 @@ LEVELS[2]={cast:{queen:true},build(){SKY.material.uniforms.a.value.set(0xffa860)
   TICK.push(()=>{if(!s2.done&&HERO.z>14&&!s2.cam){s2.cam=1;shot(0,3.2,12.5,0,2,22,2.5)}});
   await until(()=>s2.done);g2.on=false;cl.visible=true;rainOn(0,6.5,22,8);SFX.ok();await wait(1.2);clearGesture();GOAL='';await good('c3_k2');cl.visible=false;followCam();
   // --- пандус: тупой угол ---
-  ANGCARD={deg:L.beta};L.arc2.visible=false;L.arc3.visible=true;newTask('Сделай пологую горку — тупой угол','hold');run(()=>say('c3_t3'));const s3={done:false};KRUG.mode='go';KRUG.tgt={x:-1.6,z:30};
+  ANGCARD={deg:L.beta};L.arc2.visible=false;L.arc3.visible=true;newTask('Сделай горку: угол тупой','hold');run(()=>say('c3_t3'));const s3={done:false};KRUG.mode='go';KRUG.tgt={x:-1.6,z:30};
   TASK.help=async()=>{const m=marker(.9,31.5);await say('u_go');await wait(3);m.visible=false};
   const slide=async()=>{KRUG.mode='none';const fz=34-L.d;const pts=[];for(let i=0;i<=20;i++)pts.push(i/20);KRUG.root.position.set(0,0,fz-.6);for(const t of pts){const z=lerp(fz-.4,lerp(fz,34,.45),t);KRUG.root.position.set(0,groundAt(0,z,9),z);await wait(.03)}SFX.boing();for(const t of pts){const z=lerp(lerp(fz,34,.45),fz-.8,t);KRUG.root.position.set(0,groundAt(0,z,9),z);await wait(.02)}KRUG.mode='go';KRUG.tgt={x:-1.6,z:30}};
   const g3=grabber({hp:()=>V3(.9,.4,34-L.d),move(){L.d=clamp(34-HERO.z,-1.2,4.5);L.layout();ANGCARD.deg=L.beta;if(Math.random()<.05)SFX.creak()},rel(){if(L.beta>=130)s3.done=true;else{TASK.err++;G.mistakes=(G.mistakes||0)+1;SFX.bad();run(async()=>{if(L.d>.3)await slide();else SFX.bump();await sayNext('c3_steep');if(TASK.err>=2&&TASK.help)await TASK.help()})}}});

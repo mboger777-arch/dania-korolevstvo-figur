@@ -9,11 +9,11 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
  for(const [x,z] of [[-12,23.5],[12,23.5],[-12,-4],[12,-4]]){mesh(GEO.cyl,0xd8cbb2,x,2.6,z,null,[1.5,5.2,1.5]);mesh(GEO.cone,0x7a4ad8,x,6.1,z,null,[1.8,1.9,1.8]);mesh(GEO.box,[0xff5a6a,0xffd23a,0x3d8fe8,0x3fbf63][(x>0)+(z>0)*2],x+.45,7.3,z,null,[.8,.5,.04])}
  for(let i=0;i<14;i++)mesh(GEO.box,0xd8cbb2,-11.5+i*1.77,3.75,23.5,null,[.9,.7,1.1]);
  flowers(40,-10,10,-2,21);
- this.hits=0;heroAt(0,2,0);place(QUEEN,7,2.5,-.9);place(KRIV,0,11,Math.PI);this.kb=cylBlock(0,11,1.1,3)},
+ this.hits=0;heroAt(0,2,0);place(QUEEN,7,2.5,-.9);place(KRIV,0,11,Math.PI);KRIV.root.scale.setScalar(1.35);this.kb=cylBlock(0,11,1.1,3)},
  async play(){const L=this,KV=KRIV;
   await cutscene(async()=>{shot(3.5,2.6,5,0,1.8,11,2.2);KV.F.mood='angry';await say('b_s');followCam()});
   // ---- фаза 1: отбивай клубки ----
-  newTask('Отбей комок обратно — проведи пальцем','kick');run(()=>say('b_t1'));
+  newTask('Отбей комок: проведи пальцем','kick');run(()=>say('b_t1'));
   const ball=mesh(GEO.sph,new THREE.MeshLambertMaterial({map:TEX.yarn,color:0xc080ff}),0,-5,0,null,.5);
   const B={st:'wait',t:T+2.5,lk:HERO.kickT||0};let hits=0;
   TASK.help=async()=>{await say('b_t1')};
@@ -38,7 +38,7 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
    L.headAt(E);await wait(.4);await say('b_t2')});
   L.tick2=dt=>{L.headAt(E)};TICK.push(L.tick2);
   // ---- фаза 2: пробеги через петли по порядку ----
-  newTask('Пробеги через петлю, которая светится','move');
+  newTask('Пробеги через светлую петлю','move');
   const glow=()=>{for(const o of loops){o.lp.material.emissive.set(o.done?0x000000:o.n===order?0xffc000:0x2a0050);o.lp.material.emissiveIntensity=o.n===order?.6+Math.sin(T*8)*.35:.5}};
   TASK.help=async()=>{const o=loops[order];if(o)burst(V3(o.m.x,2,o.m.z),0xffe066,40,4);await say('b_ord')};
   const tk2=dt=>{glow();for(const o of loops){if(o.done)continue;const inn=hd(o.m.x,o.m.z)<1.0;if(inn&&!o.inside){if(o.n===order){o.done=true;order++;bigNum(order);SFX.ding();burst(o.m,0xffe066,26,3);
@@ -50,7 +50,7 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
   await until(()=>order>=6);TICK.splice(TICK.indexOf(tk2),1);GOAL='';await until(()=>!TALK);await good('b_k2');
   // ---- фаза 3: замкни ломаную — неси конец к началу ----
   const mk=mesh(GEO.sph,M(0xffe066,{em:0xffb000,ei:.9}),V[0].x,.4,V[0].z,null,.42);TICK.push(()=>{mk.scale.setScalar(.42*(1+Math.sin(T*6)*.25))});
-  await say('b_t3');newTask('Возьми конец и принеси к светящейся точке','hold');
+  await say('b_t3');newTask('Неси конец к светлой точке','hold');
   let carry=false,closed=false;
   const gr=grabber({hp:()=>V3(E.x,.9,E.z),grab:()=>{carry=true;clearGesture()},
    move:dt=>{const tx=HERO.x+Math.sin(HERO.yaw)*1.1,tz=HERO.z+Math.cos(HERO.yaw)*1.1;E.x=lerp(E.x,tx,.25);E.z=lerp(E.z,tz,.25);setSeg(edges[5],V3(V[5].x,.16,V[5].z),V3(E.x,.16,E.z),.12)},
@@ -71,7 +71,7 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
   const hx=4,hz=12.5;const cube=mesh(GEO.box,0x3d8fe8,hx,1.1,hz,null,2.2);mesh(GEO.box,0x7a4a2a,hx,.6,hz-1.11,null,[.7,1.2,.04]);mesh(GEO.box,0xbfe6ff,hx+.6,1.4,hz-1.11,null,[.45,.45,.04]);const cb=block(hx,hz,1.1,1.1,2.2);
   const rs=new THREE.Shape();rs.moveTo(-1.35,0);rs.lineTo(1.35,0);rs.lineTo(0,1.35);rs.closePath();const rg=new THREE.ExtrudeGeometry(rs,{depth:2.3,bevelEnabled:false});rg.translate(0,0,-1.15);
   const roof=mesh(rg,M(0xff5a6a),-3.5,0,5);place(KV,-2,15,Math.PI*.8);
-  await say('f_t');newTask('Принеси крышу-треугольник на квадрат','hold');
+  await say('f_t');newTask('Поставь крышу на квадрат','hold');
   let rc=false,built=false;
   const gr2=grabber({hp:()=>V3(roof.position.x,roof.position.y+1.6,roof.position.z),grab:()=>{rc=true;clearGesture()},
    move:dt=>{const p=roof.position;p.x=lerp(p.x,HERO.x+Math.sin(HERO.yaw)*1.3,.25);p.z=lerp(p.z,HERO.z+Math.cos(HERO.yaw)*1.3,.25);p.y=lerp(p.y,2.5,.2)},
@@ -85,4 +85,4 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
    LVDRAW=()=>{const v=vis(),k=ease(Math.min(1,(T-m0)*1.6));X.fillStyle=`rgba(40,20,90,${.45*k})`;X.fillRect(v.x0,v.y0,v.w,v.h);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.48);X.scale(k,k);drawMedal(0,0,90);X.restore();
     txt('Мастер фигур',v.x0+v.w/2,v.y0+v.h*.48+150,60,'#ffe08a',{f:FONT,st:'#4a1f8a',lw:10,id:'mf'})};
    if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;SFX.star();await say('f_2');await wait(.6);LVDRAW=null;await say('f_3')});HERO.lock=true;shot(cx,3.4,cz,hx-2,1.5,hz-2,2.4)}};
-LEVELS[6].headAt=function(E){if(!KRIV)return;KRIV.root.position.set(E.x,-.9,E.z-.42);KRIV.root.rotation.set(0,0,0)};
+LEVELS[6].headAt=function(E){if(!KRIV)return;KRIV.root.scale.setScalar(1);KRIV.root.position.set(E.x,-1.4,E.z-.05);KRIV.root.rotation.set(0,0,0)};

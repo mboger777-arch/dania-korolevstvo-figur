@@ -204,8 +204,8 @@ function makeKriv(){const root=new THREE.Group(),body=new THREE.Group();root.add
  const tg=grp(body,0,0,0);const tb=tube(blobPts(34,11,V3(0,1.2,0),.42,.7,.32),.045,mat,tg,true);tube(blobPts(24,23,V3(0,1.15,0),.36,.6,.28),.03,mat2,tg,true);
  const head=grp(body,0,1.95,.05);mesh(GEO.sph,new THREE.MeshLambertMaterial({map:TEX.yarn,color:0xc090ff,emissive:0x200040,emissiveIntensity:.4}),0,0,0,head,.46);const F=makeFace('kriv');faceCap(F,.46,head,0,0,1.6,1.3);
  const front=v=>v.z>.12&&Math.abs(v.x)<.42&&v.y<.32&&v.y>-.36;tube(blobPts(36,37,V3(0,0,0),.6,1.05,.58,front),.04,mat,head,true);tube(blobPts(26,41,V3(0,.05,-.05),.56,1,.54,front),.03,mat2,head,true);
- const arms=[],legs=[];for(const s of [-1,1]){const ar=grp(body,s*.3,1.45,0);tube(limbPts(V3(0,0,0),V3(s*.7,-.55,.15),.22,9,s>0?51:57,.09),.035,mat,ar);tube(limbPts(V3(0,-.05,0),V3(s*.66,-.5,.1),.18,8,s>0?61:67),.022,mat2,ar);arms.push(ar);
-  const lg=grp(body,s*.17,.72,0);tube(limbPts(V3(-s*.05,.18,0),V3(s*.1,-.64,.06),.16,8,s>0?71:77),.04,mat,lg);tube(limbPts(V3(0,0,0),V3(s*.08,-.62,.0),.14,7,s>0?81:87),.025,mat2,lg);
+ const arms=[],legs=[];for(const s of [-1,1]){const ar=grp(tg,s*.3,1.45,0);tube(limbPts(V3(0,0,0),V3(s*.7,-.55,.15),.22,9,s>0?51:57,.09),.035,mat,ar);tube(limbPts(V3(0,-.05,0),V3(s*.66,-.5,.1),.18,8,s>0?61:67),.022,mat2,ar);arms.push(ar);
+  const lg=grp(tg,s*.17,.72,0);tube(limbPts(V3(-s*.05,.18,0),V3(s*.1,-.64,.06),.16,8,s>0?71:77),.04,mat,lg);tube(limbPts(V3(0,0,0),V3(s*.08,-.62,.0),.14,7,s>0?81:87),.025,mat2,lg);
   const ft=mesh(new THREE.TorusGeometry(.11,.03,6,16),mat,s*.12,-.66,.08,lg);ft.rotation.x=Math.PI/2;ft.scale.set(1,1.4,1);legs.push(lg)}
  const gold=M(0xf0be30,{em:0x7a5000,ei:.4});const cr=grp(head,.04,.52,0);cr.rotation.z=-.18;mesh(GEO.cyl,gold,0,0,0,cr,[.28,.13,.28]);for(let i=0;i<5;i++){const a=i/5*6.283;mesh(GEO.cone,gold,Math.sin(a)*.23,.16,Math.cos(a)*.23,cr,[.07,.22,.07]);mesh(GEO.sph,gold,Math.sin(a)*.23,.28,Math.cos(a)*.23,cr,.035)}
  mesh(GEO.sph,M(0x5ad06a,{em:0x105020,ei:.4}),0,0,.28,cr,.05);
@@ -251,15 +251,21 @@ function krugStep(dt){const k=KRUG;if(!k)return;const r=k.root.position;let sp=0
  else if(k.mode==='go'&&k.tgt){const dx=k.tgt.x-r.x,dz=k.tgt.z-r.z,d=Math.hypot(dx,dz);if(d>.15){sp=Math.min(5,d*3);r.x+=dx/d*sp*dt;r.z+=dz/d*sp*dt;k.root.rotation.y=Math.atan2(dx,dz)}r.y=groundAt(r.x,r.z,r.y+.3)}
  k.sp=sp}
 // ---- камера ----
-const CAMS={yaw:0,dist:6.4,h:3.1,look:1.35,mode:'follow',pos:V3(0,5,-8),tgt:V3(0,1,0),snap:true,k:5,fov:52};
+const CAMS={yaw:0,dist:5.0,h:2.4,look:1.25,mode:'follow',pos:V3(0,5,-8),tgt:V3(0,1,0),snap:true,k:5,fov:52};
 function shot(px,py,pz,lx,ly,lz,k){CAMS.mode='shot';CAMS.sp=V3(px,py,pz);CAMS.sl=V3(lx,ly,lz);CAMS.k=k||3}
+// в катсцене говорящий герой — крупным планом лицом к камере (через ~1 с после начала реплики)
+const TALKCH={dania:()=>DANIA,krug:()=>KRUG,queen:()=>QUEEN,kriv:()=>KRIV};
+function talkFrame(){if(typeof CUT==='undefined'||!CUT||!TALK||CAMS.wide||T-TALK.t0<1.1)return null;const g=TALKCH[TALK.who==='narr'&&scene==='intro'?'dania':TALK.who];const c=g&&g();if(!c||!c.root.visible||!c.root.parent)return null;
+ const p=c.root.position,hh=c.h,D=clamp(hh*2.1,3.6,6.4);let vx=CAMS.sl.x-CAMS.sp.x,vz=CAMS.sl.z-CAMS.sp.z;const n=Math.hypot(vx,vz)||1;vx/=n;vz/=n;
+ const fy=c.root.rotation.y+(c.body.rotation.y||0),fx=Math.sin(fy),fz=Math.cos(fy);if(-(vx*fx+vz*fz)<.35){const a=fy+Math.PI+.35;vx=Math.sin(a);vz=Math.cos(a)}
+ return[V3(p.x-vx*D,p.y+hh*.75+.5,p.z-vz*D),V3(p.x+vx*.6,p.y+hh*.62,p.z+vz*.6)]}
 function followCam(){CAMS.mode='follow';CAMS.k=5}
 function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));if(Math.abs(d)<2.3)CAMS.yaw+=d*Math.min(1,dt*1.3)}
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
   const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);P=V3(h.x-fx*CAMS.dist,h.y+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,h.y+CAMS.look,h.z+fz*1.2);
   const gp=groundAt(P.x,P.z)+.6;if(P.y<gp)P.y=gp}
- else{P=CAMS.sp;L=CAMS.sl}
+ else{P=CAMS.sp;L=CAMS.sl;const tf=talkFrame();if(tf){P=tf[0];L=tf[1]}}
  const k=CAMS.snap?1:1-Math.exp(-dt*CAMS.k);CAMS.pos.lerp(P,k);CAMS.tgt.lerp(L,k);CAMS.snap=false;CAM.position.copy(CAMS.pos);CAM.lookAt(CAMS.tgt);
  if(Math.abs(CAM.fov-CAMS.fov)>.05){CAM.fov=lerp(CAM.fov,CAMS.fov,.1);CAM.updateProjectionMatrix()}}
 // ---- проекция на экран (дизайн-координаты оверлея) ----
