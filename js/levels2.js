@@ -68,8 +68,8 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
 // бот: встать за фигурой на линии «фигура → дырка» и пнуть
 async function bKick(L,s,hx){if(s.passed)return;const p=s.b.position;let dx=hx-p.x,dz=13.6-p.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
  const nd=Math.abs(dx)*(SHW[s.kind]+.5)+Math.abs(dz)*.95;const far=[p.x-dx*(nd+1.4),p.z-dz*(nd+1.4)];
- if(hd(hx,13.6)<Math.hypot(hx-p.x,13.6-p.z)+.5||hd(p.x,p.z)<1.5){const side=(HERO.x-p.x)*dz-(HERO.z-p.z)*dx>0?1:-1;await bGo(clamp(p.x+dz*side*2.2,-9,9),clamp(p.z-dx*side*2.2,-2.5,12.5),.8)}
- await bGo(clamp(far[0],-9,9),clamp(far[1],-2.5,12.5),.6);const q=s.b.position;await bGo(q.x-dx*nd,q.z-dz*nd,.35);bSwipe();await bWait(.2)}
+ if(hd(hx,13.6)<Math.hypot(hx-p.x,13.6-p.z)+.5||hd(p.x,p.z)<1.5){const side=(HERO.x-p.x)*dz-(HERO.z-p.z)*dx>0?1:-1;await bGo(clamp(p.x+dz*side*2.2,-9,9),clamp(p.z-dx*side*2.2,-2.5,12.5),.8,6)}
+ await bGo(clamp(far[0],-9,9),clamp(far[1],-2.5,12.5),.6,8);const q=s.b.position;await bGo(q.x-dx*nd,q.z-dz*nd,.35,4);bSwipe();await bWait(.2)}
 
 // ===================== Глава 5: Пчелиные соты (обеги край, сосчитай углы) =====================
 function polyPts(cx,cz,r,n){const a=[];for(let i=0;i<n;i++){const f=-Math.PI/2+i/n*Math.PI*2;a.push({x:cx+Math.cos(f)*r,z:cz+Math.sin(f)*r})}return a}

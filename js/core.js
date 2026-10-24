@@ -144,6 +144,11 @@ function takeSwipe(){if(INP.swipeQ&&T-INP.swipeQ<.3){INP.swipeQ=0;return true}re
 const HINT={g:null,shownT:-99,t0:0};
 function needGesture(g){HINT.g=g;HINT.t0=T;HINT.shownT=T;INP.last=T}
 function clearGesture(){HINT.g=null}
+// джойстик: под пальцем — круг и ручка; без пальца — бледная подсказка слева внизу
+function drawJoy(){if(INPMODE!=='play'||!(SCN&&SCN.world))return;X.save();
+ let bx,by,kx,ky,a;if(JOY){bx=JOY.x0;by=JOY.y0;const dx=JOY.x-bx,dy=JOY.y-by,d=Math.hypot(dx,dy),k=Math.min(d,90)/(d||1);kx=bx+dx*k;ky=by+dy*k;a=.55}else{bx=safeL()+110;by=safeB()-100;kx=bx+(BOT.on?INP.jx*60:0);ky=by-(BOT.on?INP.jy*60:0);a=.28}
+ X.globalAlpha=a;X.fillStyle='#ffffff';X.beginPath();X.arc(bx,by,92,0,7);X.fill();X.lineWidth=6;X.strokeStyle='#4a1f8a';X.stroke();
+ X.globalAlpha=Math.min(1,a+.3);X.fillStyle='#ffd23a';X.beginPath();X.arc(kx,ky,40,0,7);X.fill();X.lineWidth=5;X.strokeStyle='#7a4a00';X.stroke();X.restore()}
 function drawHand(){if(!HINT.g||INPMODE!=='play')return;const idle=T-INP.last;let ph=-1;
  if(T-HINT.shownT<3.2)ph=(T-HINT.shownT);else if(idle>5){ph=(idle-5)%4.5;if(ph>3.2)ph=-1}
  if(ph<0)return;const v=vis();const g=HINT.g;const lx=safeL()+190,ly=safeB()-150,rx=safeR()-210,ry=safeB()-170;
@@ -191,7 +196,7 @@ function loop(now){requestAnimationFrame(loop);DT=clamp((now-last)/1000,0,.05);l
  X.setTransform(DPR,0,0,DPR,0,0);X.clearRect(0,0,W,H);X.setTransform(DPR*S,0,0,DPR*S,DPR*OX,DPR*OY);UI=[];if(G.auditReq){G.auditReq=0;AUD={t:[],scene}}else AUD=null;
  if(SCN&&SCN.draw)SCN.draw();
  if(SCN&&SCN.hud!==false&&scene!=='title')hudButtons();
- drawGoal();drawBig();drawTalk();drawHand();
+ drawJoy();drawGoal();drawBig();drawTalk();drawHand();
  if(SCN&&SCN.cut)cutButtons(SCN.skip);
  if(fade>0){fade=Math.max(0,fade-DT*2.5);const v=vis();X.fillStyle=`rgba(20,10,50,${fade})`;X.fillRect(v.x0,v.y0,v.w,v.h)}
  if(AUD)G.lastAudit=AUD}

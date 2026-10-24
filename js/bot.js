@@ -5,7 +5,7 @@ async function bUntil(f,tmo){const tok=BTOK,t0=T;await until(()=>tok!==BTOK||f()
 const bWait=s=>{const t0=T;return bUntil(()=>T-t0>=s)};
 function bHold(v){BOT.hold=v}
 function bAim(x,z){BAIM={x,z}}function bAimA(a){BAIM=a==null?null:{a}}
-async function bGo(x,z,tol){BGOAL={x,z,tol:tol||.5};try{await bUntil(()=>hd(x,z)<(tol||.5),25)}finally{BGOAL=null}}
+async function bGo(x,z,tol,soft){BGOAL={x,z,tol:tol||.5};try{if(soft){const tok=BTOK,t0=T;await until(()=>tok!==BTOK||hd(x,z)<(tol||.5)||T-t0>soft);if(tok!==BTOK)throw STALE}else await bUntil(()=>hd(x,z)<(tol||.5),25)}finally{BGOAL=null}}
 async function bPath(pts,tol){for(const [x,z] of pts)await bGo(x,z,tol||.7)}
 function bTap(){INP.tapQ=T;INP.used.tap=1;INP.last=T}
 function bSwipe(){INP.swipeQ=T;INP.used.swipe=1;INP.swipeDir=0;INP.last=T}
