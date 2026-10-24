@@ -150,7 +150,7 @@ LEVELS[5]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xb8e070);h
   // гонка: Даня в тележке, рулим, объезжаем камни; Кривуля катит комок сзади
   const rocks=[[-2.5,24],[2.5,36],[0,48],[-3,60],[3,72],[0,86],[-2.5,100],[2.5,112]].map(([x,z])=>{const r=mesh(GEO.sphL,0x8a8a9a,x,.45,z,null,[1.1,.8,1]);return{x,z,r,hit:false,passed:false}});L.rocks=rocks;
   newTask('Рули пальцем и объезжай камни','move');run(()=>say('c6_t2'));
-  const sp={v:0};let done=false,lastZ=8;HERO.mode='sled';HERO.x=0;HERO.z=8;DANIA.anim='sit';CAMS.dist=7.5;CAMS.h=3.6;CAMS.snap=true;followCam();
+  const sp={v:0};let done=false,lastZ=8;HERO.mode='sled';HERO.x=0;HERO.z=8;DANIA.anim='sit';CAMS.dist=5.8;CAMS.h=2.9;CAMS.snap=true;followCam();
   TASK.help=async()=>{await say('c6_t2')};
   BSTEER=()=>{const nx=rocks.filter(r=>!r.passed).sort((a,b)=>a.z-b.z)[0];if(!nx)return 0;if(TASK.err===0)return nx.x;return nx.x>0?nx.x-2.6:nx.x<0?nx.x+2.6:2.6};
   botTask(async()=>{await bUntil(()=>done,60)});
@@ -158,7 +158,7 @@ LEVELS[5]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xb8e070);h
    const c=L.cart;c.position.set(HERO.x,0,HERO.z);c.rotation.y=HERO.yaw;L.cartB.on=false;DANIA.root.position.set(HERO.x,1.66,HERO.z);DANIA.anim='sit';
    for(const w of L.right.concat(L.slots[0].w?[L.slots[0].w.g]:[]))w.children[0].rotation.x+=sp.v*dt*1.5;if(L.slots[0].w)L.slots[0].w.g.position.set(HERO.x-1.15,.6,HERO.z+1);
    KRUG.root.position.set(HERO.x-1.45,0,HERO.z-1);KRUG.root.rotation.y=HERO.yaw;KRUG.anim='sit';
-   L.ball.position.set(Math.sin(T)*.6,2,HERO.z-9);L.ball.rotation.x+=sp.v*dt/2;place(KRIV,Math.sin(T)*.6+1.2,HERO.z-12,0);
+   L.ball.position.set(Math.sin(T)*.6,2,HERO.z-9);L.ball.rotation.x+=sp.v*dt/2;place(KRIV,Math.sin(T)*.6+1.2,HERO.z-18,0);
    for(const r of rocks){if(r.passed)continue;if(lastZ<r.z-.6&&HERO.z>=r.z-.6){r.passed=true;if(Math.abs(HERO.x-r.x)<1.5){r.hit=true;sp.v=2;SFX.bump();burst(V3(r.x,1,r.z),0xaaaaaa,20,4);r.r.visible=false;mistake('c6_bump')}else SFX.whoosh()}}
    lastZ=HERO.z;if(HERO.z>126)done=true};
   TICK.push(tick);await until(()=>done);TICK.splice(TICK.indexOf(tick),1);BSTEER=null;GOAL='';

@@ -113,7 +113,7 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
  mkFlags(list){for(const f of this.flags){WORLD.remove(f.g)}this.flags=list.map(([x,z,c])=>{const g=new THREE.Group();g.position.set(x,SLOPE(z),z);mesh(GEO.cylL,0x5a4030,0,1.2,0,g,[.06,2.4,.06]);const fl=mesh(GEO.tri||GEO.box,M(c,{em:c,ei:.4}),.45,2.1,0,g,[.9,.6,.08]);if(!GEO.tri)fl.scale.set(.9,.55,.05);
   const r=mesh(new THREE.RingGeometry(1.1,1.4,24),M(c,{basic:1,op:.6}),0,.06,0,g);r.rotation.x=-Math.PI/2;WORLD.add(g);return{x,z,c,g,hit:false,blue:c!==0xff3030}})},
  async ride(n,flags){// одна поездка: true — без ошибок
-  const L=this;L.mkFlags(flags);heroAt(0,0,0);fade=.7;HERO.mode='sled';KRUG.mode='ride';DANIA.anim='sit';const verts=[V3(0,SLOPE(0)+.3,0)];const segs=[];let res=null,lastZ=0;CAMS.dist=7;CAMS.h=3.6;CAMS.snap=true;
+  const L=this;L.mkFlags(flags);heroAt(0,0,0);fade=.7;HERO.mode='sled';KRUG.mode='ride';DANIA.anim='sit';const verts=[V3(0,SLOPE(0)+.3,0)];const segs=[];let res=null,lastZ=0;CAMS.dist=5.4;CAMS.h=2.8;CAMS.snap=true;
   const tick=dt=>{if(res)return;HERO.vx=HERO.vz=0;HERO.z+=9*dt;HERO.x=clamp(HERO.x-INP.jx*7.5*dt,-10,10);HERO.y=SLOPE(HERO.z);HERO.yaw=-INP.jx*.35;HERO.gr=true;HERO.sp=0;DANIA.anim='sit';
    L.sled.position.set(HERO.x,HERO.y,HERO.z);L.sled.rotation.set(Math.atan(.25)*(HERO.z<88?1:0),HERO.yaw,0);DANIA.root.position.y=HERO.y+.18;DANIA.root.rotation.x=L.sled.rotation.x;KRUG.root.position.set(HERO.x+Math.sin(HERO.yaw)*.75,SLOPE(HERO.z+.75)+.2,HERO.z+.75);KRUG.root.rotation.y=HERO.yaw;KRUG.root.rotation.x=L.sled.rotation.x;KRUG.anim='sit';
    for(const f of L.flags){if(f.hit||f.passed)continue;if(lastZ<f.z&&HERO.z>=f.z){f.passed=true;if(Math.abs(HERO.x-f.x)<1.7){f.hit=true;if(!f.blue){res='red';return}SFX.ding();burst(V3(f.x,SLOPE(f.z)+1.5,f.z),0xffe066,24);const v=V3(f.x,SLOPE(f.z)+.3,f.z);const s=segMesh(verts[verts.length-1],v,.12,0xffe066,{mat:M(0xffe066,{em:0xffc000,ei:1})});segs.push(s);verts.push(v);bigNum(segs.length)}
@@ -121,7 +121,7 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
    lastZ=HERO.z;if(HERO.z>90)res='ok'};
   TICK.push(tick);await until(()=>res);TICK.splice(TICK.indexOf(tick),1);DANIA.root.rotation.x=0;KRUG.root.rotation.x=0;
   if(res!=='ok'){for(const s of segs)s.visible=false;SFX.bump();HERO.mode='still';return res}KRUG.anim='idle';
-  HERO.mode='walk';KRUG.mode='follow';CAMS.dist=6.4;CAMS.h=3.1;L.sled.position.set(-2,SLOPE(92),92);L.sled.rotation.set(0,.4,0);return 'ok'},
+  HERO.mode='walk';KRUG.mode='follow';place(KRUG,HERO.x-1.2,HERO.z-.8);CAMS.dist=5.8;CAMS.h=2.9;L.sled.position.set(-2,SLOPE(92),92);L.sled.rotation.set(0,.4,0);return 'ok'},
  async play(){const L=this;
   await cutscene(async()=>{shot(4,3,-6,0,-6,30,2);await say('c2_s');shot(-1,2.4,-5,-3,1.7,-1,3);await say('c2_r')});
   // поездка 1: четыре флажка = четыре звена
