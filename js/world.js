@@ -168,6 +168,21 @@ function talkFrame(){if(typeof CUT==='undefined'||!CUT||!TALK||CAMS.wide||T-TALK
  const fy=c.vyaw!=null?c.vyaw:c.root.rotation.y,fx=Math.sin(fy),fz=Math.cos(fy);if(-(vx*fx+vz*fz)<.35){const a=fy+Math.PI+.35;vx=Math.sin(a);vz=Math.cos(a)}
  return[V3(p.x-vx*D,p.y+hh*.75+.5,p.z-vz*D),V3(p.x+vx*.6,p.y+hh*.62,p.z+vz*.6)]}
 function followCam(){CAMS.mode='follow';CAMS.k=5}
+// ---- прозрачность препятствий: всё, что между камерой и героем или ближе ~1.5 м к камере, тает ----
+const _cf=new THREE.Vector3(),_ob=new THREE.Box3(),_os=new THREE.Sphere(),_oc=new THREE.Vector3();
+function occInfo(o){let u=o.userData.occ;if(u===undefined){_ob.setFromObject(o);if(_ob.isEmpty()){u=o.userData.occ=null;return u}_ob.getBoundingSphere(_os);
+ u=o.userData.occ=_os.radius>7||o.userData.noFade?null:{ox:_os.center.x-o.position.x,oy:_os.center.y-o.position.y,oz:_os.center.z-o.position.z,r:_os.radius,f:1}}return u}
+function occSet(o,u,f){u.f=f;const on=f<.995;o.traverse(m=>{const mt=m.material;if(!mt)return;
+ if(on){if(!m.userData.om){m.userData.om=mt;m.material=Array.isArray(mt)?mt.map(x=>{const c=x.clone();c.transparent=true;c.userData.bo=x.opacity;return c}):(()=>{const c=mt.clone();c.transparent=true;c.userData.bo=mt.opacity;return c})()}
+  for(const c of [].concat(m.material)){c.opacity=c.userData.bo*f;c.depthWrite=f>.9}}
+ else if(m.userData.om){for(const c of [].concat(m.material))c.dispose();m.material=m.userData.om;m.userData.om=null}})}
+function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;const C=CAM.position;let tx,ty,tz;
+ if(CAMS.mode==='follow'){tx=HERO.x;ty=HERO.y+1;tz=HERO.z}else{tx=CAMS.tgt.x;ty=CAMS.tgt.y;tz=CAMS.tgt.z}
+ CAM.getWorldDirection(_cf);const dx=tx-C.x,dy=ty-C.y,dz=tz-C.z,L=Math.hypot(dx,dy,dz)||1,ux=dx/L,uy=dy/L,uz=dz/L;
+ for(const o of WORLD.children){if(!o.visible)continue;const u=occInfo(o);if(!u)continue;
+  const cx=o.position.x+u.ox,cy=o.position.y+u.oy,cz=o.position.z+u.oz;const vx=cx-C.x,vy=cy-C.y,vz=cz-C.z;const dc=Math.hypot(vx,vy,vz);
+  const fw=(vx*_cf.x+vy*_cf.y+vz*_cf.z);let want=1;if(dc<u.r+1.5||(fw>0&&dc<u.r+2.4))want=.18;else{const t=vx*ux+vy*uy+vz*uz;if(t>0&&t<L-.7){const px=vx-ux*t,py=vy-uy*t,pz=vz-uz*t;if(Math.hypot(px,py,pz)<u.r*.8)want=.28}}
+  if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}}
 function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));if(Math.abs(d)<2.3)CAMS.yaw+=d*Math.min(1,dt*1.3)}
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
@@ -184,5 +199,5 @@ function audit3D(){return CHARS.filter(c=>c.root.visible&&c.root.parent).map(c=>
 // ---- кадр ----
 function frame3D(dt){if(SCN&&SCN.step3D)SCN.step3D(dt);if(SCN&&SCN.world){heroStep(dt);krugStep(dt);stepPhys(dt)}for(const f of TICK)f(dt);stepFX(dt);
  for(const c of CHARS){c.update(dt,c===DANIA?HERO.sp:c.sp||0);if(c.shadow){const p=c.root.position;const g=groundAt(p.x,p.z,p.y+.05);c.shadow.position.set(p.x,g+.03,p.z);const hgt=p.y-g+(c.hop||0);c.shadow.material.opacity=clamp(1-hgt*.4,.25,1);c.shadow.visible=c.root.visible}}
- camStep(dt);R3.render(SCENE,CAM)}
+ camStep(dt);occStep(dt);R3.render(SCENE,CAM)}
 const LEVELS=[];// заполняется levels1/levels2/boss

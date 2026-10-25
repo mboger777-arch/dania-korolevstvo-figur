@@ -63,9 +63,9 @@ function bldStep(dt){const D=ACT2.bld;if(!D)return;const g=bGeo();dt=Math.min(dt
  for(const p of P){if(p.st==='drag')continue;
   if(p.st==='rest'){if(p.sup!=='g'&&(!D.P.includes(p.sup)||p.sup.st!=='rest'||Math.abs((p.sup.y-p.sup.h/2)-(p.y+p.h/2))>3||!bOver(p,p.sup))){p.st='fall';p.vy=0}else continue}
   if(p.ign&&D.P.includes(p.ign)&&p.ign.st==='rest'&&bOver(p,p.ign)){p.x+=p.vx*dt;p.y=p.ign.y-p.ign.h/2-p.h/2;p.vy=0;p.rot+=(p.k==='circle'?p.vx/(p.w/2):Math.sign(p.vx)*2)*dt;if(p.k!=='circle')p.rot=Math.max(-.6,Math.min(.6,p.rot));continue}
-  p.ign=null;p.vy+=2200*dt;p.x+=p.vx*dt;if(p.k==='circle')p.rot+=p.vx/(p.w/2)*dt;
+  if(p.ign&&!bOver(p,p.ign))p.ign=null;p.vy+=2200*dt;p.x+=p.vx*dt;if(p.k==='circle')p.rot+=p.vx/(p.w/2)*dt;
   if(p.x<g.L+p.w/2){p.x=g.L+p.w/2;p.vx=Math.abs(p.vx)*.4}if(p.x>g.R-p.w/2){p.x=g.R-p.w/2;p.vx=-Math.abs(p.vx)*.4}
-  const bot0=p.y+p.h/2;let s=g.G,q0='g';for(const q of D.P){if(q===p||q.st!=='rest'||!bOver(p,q))continue;const tp=q.y-q.h/2;if(tp>=bot0-2&&tp<s){s=tp;q0=q}}
+  const bot0=p.y+p.h/2;let s=g.G,q0='g';for(const q of D.P){if(q===p||q===p.ign||q.st!=='rest'||!bOver(p,q))continue;const tp=q.y-q.h/2;if(tp>=bot0-2&&tp<s){s=tp;q0=q}}
   p.y+=p.vy*dt;if(p.y+p.h/2<s)continue;
   p.y=s-p.h/2;p.vy=0;
   if(q0==='g'){p.st='rest';p.sup='g';if(p.k!=='circle')p.rot=0;if(Math.abs(p.vx)>20&&p.k==='circle'){p.vx*=.5;p.st='fall';p.y-=.5;continue}p.vx=0;SFX.step();continue}
