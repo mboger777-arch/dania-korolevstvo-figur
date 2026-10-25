@@ -85,12 +85,11 @@ for ch,fr in CH.items():
     th=max(8,round(f['hu']*ppu));im=f['im'].resize((max(4,round(f['im'].width*th/f['im'].height)),th),Image.LANCZOS)
     ims.append(im)
   # упаковка по полкам, ширина 2048
-  AW=2048;x=y=0;rowh=0;pos=[]
+  AW=2048;G=14;x=y=G//2;rowh=0;pos=[]
   for im in ims:
-    if x+im.width+2>AW:x=0;y+=rowh+2;rowh=0
-    pos.append((x,y));x+=im.width+2;rowh=max(rowh,im.height)
-  AH=y+rowh;AH2=1
-  while AH2<AH:AH2*=2
+    if x+im.width+G>AW:x=G//2;y+=rowh+G;rowh=0
+    pos.append((x,y));x+=im.width+G;rowh=max(rowh,im.height)
+  AH2=(y+rowh+G//2+3)//4*4
   at=Image.new('RGBA',(AW,AH2),(0,0,0,0))
   m={'w':AW,'h':AH2,'f':{}}
   for f,im,(px,py) in zip(fr,ims,pos):

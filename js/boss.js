@@ -64,7 +64,7 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
    // превращение: шестиугольник поднимается и становится телом Кривули
    TICK.splice(TICK.indexOf(L.tick2),1);const t0=T;const grp=new THREE.Group();for(const e of edges){WORLD.remove(e);grp.add(e)}grp.position.set(0,0,0);WORLD.add(grp);
    await until(()=>{const k=clamp((T-t0)/1.4,0,1);const s=1-k*.86;grp.scale.set(s,s,s);grp.position.set(-C.x*(s-1)*0,0,C.z*(1-s));return k>=1});WORLD.remove(grp);
-   const hex=mesh(new THREE.TorusGeometry(.72,.14,6,6),M(0xffd23a,{em:0xffa000,ei:.45}),0,.86,-.08,KV.body);hex.rotation.z=Math.PI/6;KV.hex=hex;
+   const hex=mesh(new THREE.TorusGeometry(.72,.14,6,6),M(0xffd23a,{em:0xffa000,ei:.45}),0,1.05,.32,KV.body);hex.rotation.z=Math.PI/6;KV.hex=hex;
    KV.root.position.set(0,0,12);KV.root.rotation.set(0,Math.PI,0);KV.anim='idle';KV.F.mood='happy';burst(V3(0,1.5,12),0xffe066,60,6);SFX.star();
    shot(2.5,2.2,7.5,0,1.3,12,2.4);await say('b_v1');await say('b_v2')});
   // ---- финал: домик — квадрат и треугольник ----
