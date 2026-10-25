@@ -63,5 +63,5 @@
 - [x] Стройка: убраны повторные события tip (p.ign теперь держится, пока фигура над опорой)
 - [x] FULL 844x390 (до правок r4): 7/7 ok, errors [], feet 0, botTimeouts 0, ch3 tower+roll+house
 - [x] FULL 667x375 после r4: 7/7 ok, ошибки по главам 2,2,3,3,4,2,5, errors [], feet 0, botTimeouts 0, cut/noend пусто, ch3 tower+roll+house (без tip)
-- [ ] FULL 932x430 после r4
+- [x] FULL 932x430 после r4: 7/7 ok, ошибки 2,2,3,3,4,2,5, errors [], feet 0, botTimeouts 0, cut/noend пусто, ch3 tower+roll+house
 - [ ] setv 20261024d4, push, live 844
