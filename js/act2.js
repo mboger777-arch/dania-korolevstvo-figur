@@ -37,7 +37,7 @@ function act2Setup(i){ACT2.npc=null;ACT2.items=[];ACT2.carry=null;ACT2.bst=null;
  TICK.push(act2Tick)}
 function dropItem(it,x,z){it.x=x;it.z=z;it.y=baseAt(x,z)+.75;it.g.position.set(x,it.y,z);it.s.visible=true;it.s.position.set(x,baseAt(x,z)+.04,z);it.away=false}
 function act2Tick(dt){if(!ACT.on||scene!=='ch')return;const walk=HERO.mode==='walk'&&!HERO.lock&&!CUT;const N=ACT2.npc;
- if(N){const dn=Math.hypot(HERO.x-N.x,HERO.z-N.z);N.g.rotation.y=Math.atan2(HERO.x-N.x,HERO.z-N.z)*.8;
+ if(N){const dn=Math.hypot(HERO.x-N.x,HERO.z-N.z);{const a=Math.atan2(CAM.position.x-N.x,CAM.position.z-N.z);N.g.rotation.y+=Math.atan2(Math.sin(a-N.g.rotation.y),Math.cos(a-N.g.rotation.y))*Math.min(1,dt*4)}
   const jt=T-N.jumpT;N.body.position.y=1.25+Math.sin(T*3)*.04+(jt<1.2?Math.abs(Math.sin(jt*8))*.5*(1-jt/1.2):0);N.body.rotation.z=T-N.badT<.8?Math.sin((T-N.badT)*20)*.15:0;
   N.bub.visible=!N.done;N.bub.position.y=2.75+Math.sin(T*2)*.06;
   if(!N.asked&&walk&&dn<4.5){N.asked=true;ACT.pend.push(N.ask);aHint('move');alog('npc','ask')}
