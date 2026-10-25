@@ -28,7 +28,7 @@ function npcMesh(C){const g=new THREE.Group();g.position.set(C.x,groundAt(C.x,C.
 function buildMesh(x,z){const g=new THREE.Group();g.position.set(x,groundAt(x,z),z);mesh(GEO.cyl,0xc89858,0,.1,0,g,[1.4,.2,1.4]);
  mesh(GEO.box,0x3d8fe8,-.45,.45,.1,g,.5);const r=mesh(new THREE.ConeGeometry(.42,.4,4),M(0x3fbf63),-.45,.9,.1,g);r.rotation.y=Math.PI/4;
  mesh(GEO.box,0x3d8fe8,.5,.4,-.2,g,.4);mesh(GEO.box,0x3d8fe8,.5,.8,-.2,g,.4);mesh(GEO.sph,0xff5a7a,.2,.4,.6,g,.25);
- label3D('Стройка','#fff',.5,{p:g,st:'#2a1050'}).position.set(0,2,0);WORLD.add(g);return g}
+ const lb=label3D('Стройка','#fff',.5,{p:g,st:'#2a1050'});lb.position.set(0,2,0);g.userData.lb=lb;WORLD.add(g);return g}
 function act2Setup(i){ACT2.npc=null;ACT2.items=[];ACT2.carry=null;ACT2.bst=null;ACT2.bld=null;ACT2.nearB=null;const C=ACTS[i];if(!C||!ACT.on)return;
  const sh=(x,z)=>{let ok=!nogo(x,z);for(const b of BLOCKS)if(b.on&&inBlock(b,x,z,.3))ok=false;for(const c of CYLS)if(c.on&&Math.hypot(x-c.x,z-c.z)<c.r+.3)ok=false;if(!ok)console.warn('act blocked',i,x,z);return ok};
  if(C.npc){const N=C.npc;sh(N.x,N.z);const m=npcMesh(N);ACT2.npc={...N,...m,asked:false,done:false,jumpT:-9,badT:-9};
@@ -37,6 +37,7 @@ function act2Setup(i){ACT2.npc=null;ACT2.items=[];ACT2.carry=null;ACT2.bst=null;
  TICK.push(act2Tick)}
 function dropItem(it,x,z){it.x=x;it.z=z;it.y=baseAt(x,z)+.75;it.g.position.set(x,it.y,z);it.s.visible=true;it.s.position.set(x,baseAt(x,z)+.04,z);it.away=false}
 function act2Tick(dt){if(!ACT.on||scene!=='ch')return;const walk=HERO.mode==='walk'&&!HERO.lock&&!CUT;const N=ACT2.npc;
+ if(ACT2.bst&&ACT2.bst.g&&ACT2.bst.g.userData.lb){const B=ACT2.bst.g;B.userData.lb.visible=Math.hypot(CAM.position.x-B.position.x,CAM.position.z-B.position.z)>5.5}
  if(N){const dn=Math.hypot(HERO.x-N.x,HERO.z-N.z);{const a=Math.atan2(CAM.position.x-N.x,CAM.position.z-N.z);N.g.rotation.y+=Math.atan2(Math.sin(a-N.g.rotation.y),Math.cos(a-N.g.rotation.y))*Math.min(1,dt*4)}
   const jt=T-N.jumpT;N.body.position.y=1.25+Math.sin(T*3)*.04+(jt<1.2?Math.abs(Math.sin(jt*8))*.5*(1-jt/1.2):0);N.body.rotation.z=T-N.badT<.8?Math.sin((T-N.badT)*20)*.15:0;
   N.bub.visible=!N.done;N.bub.position.y=2.75+Math.sin(T*2)*.06;
