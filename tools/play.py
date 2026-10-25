@@ -31,7 +31,7 @@ async def main():
       await pg.goto(BASE+'?'+FLAGS+'&map');await pg.wait_for_function('typeof scene!=="undefined"&&scene==="map"',timeout=60000)
     for ci in CH:
       [os.remove(f) for f in __import__('glob').glob(f'{out}/c{ci}_*.png')]
-      await pg.evaluate('G.mistakes=0;G.botTimeouts=0;VLOG=[]')
+      await pg.evaluate('G.mistakes=0;G.botTimeouts=0;VLOG=[];ACTLOG=[]')
       if FULL: await pg.wait_for_function('!TALK',timeout=30000);await tap('ch'+str(ci));await pg.wait_for_function('scene==="ch"',timeout=10000)
       else: await pg.evaluate(f'go("ch",{ci})')
       t0=time.time();n=0;last=-99;bad=[];fps=[];maxair=0
@@ -46,10 +46,10 @@ async def main():
         if time.time()-last>SHOT:
           last=time.time();n+=1;await pg.screenshot(path=f'{out}/c{ci}_{n:02d}.png')
       ok=st['sc']=='map';el=round(time.time()-t0,1)
-      info=json.loads(await pg.evaluate('JSON.stringify({m:G.mistakes||0,bt:G.botTimeouts||0,done:SV.done,vl:VLOG})'))
+      info=json.loads(await pg.evaluate('JSON.stringify({m:G.mistakes||0,bt:G.botTimeouts||0,done:SV.done,vl:VLOG,acts:ACTLOG})'))
       vl=info['vl'];cut=[] if 'fast' in FLAGS else [(v['k'],round((v['t1']-v['t0'])/1000,2),v['dur']) for v in vl if 't1' in v and v['dur'] and (v['t1']-v['t0'])/1000<v['dur']-0.15]
       noend=[v['k'] for v in vl[:-1] if 't1' not in v]
-      r={'ch':ci,'ok':ok,'sec':el,'mistakes':info['m'],'botTimeouts':info['bt'],'feetBad':len(bad),'feetEx':bad[:5],'maxAir':maxair,'lines':len(vl),'cut':cut,'noend':noend,'fpsMin':round(min(fps),1) if fps else 0,'fpsAvg':round(sum(fps)/len(fps),1) if fps else 0,'last':st}
+      r={'ch':ci,'ok':ok,'sec':el,'mistakes':info['m'],'botTimeouts':info['bt'],'feetBad':len(bad),'feetEx':bad[:5],'maxAir':maxair,'lines':len(vl),'cut':cut,'noend':noend,'fpsMin':round(min(fps),1) if fps else 0,'fpsAvg':round(sum(fps)/len(fps),1) if fps else 0,'acts':info.get('acts',[]),'last':st}
       rep['chapters'].append(r);print(json.dumps(r,ensure_ascii=False),flush=True)
       if not ok: await pg.screenshot(path=f'{out}/c{ci}_FAIL.png')
     if FULL:

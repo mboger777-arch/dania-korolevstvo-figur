@@ -116,15 +116,16 @@ function toD(e){return[(e.clientX-VVX-OX)/S,(e.clientY-VVY-OY)/S]}
 C.addEventListener('pointerdown',e=>{if(PORTRAIT())return;e.preventDefault();ac();const[x,y]=toD(e);PX=x;PY=y;
  let best=null,bd=1e9;for(let i=UI.length-1;i>=0;i--){const b=UI[i];const dx=Math.abs(x-b.x),dy=Math.abs(y-b.y);if(dx<b.w/2+6&&dy<b.h/2+6){const d=Math.hypot(dx,dy);if(d<bd){bd=d;best=b}}}
  if(best){SFX.click();best.fn();return}
+ if(typeof ACTPTR!=='undefined'&&ACTPTR.down(x,y,e.pointerId))return;
  if(TALK&&TALK.box){const[bx,by,bw,bh]=TALK.box;if(x>bx&&x<bx+bw&&y>by&&y<by+bh){skipTalk();return}}
  if(SCN&&SCN.tap&&INPMODE==='ui'){SCN.tap(x,y);return}
  if(INPMODE!=='play')return;INP.last=T;
  const mid=vis().x0+vis().w*.45;
  if(x<mid&&!JOY){JOY={id:e.pointerId,x0:x,y0:y,x,y}}
  else if(!RT){RT={id:e.pointerId,x0:x,y0:y,t0:T,moved:false,holding:false}}},{passive:false});
-C.addEventListener('pointermove',e=>{const[x,y]=toD(e);PX=x;PY=y;if(JOY&&JOY.id===e.pointerId){JOY.x=x;JOY.y=y;INP.last=T}
+C.addEventListener('pointermove',e=>{const[x,y]=toD(e);PX=x;PY=y;if(typeof ACTPTR!=='undefined')ACTPTR.move(x,y,e.pointerId);if(JOY&&JOY.id===e.pointerId){JOY.x=x;JOY.y=y;INP.last=T}
  if(RT&&RT.id===e.pointerId){const dx=x-RT.x0,dy=y-RT.y0;if(!RT.holding&&!RT.moved&&Math.hypot(dx,dy)>46&&T-RT.t0<.45){RT.moved=true;INP.swipeQ=T;INP.swipeDir=Math.atan2(dx,-dy);INP.used.swipe=1;INP.last=T}}});
-const _up=e=>{if(JOY&&JOY.id===e.pointerId)JOY=null;if(RT&&RT.id===e.pointerId){if(!RT.moved&&!RT.holding&&T-RT.t0<.3){INP.tapQ=T;INP.used.tap=1}RT=null}};
+const _up=e=>{if(typeof ACTPTR!=='undefined')ACTPTR.up(e.pointerId);if(JOY&&JOY.id===e.pointerId)JOY=null;if(RT&&RT.id===e.pointerId){if(!RT.moved&&!RT.holding&&T-RT.t0<.3){INP.tapQ=T;INP.used.tap=1}RT=null}};
 C.addEventListener('pointerup',_up);C.addEventListener('pointercancel',_up);
 ['dblclick','contextmenu','gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
