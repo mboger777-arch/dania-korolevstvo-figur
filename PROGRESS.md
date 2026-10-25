@@ -57,3 +57,10 @@
 - [ ] Тесты 3 размера, voicecheck, setv 20261024d3, push, live
 - [x] Листы: sheets/r3_heroes_vs_lineup.png, sheets/r3_play1.png (активности гл.1), sheets/r3_play2.png (NPC + стройка); надпись «Стройка» прячется вблизи камеры
 - [x] voicecheck 844 (живой голос): 7/7 ok, errors [], feet 0; setv 20261024d3 (caa85d6)
+
+## Раунд 4 (визуальные правки)
+- [x] Прозрачность препятствий (world.js occStep): объекты WORLD между камерой и Даней или ближе ~1.5 м (впереди камеры — 2.4 м) плавно тают до 0.18–0.28; NPC тоже. Лист: sheets/r4_ch2.png
+- [x] Стройка: убраны повторные события tip (p.ign теперь держится, пока фигура над опорой)
+- [x] FULL 844x390 (до правок r4): 7/7 ok, errors [], feet 0, botTimeouts 0, ch3 tower+roll+house
+- [ ] FULL 667x375 / 932x430 после r4
+- [ ] setv 20261024d4, push, live 844
