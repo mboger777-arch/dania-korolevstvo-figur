@@ -88,7 +88,7 @@ function bPick(x,y){const D=ACT2.bld;for(let j=D.P.length-1;j>=0;j--){const p=D.
   if(!p)p=bPick(x,y);if(p){p.st='drag';p.ign=null;p.vx=p.vy=0;p.rot=0;D.ptr=id;D.drag=p;D.touched=true;SFX.click();INP.last=T}return true};
  ACTPTR.move=function(x,y,id){const D=ACT2.bld;if(!D)return m0(x,y,id);if(D.drag&&D.ptr===id){const g=bGeo();D.drag.x=Math.max(g.L+D.drag.w/2,Math.min(g.R-D.drag.w/2,x));D.drag.y=Math.min(g.G-D.drag.h/2,Math.max(g.b.y+D.drag.h/2,y));INP.last=T}};
  ACTPTR.up=function(id){const D=ACT2.bld;if(!D)return u0(id);if(D.drag&&D.ptr===id){D.drag.st='fall';D.drag.vy=0;D.drag=null;D.ptr=null}}}
-function bFreeXf(){const g=bGeo(),D=ACT2.bld;for(const f of [.85,.15,.7,.3,.95,.05]){const x=g.L+(g.R-g.L)*f;if(x-g.U/2<g.L||x+g.U/2>g.R)continue;if(!D.P.some(q=>Math.abs(q.x-x)<(q.w+g.U)/2+4))return f}return .85}
+function bFreeXf(){const g=bGeo(),D=ACT2.bld;for(const f of [.85,.15,.7,.3,.95,.05]){const x=g.L+(g.R-g.L)*f;if(x-g.U/2<g.L||x+g.U/2>g.R)continue;if(!D.P.some(q=>Math.abs(q.x-x)<(q.w+g.U)/2+4))return f}let bf=.85,bd=-1;for(let f=.1;f<=.9;f+=.05){const x=g.L+(g.R-g.L)*f;if(x-g.U/2<g.L||x+g.U/2>g.R)continue;const d=Math.min(...D.P.map(q=>Math.abs(q.x-x)),1e9);if(d>bd){bd=d;bf=f}}return bf}
 function bDrop(k,xf){const g=bGeo();const p=bPiece(k,g.L+(g.R-g.L)*xf,g.b.y+g.U);bAdd(p);ACT2.bld.touched=true;return p}
 function drawPiece(p,ghost){X.save();X.translate(p.x,p.y);X.rotate(p.rot||0);X.globalAlpha=ghost?.5:1;X.beginPath();
  if(p.k==='square')X.rect(-p.w/2,-p.h/2,p.w,p.h);else if(p.k==='tri'){X.moveTo(0,-p.h/2);X.lineTo(p.w/2,p.h/2);X.lineTo(-p.w/2,p.h/2);X.closePath()}else X.arc(0,0,p.w/2,0,7);
@@ -121,7 +121,7 @@ async function act2Tour(){if(!ACT.on||HERO.mode!=='walk'||HERO.lock||CUT)return;
   for(const it of [bad,good]){if(!it||!actReach(it.hx,it.hz))continue;await bGo(it.hx,it.hz,.5,16);TR.push([HERO.x,HERO.z]);if(actReach(N.x,N.z))await bGo(N.x,N.z-1.4,.6,16);await bWait(1)}
   for(let j=TR.length-2;j>=1;j--){if(actReachFrom(HERO.x,HERO.z,sx,sz))break;await bGo(TR[j][0],TR[j][1],.8,10)}}
  const B=ACT2.bst;if(B&&!ACT.tour.has(B)&&actReach(B.x,B.z-2)){ACT.tour.add(B);any=true;alog('tour','build');await bGo(B.x,B.z-2,.5,8);await bSoft(()=>ACT2.nearB,4);if(ACT2.nearB)bldOpen();
-  if(ACT2.bld){await bWait(1.5);const seq=[['circle',.2],['square',.5],['circle',.5],['square',.5],['tri',.5],['square',-1],['square',-1],['square',-1]];let tx=null;
+  if(ACT2.bld){await bWait(1.5);const seq=[['square',-1],['square',-1],['square',-1],['square',.4],['circle',.4],['tri',.4],['circle',.1]];let tx=null;
    for(const [k,xf] of seq){if(xf<0){if(tx===null)tx=bFreeXf();bDrop(k,tx)}else bDrop(k,xf);await bWait(1.3)}await bSoft(()=>actFree(),15);bldClose()}}
  if(any){await bSoft(()=>actFree(),15);await bGo(sx,sz,.8,10)}}
 {const _t=actTour;actTour=async function(){await _t();await act2Tour()}}
