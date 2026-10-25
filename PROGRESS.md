@@ -35,3 +35,11 @@
 ## Заметки
 - бот: js/bot.js (bGo/bPath/bKick/bJumpOn/BSTEER); тест `VP=844x390 CH=3 TMO=250 SHOT=5 python3 tools/play.py`
 - контакт-листы: `python3 tools/sheet.py 'shots/844x390/c3_*.png' sheets/c3.png`
+
+## Раунд 3 (герои лучше + активности)
+- [x] Сгенерированы развороты 4 героев (refs/gen/ta_*.jpg), циклы бега Дани (run_*), позы (poses_*)
+- [x] tools/cutout.py — хромакей + разрезание по связным компонентам (чисто, без ореола)
+- [ ] TripoSR (CPU) — проверка как альтернативы; TRELLIS/Hunyuan3D/InstantMesh требуют CUDA — недоступны
+- [ ] Спрайтовые 2.5D-герои (виды спереди/3-4/бок/спина, бег-флипбук, моргание, дыхание, реакции)
+- [ ] Активности по главам
+- [ ] Тесты 3 размера, voicecheck, setv 20261024d3, push, live
