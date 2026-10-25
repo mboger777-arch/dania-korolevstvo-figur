@@ -160,7 +160,7 @@ function drawChalk(){const D=ACT.draw;if(!D)return;const v=vis();X.fillStyle='rg
 // ---- счётчик фигурок, наклейка, конфетти ----
 function actDraw(){if(!ACT.on)return;drawChalk();
  if(ACT.nearChalk&&!ACT.draw&&INPMODE==='play'){const o=ACT.nearChalk;labelBtn('chalkgo',640,safeB()-70,250,76,'✏️ Рисовать',()=>{if(ACT.nearChalk)chalkOpen(o)},{size:34,pulse:true});if(!SV.seen.chalkbtn){SV.seen.chalkbtn=1;save();aHint('tap')}}
- if(ACT.gems.length&&!ACT.draw&&!TALK&&!CUT){const n=ACT.gems.length,w=24+n*46,x=safeL()+92,y=safeT()+84;panel(x,y,w,62,{fill:'rgba(255,250,236,.9)',st:'#6a4bb8',lw:4,r:20});
+ if(ACT.gems.length&&!ACT.draw&&!(typeof ACT2!=='undefined'&&ACT2.bld)&&!TALK&&!CUT){const n=ACT.gems.length,w=24+n*46,x=safeL()+92,y=safeT()+84;panel(x,y,w,62,{fill:'rgba(255,250,236,.9)',st:'#6a4bb8',lw:4,r:20});
   ACT.gems.forEach((g,j)=>shapeIcon(g.kind,x+35+j*46,y+31,17,g.got?GEMCSS[g.kind]:null,g.got?'#2a1050':'rgba(90,70,140,.55)'))}
  drawConf()}
 function drawConf(){const dt=DT;ACT.conf=ACT.conf.filter(c=>T-c.t0<3.5);for(const c of ACT.conf){c.x+=c.vx*dt;c.y+=c.vy*dt;c.r+=c.vr*dt;X.save();X.translate(c.x,c.y);X.rotate(c.r);X.fillStyle=c.c;X.fillRect(-8,-5,16,10);X.restore()}
@@ -178,7 +178,7 @@ function drawSticker(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s)return;c
 let ALBUM=false;
 function drawAlbum(){const v=vis();X.fillStyle='rgba(20,10,50,.6)';X.fillRect(v.x0,v.y0,v.w,v.h);const w=Math.min(1100,v.w-120),h=Math.min(600,v.h-60);const x=640-w/2,y=v.y0+v.h/2-h/2;panel(x,y,w,h,{fill:'rgba(255,250,236,.98)',st:'#ffb52e',lw:7,r:30});
  const n=STK.filter(s=>SV.st[s[0]]).length;txt('Альбом наклеек  '+n+' / '+STK.length,640,y+44,46,'#6a4bb8',{f:FONT,st:0,id:'albT'});
- const cols=7,cw=(w-60)/cols,chh=(h-110)/2;STK.forEach((s,j)=>{const cx=x+30+cw*(j%cols+.5),cy=y+96+chh*(Math.floor(j/cols)+.42);const r=Math.min(cw,chh)*.36;drawSticker(s[0],cx,cy,r,!!SV.st[s[0]]);txt(s[2],cx,cy+r+24,22,SV.st[s[0]]?'#3a1a6a':'#9a90b0',{f:FONT,st:0,box:[cx-cw/2,cy,cx+cw/2,cy+r+50]})});
+ const cols=Math.ceil(STK.length/2),cw=(w-60)/cols,chh=(h-110)/2;STK.forEach((s,j)=>{const cx=x+30+cw*(j%cols+.5),cy=y+96+chh*(Math.floor(j/cols)+.42);const r=Math.min(cw,chh)*.36;drawSticker(s[0],cx,cy,r,!!SV.st[s[0]]);txt(s[2],cx,cy+r+24,22,SV.st[s[0]]?'#3a1a6a':'#9a90b0',{f:FONT,st:0,box:[cx-cw/2,cy,cx+cw/2,cy+r+50]})});
  hitBtn('albX',640,v.y0+v.h/2,v.w,v.h,()=>{ALBUM=false})}
 {const md=SC.map.draw;SC.map.draw=function(){md.call(this);const n=STK.filter(s=>SV.st[s[0]]).length;
   if(ALBUM){UI.length=0;drawAlbum();return}
