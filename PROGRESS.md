@@ -55,3 +55,5 @@
 - [ ] Секретная дверь-фигура — не сделана (необязательная)
 - [x] Голос новых реплик: voicegen → ASR (n_tri_ok/n_circ_* перепроверены ASR с паддингом — полные) → stress → voicecheck (FULL 844x390 с голосом: cut/noend пусто, ошибок 0)
 - [ ] Тесты 3 размера, voicecheck, setv 20261024d3, push, live
+- [x] Листы: sheets/r3_heroes_vs_lineup.png, sheets/r3_play1.png (активности гл.1), sheets/r3_play2.png (NPC + стройка); надпись «Стройка» прячется вблизи камеры
+- [x] voicecheck 844 (живой голос): 7/7 ok, errors [], feet 0; setv 20261024d3 (caa85d6)
