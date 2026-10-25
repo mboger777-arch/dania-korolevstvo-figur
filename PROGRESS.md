@@ -64,4 +64,4 @@
 - [x] FULL 844x390 (до правок r4): 7/7 ok, errors [], feet 0, botTimeouts 0, ch3 tower+roll+house
 - [x] FULL 667x375 после r4: 7/7 ok, ошибки по главам 2,2,3,3,4,2,5, errors [], feet 0, botTimeouts 0, cut/noend пусто, ch3 tower+roll+house (без tip)
 - [x] FULL 932x430 после r4: 7/7 ok, ошибки 2,2,3,3,4,2,5, errors [], feet 0, botTimeouts 0, cut/noend пусто, ch3 tower+roll+house
-- [ ] setv 20261024d4, push, live 844
+- [x] setv 20261024d4, push, live 844x390: title→intro→map→ch1, act2.js?v=20261024d4, occStep есть, console errors 0
