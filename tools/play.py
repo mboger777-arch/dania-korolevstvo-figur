@@ -44,7 +44,9 @@ async def main():
           if not c['air'] and not c['sit'] and abs(c['gap'])>0.06: bad.append((round(time.time()-t0,1),c['n'],c['gap'],st['hero']))
           if c['n']=='dania': maxair=max(maxair,c['airT'])
         if time.time()-last>SHOT:
-          last=time.time();n+=1;await pg.screenshot(path=f'{out}/c{ci}_{n:02d}.png')
+          last=time.time();n+=1
+          try: await pg.screenshot(path=f'{out}/c{ci}_{n:02d}.png',timeout=90000)
+          except Exception as e: print('shot timeout',ci,n,flush=True);shotto=globals().setdefault('SHOTTO',[]);shotto.append((ci,n))
       ok=st['sc']=='map';el=round(time.time()-t0,1)
       info=json.loads(await pg.evaluate('JSON.stringify({m:G.mistakes||0,bt:G.botTimeouts||0,done:SV.done,vl:VLOG,acts:ACTLOG})'))
       vl=info['vl'];cut=[] if 'fast' in FLAGS else [(v['k'],round((v['t1']-v['t0'])/1000,2),v['dur']) for v in vl if 't1' in v and v['dur'] and (v['t1']-v['t0'])/1000<v['dur']-0.15]
