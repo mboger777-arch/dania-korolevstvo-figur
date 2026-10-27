@@ -96,7 +96,7 @@ function drawPiece(p,ghost){X.save();X.translate(p.x,p.y);X.rotate(p.rot||0);X.g
  X.fillStyle=GEMCSS[p.k];X.fill();X.lineWidth=5;X.strokeStyle='#2a1050';X.stroke();
  if(p.k==='circle'){X.beginPath();X.moveTo(-p.w*.3,0);X.lineTo(p.w*.3,0);X.strokeStyle='rgba(255,255,255,.6)';X.lineWidth=4;X.stroke()}X.restore()}
 function drawBuild(){const D=ACT2.bld;if(!D)return;bldStep(DT);const v=vis();X.fillStyle='rgba(20,10,50,.45)';X.fillRect(v.x0,v.y0,v.w,v.h);const g=bGeo(),b=g.b;
- X.save();X.shadowColor='rgba(0,0,0,.4)';X.shadowBlur=16;X.fillStyle='#b07a3a';rr(b.x-16,b.y-16,b.w+32,b.h+32,26);X.fill();X.restore();
+ woodFrame(b.x,b.y,b.w,b.h);
  const gr=X.createLinearGradient(0,b.y,0,b.y+b.h);gr.addColorStop(0,'#bfe6ff');gr.addColorStop(1,'#eaf7ff');X.fillStyle=gr;rr(b.x,b.y,b.w,b.h,14);X.fill();
  X.fillStyle='#7cc860';X.fillRect(b.x+130,g.G,b.w-130,b.y+b.h-g.G);X.fillStyle='#f3e2c0';X.fillRect(b.x,b.y,130,b.h);
  txt('Построй домик или башню',b.x+b.w/2+60,b.y+36,36,'#2a1050',{f:FONT,st:'#ffffff',lw:6,id:'bldT',box:[b.x+130,b.y,b.x+b.w,b.y+80]});

@@ -48,7 +48,7 @@ function drawMedal(x,y,r){X.save();X.translate(x,y);X.fillStyle='#d23a4a';X.begi
 let LVDRAW=null;
 SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();INPMODE='play';CAMS.snap=true;
   run(async()=>{await L.play();await chapterWin(i)})},
- draw(){if(LVDRAW)LVDRAW();drawAngCard();if(this.win){const u=T-this.win;const v=vis();X.fillStyle=`rgba(40,20,90,${Math.min(.35,u)})`;X.fillRect(v.x0,v.y0,v.w,v.h);const k=ease(u*2);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.5);X.scale(k,k);for(let j=0;j<3;j++){txt('★',(j-1)*130,j==1?-30:0,j==1?170:130,'#ffd84a',{f:NUM,st:'#7a4a00',lw:14})}X.restore()}}};
+ draw(){if(LVDRAW)LVDRAW();drawAngCard();if(this.win){const u=T-this.win;const v=vis();X.fillStyle=`rgba(40,20,90,${Math.min(.35,u)})`;X.fillRect(v.x0,v.y0,v.w,v.h);const k=ease(u*2);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.5);X.scale(k,k);rays(0,-10,330,'#fff3b0',.4);for(let j=0;j<3;j++){const uj=u-.25-j*.22,kj=uj<0?0:uj<.35?ease(uj/.35)*1.25-Math.max(0,uj-.25)*2.5:1;if(kj>0){X.save();X.translate((j-1)*140,j==1?-40:0);X.scale(kj,kj);X.rotate(Math.sin(T*2+j)*.06);starG(0,0,j==1?84:64);X.restore()}}ribbon('Глава пройдена!',0,110,460,'#d23a6a',44);X.restore()}}};
 async function chapterWin(i){SFX.star();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;burst(V3(HERO.x,HERO.y+2,HERO.z),0xffe066,50,6);SC.ch.win=T;GOAL='';clearGesture();await say('g_win');await wait(1.2);SC.ch.win=0;SV.done[i]=1;save();go('map')}
 const TASK={err:0,help:null,busy:false};
 function newTask(goal,g){GOAL=goal;TASK.err=0;TASK.help=null;if(g)needGesture(g)}

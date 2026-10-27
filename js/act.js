@@ -148,7 +148,7 @@ function shapeIcon(kind,x,y,r,fill,st){X.save();X.translate(x,y);X.beginPath();
  else{const n=kind==='tri'?3:kind==='pent'?5:6;for(let i=0;i<n;i++){const a=i/n*6.283-Math.PI/2;X.lineTo(Math.cos(a)*r,Math.sin(a)*r*(n===3?1.1:1)+(n===3?r*.15:0))}X.closePath()}
  if(fill){X.fillStyle=fill;X.fill()}if(st){X.lineWidth=Math.max(3,r*.14);X.strokeStyle=st;X.stroke()}X.restore()}
 function drawChalk(){const D=ACT.draw;if(!D)return;const v=vis();X.fillStyle='rgba(20,10,50,.45)';X.fillRect(v.x0,v.y0,v.w,v.h);const b=chalkBoard();
- X.save();X.shadowColor='rgba(0,0,0,.4)';X.shadowBlur=16;X.fillStyle='#b07a3a';rr(b.x-16,b.y-16,b.w+32,b.h+32,26);X.fill();X.restore();X.fillStyle='#2f4a3c';rr(b.x,b.y,b.w,b.h,14);X.fill();
+ woodFrame(b.x,b.y,b.w,b.h);const cg=X.createRadialGradient(b.x+b.w/2,b.y+b.h/2,40,b.x+b.w/2,b.y+b.h/2,b.w*.7);cg.addColorStop(0,'#3d5e4c');cg.addColorStop(1,'#203a2e');X.fillStyle=cg;rr(b.x,b.y,b.w,b.h,14);X.fill();X.save();rr(b.x,b.y,b.w,b.h,14);X.clip();X.strokeStyle='rgba(255,255,255,.05)';X.lineWidth=18;for(let i=0;i<5;i++){X.beginPath();X.moveTo(b.x+i*b.w/4,b.y+b.h);X.quadraticCurveTo(b.x+i*b.w/4+60,b.y+b.h/2,b.x+i*b.w/4-20,b.y);X.stroke()}X.restore();
  txt('Нарисуй фигуру пальцем',b.x+b.w/2,b.y+38,40,'#ffffff',{f:FONT,st:'#1a2a20',lw:6,id:'chalkT',box:[b.x,b.y,b.x+b.w,b.y+b.h]});
  const ic=[['circle','ch_circle'],['tri','ch_tri'],['square','ch_quad']];ic.forEach(([k,id],j)=>{const ix=b.x+50,iy=b.y+110+j*90;shapeIcon(k,ix,iy,28,SV.st[id]?GEMCSS[k]:null,SV.st[id]?'#fff':'rgba(255,255,255,.5)')});
  X.lineCap=X.lineJoin='round';const S0=D.pts||((D.res!==undefined&&T-D.resT<1.4)?D.last:null);
@@ -165,7 +165,7 @@ function actDraw(){if(!ACT.on)return;drawChalk();
  drawConf()}
 function drawConf(){const dt=DT;ACT.conf=ACT.conf.filter(c=>T-c.t0<3.5);for(const c of ACT.conf){c.x+=c.vx*dt;c.y+=c.vy*dt;c.r+=c.vr*dt;X.save();X.translate(c.x,c.y);X.rotate(c.r);X.fillStyle=c.c;X.fillRect(-8,-5,16,10);X.restore()}
  const P=ACT.pop;if(P){const u=T-P.t0;if(u>3){ACT.pop=null}else{const k=u<.3?ease(u/.3):u>2.6?(3-u)/.4:1;const v=vis();X.save();X.globalAlpha=Math.max(0,Math.min(1,k));const cx=v.x0+v.w/2,cy=v.y0+v.h*.58;X.translate(cx,cy);X.scale(k,k);
-  panel(-190,-120,380,240,{fill:'rgba(255,250,236,.97)',st:'#ffb52e',lw:7,r:30});txt('Новая наклейка!',0,-82,40,'#6a4bb8',{f:FONT,st:0,id:'stkT'});drawSticker(P.id,0,20,62,true);X.restore()}}}
+  rays(0,20,260,'#fff3b0',.5);panel(-190,-120,380,240,{fill:'rgba(255,250,236,.97)',st:'#ffb52e',lw:7,r:30});ribbon('Новая наклейка!',0,-118,330,'#d23a6a',36);X.save();X.translate(0,24);X.rotate(Math.sin(T*3)*.06);drawSticker(P.id,0,0,66,true);X.restore();X.restore()}}}
 function drawSticker(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s)return;const ic=s[1];X.save();X.translate(x,y);X.beginPath();X.arc(0,0,r,0,7);X.fillStyle=own?'#fff6d8':'rgba(120,110,150,.25)';X.fill();X.lineWidth=r*.09;X.strokeStyle=own?'#ffb52e':'rgba(120,110,150,.5)';X.setLineDash(own?[]:[8,8]);X.stroke();X.setLineDash([]);
  const col=own?null:'rgba(120,110,150,.35)';
  if(['circle','tri','square','pent','hex','star'].includes(ic))shapeIcon(ic,0,0,r*.55,col||GEMCSS[ic],own?'#2a1050':null);
@@ -176,10 +176,10 @@ function drawSticker(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s)return;c
  X.restore()}
 // ---- альбом наклеек на карте ----
 let ALBUM=false;
-function drawAlbum(){const v=vis();X.fillStyle='rgba(20,10,50,.6)';X.fillRect(v.x0,v.y0,v.w,v.h);const w=Math.min(1100,v.w-120),h=Math.min(600,v.h-60);const x=640-w/2,y=v.y0+v.h/2-h/2;panel(x,y,w,h,{fill:'rgba(255,250,236,.98)',st:'#ffb52e',lw:7,r:30});
- const n=STK.filter(s=>SV.st[s[0]]).length;txt('Альбом наклеек  '+n+' / '+STK.length,640,y+44,46,'#6a4bb8',{f:FONT,st:0,id:'albT'});
+function drawAlbum(){const v=vis();X.fillStyle='rgba(20,10,50,.6)';X.fillRect(v.x0,v.y0,v.w,v.h);const w=Math.min(1100,v.w-120),h=Math.min(600,v.h-60);const x=640-w/2,y=v.y0+v.h/2-h/2;X.save();popAt('album',640,y+h/2);panel(x,y,w,h,{fill:'rgba(255,250,236,.98)',st:'#ffb52e',lw:7,r:30});
+ const n=STK.filter(s=>SV.st[s[0]]).length;ribbon('Альбом наклеек  '+n+' / '+STK.length,640,y+30,Math.min(560,w*.6),'#6a4bb8',40);
  const cols=Math.ceil(STK.length/2),cw=(w-60)/cols,chh=(h-110)/2;STK.forEach((s,j)=>{const cx=x+30+cw*(j%cols+.5),cy=y+96+chh*(Math.floor(j/cols)+.42);const r=Math.min(cw,chh)*.36;drawSticker(s[0],cx,cy,r,!!SV.st[s[0]]);txt(s[2],cx,cy+r+24,22,SV.st[s[0]]?'#3a1a6a':'#9a90b0',{f:FONT,st:0,box:[cx-cw/2,cy,cx+cw/2,cy+r+50]})});
- hitBtn('albX',640,v.y0+v.h/2,v.w,v.h,()=>{ALBUM=false})}
+ X.restore();hitBtn('albX',640,v.y0+v.h/2,v.w,v.h,()=>{ALBUM=false})}
 {const md=SC.map.draw;SC.map.draw=function(){md.call(this);const n=STK.filter(s=>SV.st[s[0]]).length;
   if(ALBUM){UI.length=0;drawAlbum();return}
   labelBtn('album',safeR()-130,safeB()-56,230,80,'Альбом '+n,()=>{ALBUM=true;ACT.newStk=false},{size:36,pulse:!!ACT.newStk})}}

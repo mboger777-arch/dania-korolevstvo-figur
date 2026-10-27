@@ -22,7 +22,7 @@ async def main():
       if await pg.evaluate('(()=>{if(TALK)skipTalk();return scene==="ch"&&!CUT&&!TALK&&HERO.mode!=="cut"})()'):break
     await snap('goal',1500)
     await ev('run(()=>say("n_tri_ask"))');await snap('talk_npc',1200)
-    await ev('stopTalk();run(()=>say("k1"))');await snap('talk_krug',1200)
+    await ev('stopTalk();run(()=>say("u_move"))');await snap('talk_krug',1200)
     await ev('stopTalk();ACT.pop={id:STK[0][0],t0:T}');await snap('sticker',700)
     await ev('ACT.pop=null;const o=ACT.items.find(o=>o.k==="chalk");chalkOpen(o)');await snap('chalk',1500)
     await ev('chalkClose()');await snap('_',300)
