@@ -194,7 +194,7 @@ function followCam(){CAMS.mode='follow';CAMS.k=5}
 const _cf=new THREE.Vector3(),_ob=new THREE.Box3(),_os=new THREE.Sphere(),_oray=new THREE.Ray(),_ohit=new THREE.Vector3(),_otg=new THREE.Vector3();
 // единицы прозрачности: маленькие группы целиком, большие группы/меши — по мешам; кеш пересобирается при смене мира
 let OCC={w:null,u:[],t:0};
-function occBuild(){const U=[];const add=(o)=>{if(o.userData.noFade||!o.visible&&o.isMesh)return;_ob.setFromObject(o);if(_ob.isEmpty())return;_ob.getBoundingSphere(_os);
+function occBuild(){const U=[];const add=(o)=>{if(o.userData.noFade||o.userData.decor||o.isInstancedMesh||o.isPoints||!o.visible&&o.isMesh)return;_ob.setFromObject(o);if(_ob.isEmpty())return;_ob.getBoundingSphere(_os);
   if(_os.radius>3.5&&o.children.length){for(const c of o.children)add(c);return}
   if(o.isMesh&&o.geometry&&o.geometry.type==='PlaneGeometry'&&_os.radius>30)return;
   U.push({o,f:1,box:new THREE.Box3(),dyn:true})};
@@ -209,7 +209,7 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
  for(const u of OCC.u){const o=u.o;if(!o.parent||!o.visible){continue}
   u.box.setFromObject(o);const b=u.box;let want=1;
   const h=b.max.y-b.min.y;if(h>.25&&!b.containsPoint(_otg)){
-   const dn=b.distanceToPoint(C);if(dn<1.5)want=.15;else if(dn<2.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=.18}
+   const dn=b.distanceToPoint(C);if(dn<1.8)want=.15;else if(dn<3.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=.18}
    if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-.9)want=.25}
   if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}
  // персонажи (кроме Дани и говорящего) тают, если оказались у самой камеры или закрывают Даню
