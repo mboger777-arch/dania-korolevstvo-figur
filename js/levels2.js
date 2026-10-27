@@ -28,7 +28,7 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
  open(h){h.open=true;const c=h.cover;const t0=T;SFX.creak();TICK.push(()=>{const k=clamp((T-t0)*1.6,0,1);c.rotation.x=-k*1.45;c.position.y=lerp(h.y,.1,k);c.position.z=13.45-k*.9;if(k>=1)c.visible=false})},
  add(kind,x,z){const s=mkShape(kind,x,z);this.shapes.push(s);burst(V3(x,1,z),SHC[kind],20,3);SFX.pop();return s},
  tick(dt){if(HERO.kickT&&HERO.kickT!==this.lastKick){this.lastKick=HERO.kickT;clearGesture();let best=null,bd=2.1;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<bd){bd=d;best=s}}
-   if(best){const p=best.b.position;let dx=p.x-HERO.x,dz=p.z-HERO.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const a0=Math.atan2(dx,dz);let ba=null,bdiff=.5;
+   if(best){const p=best.b.position;let dx=p.x-HERO.x,dz=p.z-HERO.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const a0=Math.atan2(dx,dz);let ba=null,bdiff=.6;
     for(const h of this.holes){if(!h.open||h.full)continue;const a=Math.atan2(h.x-p.x,13.6-p.z);const df=Math.abs(adiff(a,a0));if(df<bdiff){bdiff=df;ba=a}}
     if(ba!=null){dx=Math.sin(ba);dz=Math.cos(ba)}const v=Math.max(9,Math.min(15,Math.hypot(13.6-p.z,0)*1.9+5));best.b.velocity.set(dx*v,2.2,dz*v);best.b.wakeUp();burst(V3(p.x,.6,p.z),0xffffff,12,3,.3)}}
   for(const s of this.shapes){if(!s.alive||s.passed)continue;const b=s.b,p=b.position;const hh=SHH[s.kind];if(p.y<hh){p.y=hh;if(b.velocity.y<0)b.velocity.y=0}
@@ -69,7 +69,10 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
 async function bKick(L,s,hx){if(s.passed)return;const p=s.b.position;let dx=hx-p.x,dz=13.6-p.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
  const nd=Math.abs(dx)*(SHW[s.kind]+.5)+Math.abs(dz)*.95;const far=[p.x-dx*(nd+1.4),p.z-dz*(nd+1.4)];
  if(hd(hx,13.6)<Math.hypot(hx-p.x,13.6-p.z)+.5||hd(p.x,p.z)<1.5){const side=(HERO.x-p.x)*dz-(HERO.z-p.z)*dx>0?1:-1;await bGo(clamp(p.x+dz*side*2.2,-9,9),clamp(p.z-dx*side*2.2,-2.5,12.5),.8,6)}
- await bGo(clamp(far[0],-9,9),clamp(far[1],-2.5,12.5),.6,8);const q=s.b.position;await bGo(q.x-dx*nd,q.z-dz*nd,.35,4);bSwipe();await bWait(.2)}
+ await bGo(clamp(far[0],-9,9),clamp(far[1],-2.5,12.5),.6,8);await bSettle();const q=s.b.position;await bGo(q.x-dx*nd,q.z-dz*nd,.35,4);await bSettle();
+ if(hd(q.x,q.z)>nd+.8)return;bSwipe();await bWait(.2)}
+// бот: дождаться, пока Даня остановится (у контроллера есть инерция)
+function bSettle(){const t0=T;return until(()=>HERO.sp<.4||T-t0>.8)}
 
 // ===================== Глава 5: Пчелиные соты (обеги край, сосчитай углы) =====================
 function polyPts(cx,cz,r,n){const a=[];for(let i=0;i<n;i++){const f=-Math.PI/2+i/n*Math.PI*2;a.push({x:cx+Math.cos(f)*r,z:cz+Math.sin(f)*r})}return a}

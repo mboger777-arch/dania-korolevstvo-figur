@@ -6,7 +6,7 @@ const HTEX={};
 const SPR_READY=Promise.all(Object.keys(HMETA).map(n=>new Promise(res=>{const t=new THREE.TextureLoader().load('assets/heroes/'+n+'.webp',()=>res(),undefined,()=>{console.warn('hero atlas',n);res()});t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;HTEX[n]=t})));
 window.SPR_READY=SPR_READY;
 const HGEO=new THREE.PlaneGeometry(1,1,1,12);HGEO.translate(0,.5,0);
-function heroMat(n){const m=new THREE.MeshBasicMaterial({map:HTEX[n],transparent:true,alphaTest:.04,depthWrite:true,side:THREE.DoubleSide});
+function heroMat(n){const m=new THREE.MeshBasicMaterial({map:HTEX[n],toneMapped:false,transparent:true,alphaTest:.04,depthWrite:true,side:THREE.DoubleSide});
  const u={uRect:{value:new THREE.Vector4(0,0,1,1)},uDef:{value:new THREE.Vector4(0,0,0,0)},uNeck:{value:.7},uTilt:{value:0}};m.userData.u=u;
  m.onBeforeCompile=s=>{Object.assign(s.uniforms,u);s.vertexShader='uniform vec4 uRect,uDef;uniform float uNeck,uTilt;\n'+s.vertexShader
   .replace('#include <uv_vertex>','#include <uv_vertex>\n vMapUv=uRect.xy+uv*uRect.zw;')

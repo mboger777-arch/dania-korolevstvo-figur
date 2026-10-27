@@ -53,7 +53,7 @@ function physReset(){PW=new CANNON.World({gravity:new CANNON.Vec3(0,-22,0)});PW.
  const gp=new CANNON.Body({mass:0,shape:new CANNON.Plane()});gp.quaternion.setFromEuler(-Math.PI/2,0,0);PW.addBody(gp);
  HB=new CANNON.Body({mass:0,type:CANNON.Body.KINEMATIC,shape:new CANNON.Sphere(.45)});PW.addBody(HB);PW.usePhys=false}
 function physBody(m,shape,mass,x,y,z,o){o=o||{};const b=new CANNON.Body({mass,shape,linearDamping:o.damp==null?.35:o.damp,angularDamping:.6,fixedRotation:!!o.fixed});b.position.set(x,y,z);PW.addBody(b);SYNC.push({m,b});PW.usePhys=true;return b}
-function stepPhys(dt){if(!PW||!PW.usePhys)return;HB.position.set(HERO.x,HERO.y+.5,HERO.z);HB.velocity.set(HERO.vx,0,HERO.vz);PW.step(1/60,dt,3);for(const s of SYNC){s.m.position.copy(s.b.interpolatedPosition);s.m.quaternion.copy(s.b.interpolatedQuaternion)}}
+function stepPhys(dt){if(!PW||!PW.usePhys)return;HB.position.set(HERO.x,HERO.y+.5,HERO.z);HB.velocity.set(HERO.vx,0,HERO.vz);for(const b of PW.bodies)if(b.sleepState===2&&b.type===1&&Math.abs(b.position.x-HERO.x)<2.5&&Math.abs(b.position.z-HERO.z)<2.5)b.wakeUp();PW.step(1/60,dt,3);for(const s of SYNC){s.m.position.copy(s.b.interpolatedPosition);s.m.quaternion.copy(s.b.interpolatedQuaternion)}}
 // ---- частицы и эффекты ----
 const FX=[];
 function burst(p,col,n,sp,size){const g=new THREE.BufferGeometry();const N=n||24,pos=new Float32Array(N*3),vel=[];for(let i=0;i<N;i++){pos[i*3]=p.x;pos[i*3+1]=p.y;pos[i*3+2]=p.z;const a=Math.random()*6.28,b=Math.random()*1.4,v=(sp||4)*(.5+Math.random()*.7);vel.push([Math.cos(a)*Math.cos(b)*v,Math.sin(b)*v+2,Math.sin(a)*Math.cos(b)*v])}
@@ -165,7 +165,7 @@ function heroTick(dt){const h=HERO;
  h.x=p.x;h.z=p.z;
  // вертикаль: подъём на ступеньку плавно, падение быстрее подъёма, предел скорости падения
  const gg=groundAt(h.x,h.z,h.y,MOVE.step);
- if(h.gr&&gg>h.y+.005&&gg<=h.y+MOVE.step){h.y=Math.min(gg,h.y+Math.max(.02,(gg-h.y)*Math.min(1,dt*MOVE.stepLerp)));h.vy=0}
+ if(h.gr&&gg>h.y+.005&&gg<=h.y+MOVE.step){h.y=gg;h.vy=0}// ноги сразу на ступеньке, плавность даёт камера (HERO.cy)
  else if(!h.gr||h.y>gg+.03){if(h.gr&&h.y-gg<.18){h.y=gg}else{h.gr=false;const gv=h.vy>0?MOVE.g:MOVE.gFall;h.vy=Math.max(-MOVE.maxFall,h.vy-gv*dt);h.y+=h.vy*dt;h.airT+=dt;if(h.y<=gg){h.y=gg;if(h.vy<-3)SFX.land();h.landQ=-h.vy;h.vy=0;h.gr=true;h.airT=0}}}
  else{h.y=gg;h.vy=0;h.gr=true;h.airT=0}}
 // спутник следует за героем
@@ -220,7 +220,7 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
 function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));const ad=Math.abs(d);if(ad<1.25)CAMS.yaw+=d*Math.min(1,dt*1.1*(1-ad/1.25))}// бег вбок не крутит камеру по кругу
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
-  const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);P=V3(h.x-fx*CAMS.dist,h.y+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,h.y+CAMS.look,h.z+fz*1.2);
+  const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);if(h.cy==null||Math.abs(h.cy-h.y)>3)h.cy=h.y;h.cy+=(h.y-h.cy)*Math.min(1,dt*(h.y>h.cy?7:12));const hy=h.cy;P=V3(h.x-fx*CAMS.dist,hy+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,hy+CAMS.look,h.z+fz*1.2);
   const gp=groundAt(P.x,P.z)+.6;if(P.y<gp)P.y=gp}
  else{P=CAMS.sp;L=CAMS.sl;const tf=talkFrame();if(tf){P=tf[0];L=tf[1]}}
  const k=CAMS.snap?1:1-Math.exp(-dt*CAMS.k);CAMS.pos.lerp(P,k);CAMS.tgt.lerp(L,k);CAMS.snap=false;CAM.position.copy(CAMS.pos);CAM.lookAt(CAMS.tgt);
@@ -233,5 +233,5 @@ function audit3D(){return CHARS.filter(c=>c.root.visible&&c.root.parent).map(c=>
 // ---- кадр ----
 function frame3D(dt){if(SCN&&SCN.step3D)SCN.step3D(dt);if(SCN&&SCN.world){heroStep(dt);krugStep(dt);stepPhys(dt)}for(const f of TICK)f(dt);stepFX(dt);
  for(const c of CHARS){c.update(dt,c===DANIA?HERO.sp:c.sp||0);if(c.shadow){const p=c.root.position;const g=groundAt(p.x,p.z,p.y+.05);c.shadow.position.set(p.x,g+.03,p.z);const hgt=p.y-g+(c.hop||0);c.shadow.material.opacity=clamp(1-hgt*.4,.25,1);c.shadow.visible=c.root.visible}}
- camStep(dt);occStep(dt);R3.render(SCENE,CAM)}
+ camStep(dt);occStep(dt);if(typeof gfxStep==='function')gfxStep(dt);R3.render(SCENE,CAM)}
 const LEVELS=[];// заполняется levels1/levels2/boss
