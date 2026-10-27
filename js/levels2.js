@@ -29,11 +29,11 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
  add(kind,x,z){const s=mkShape(kind,x,z);this.shapes.push(s);burst(V3(x,1,z),SHC[kind],20,3);SFX.pop();return s},
  tick(dt){if(HERO.kickT&&HERO.kickT!==this.lastKick){this.lastKick=HERO.kickT;clearGesture();let best=null,bd=2.1;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<bd){bd=d;best=s}}
    if(best){const p=best.b.position;let dx=p.x-HERO.x,dz=p.z-HERO.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const a0=Math.atan2(dx,dz);let ba=null,bdiff=.6;
-    for(const h of this.holes){if(!h.open||h.full)continue;const a=Math.atan2(h.x-p.x,13.6-p.z);const df=Math.abs(adiff(a,a0));if(df<bdiff){bdiff=df;ba=a}}
+    for(const h of this.holes){if(!h.open||h.full)continue;const a=Math.atan2(h.x-p.x,13.6-p.z);const df=Math.abs(adiff(a,a0))-(h.accept(best.kind)?.5:0);if(df<bdiff){bdiff=df;ba=a}}
     if(ba!=null){dx=Math.sin(ba);dz=Math.cos(ba)}const v=Math.max(9,Math.min(15,Math.hypot(13.6-p.z,0)*1.9+5));best.b.velocity.set(dx*v,2.2,dz*v);best.b.wakeUp();burst(V3(p.x,.6,p.z),0xffffff,12,3,.3)}}
   for(const s of this.shapes){if(!s.alive||s.passed)continue;const b=s.b,p=b.position;const hh=SHH[s.kind];if(p.y<hh){p.y=hh;if(b.velocity.y<0)b.velocity.y=0}
    {const ex=HERO.x-p.x,ez=HERO.z-p.z,ax=SHW[s.kind]+.42,az=.87;if(Math.abs(ex)<ax&&Math.abs(ez)<az){if(ax-Math.abs(ex)<az-Math.abs(ez))HERO.x=p.x+Math.sign(ex||1)*ax;else HERO.z=p.z+Math.sign(ez||1)*az}}
-   if(p.x<-9.2){p.x=-9.2;b.velocity.x=Math.abs(b.velocity.x)*.5}if(p.x>9.2){p.x=9.2;b.velocity.x=-Math.abs(b.velocity.x)*.5}if(p.z<-2.5){p.z=-2.5;b.velocity.z=Math.abs(b.velocity.z)*.5}
+   if(p.x<-8.4){p.x=-8.4;b.velocity.x=Math.abs(b.velocity.x)*.5}if(p.x>8.4){p.x=8.4;b.velocity.x=-Math.abs(b.velocity.x)*.5}if(p.z<-2.5){p.z=-2.5;b.velocity.z=Math.abs(b.velocity.z)*.5}
    if(p.z>13.1){const h=this.holes.find(h=>h.open&&!h.full&&Math.abs(p.x-h.x)<h.tol);
     if(h&&h.accept(s.kind)&&b.velocity.z>0)this.pass(s,h);
     else{p.z=13.1;b.velocity.z=-Math.abs(b.velocity.z)*.55-2.5;b.velocity.x*=.5;SFX.bump();burst(V3(p.x,p.y,13.3),0xffffff,10,2,.25);if(h&&T-(s.wrongT||-9)>1){s.wrongT=T;s.g.position.x+=.1;this.onWrong&&this.onWrong(s,h)}}}}},
@@ -57,7 +57,7 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
   await until(()=>res&&res.kind==='sq');GOAL='';await good('c4_k2');
   // T3 — ворота прямоугольников: квадрат тоже прямоугольник
   await cutscene(async()=>{L.open(L.hG);L.sign.visible=true;shot(2,3,6,5.2,1.4,13.5,2.5);await wait(.6);await say('c4_t3')});
-  const cube=L.add('sq',-2,8.5),t2=L.add('tri',1.5,7),disc=L.add('disc',-5,7);let nRect=0,saidSq=false;
+  const cube=L.add('sq',-2,8.5),t2=L.add('tri',1.5,7),disc=L.add('disc',-5,7);let nRect=0,saidSq=false;window.T3D=()=>[nRect,saidSq,TICK.length];
   if(bar.passed){L.add('rect',6,8)}
   newTask('Пни прямоугольники в ворота');run(()=>say('c4_t3b'));L.onWrong=(s,h)=>{if(h.kind==='gate')mistake('c4_nope')};
   L.onPass=(s,h)=>{if(h.kind!=='gate')return;nRect++;if(s.kind==='sq'&&!saidSq){saidSq=true;run(()=>sayNext('c4_sq'))}else run(()=>sayNext('g_good'))};
