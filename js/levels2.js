@@ -27,7 +27,7 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
  TICK.push(dt=>this.tick(dt))},
  open(h){h.open=true;const c=h.cover;const t0=T;SFX.creak();TICK.push(()=>{const k=clamp((T-t0)*1.6,0,1);c.rotation.x=-k*1.45;c.position.y=lerp(h.y,.1,k);c.position.z=13.45-k*.9;if(k>=1)c.visible=false})},
  add(kind,x,z){const s=mkShape(kind,x,z);this.shapes.push(s);burst(V3(x,1,z),SHC[kind],20,3);SFX.pop();return s},
- tick(dt){if(HERO.kickT&&HERO.kickT!==this.lastKick){this.lastKick=HERO.kickT;clearGesture();let best=null,bd=2.1;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<bd){bd=d;best=s}}
+ tick(dt){if(HERO.kickT&&HERO.kickT!==this.lastKick){this.lastKick=HERO.kickT;clearGesture();let best=null,bd=2.6;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<bd){bd=d;best=s}}
    if(best){const p=best.b.position;let dx=p.x-HERO.x,dz=p.z-HERO.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const a0=Math.atan2(dx,dz);let ba=null,bdiff=.6;
     for(const h of this.holes){if(!h.open||h.full)continue;const a=Math.atan2(h.x-p.x,13.6-p.z);const df=Math.abs(adiff(a,a0))-(h.accept(best.kind)?.5:0);if(df<bdiff){bdiff=df;ba=a}}
     if(ba!=null){dx=Math.sin(ba);dz=Math.cos(ba)}const v=Math.max(9,Math.min(15,Math.hypot(13.6-p.z,0)*1.9+5));best.b.velocity.set(dx*v,2.2,dz*v);best.b.wakeUp();burst(V3(p.x,.6,p.z),0xffffff,12,3,.3)}}
@@ -57,7 +57,7 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
   await until(()=>res&&res.kind==='sq');GOAL='';await good('c4_k2');
   // T3 — ворота прямоугольников: квадрат тоже прямоугольник
   await cutscene(async()=>{L.open(L.hG);L.sign.visible=true;shot(2,3,6,5.2,1.4,13.5,2.5);await wait(.6);await say('c4_t3')});
-  const cube=L.add('sq',-2,8.5),t2=L.add('tri',1.5,7),disc=L.add('disc',-5,7);let nRect=0,saidSq=false;window.T3D=()=>[nRect,saidSq,TICK.length];
+  const cube=L.add('sq',-2,8.5),t2=L.add('tri',1.5,7),disc=L.add('disc',-5,7);let nRect=0,saidSq=false;
   if(bar.passed){L.add('rect',6,8)}
   newTask('Пни прямоугольники в ворота');run(()=>say('c4_t3b'));L.onWrong=(s,h)=>{if(h.kind==='gate')mistake('c4_nope')};
   L.onPass=(s,h)=>{if(h.kind!=='gate')return;nRect++;if(s.kind==='sq'&&!saidSq){saidSq=true;run(()=>sayNext('c4_sq'))}else run(()=>sayNext('g_good'))};
@@ -69,7 +69,7 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
 async function bKick(L,s,hx){if(s.passed)return;const p=s.b.position;let dx=hx-p.x,dz=13.6-p.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
  const nd=Math.abs(dx)*(SHW[s.kind]+.5)+Math.abs(dz)*.95;const far=[p.x-dx*(nd+1.4),p.z-dz*(nd+1.4)];
  if(hd(hx,13.6)<Math.hypot(hx-p.x,13.6-p.z)+.5||hd(p.x,p.z)<1.5){const side=(HERO.x-p.x)*dz-(HERO.z-p.z)*dx>0?1:-1;await bGo(clamp(p.x+dz*side*2.2,-9,9),clamp(p.z-dx*side*2.2,-2.5,12.5),.8,6)}
- await bGo(clamp(far[0],-9,9),clamp(far[1],-2.5,12.5),.6,8);await bSettle();const q=s.b.position;await bGo(q.x-dx*nd,q.z-dz*nd,.35,4);await bSettle();
+ await bGo(clamp(far[0],-9,9),clamp(far[1],-2.5,12.5),.6,8);await bSettle();const q=s.b.position;await bGo(q.x-dx*nd,q.z-dz*nd,.25,4);await bSettle();
  if(hd(q.x,q.z)>nd+.8)return;bSwipe();await bWait(.2)}
 // бот: дождаться, пока Даня остановится (у контроллера есть инерция)
 function bSettle(){const t0=T;return until(()=>HERO.sp<.4||T-t0>.8)}
