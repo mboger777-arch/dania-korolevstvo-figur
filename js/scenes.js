@@ -1,7 +1,7 @@
 'use strict';
 // ===== титул, интро, карта, обёртка глав, финал =====
 let CUT=false;
-async function cutscene(fn){CUT=true;INPMODE='ui';HERO.lock=true;try{await fn()}finally{CUT=false;INPMODE='play';HERO.lock=false;followCam()}}
+async function cutscene(fn){CUT=true;CAMS.twc=null;INPMODE='ui';HERO.lock=true;try{await fn()}finally{CAMS.wide=false;CUT=false;INPMODE='play';HERO.lock=false;followCam()}}
 function buildVillage(){clearWorld();groundPlane();hills();
  [[-7,6,0,0],[-11,1,.4,1],[7,6,-.3,2],[11,0,-.6,3],[-4,12,.1,4],[5,13,-.2,5],[-14,9,.6,2],[14,10,-.5,0]].forEach(([x,z,a,c])=>house(x,z,1,a,c));
  const tw=new THREE.Group();tw.position.set(0,0,18);for(let i=0;i<5;i++){const h=mesh(GEO.hex,M(i%2?0xf5c242:0xffd65a,{em:0x604000,ei:.2}),0,1+i*1.6,0,tw,[1.6-i*.1,1.5,1.6-i*.1])}mesh(GEO.cone,0xf2683c,0,8.9,0,tw,[1.3,1.6,1.3]);WORLD.add(tw);cylBlock(0,18,1.7,9);

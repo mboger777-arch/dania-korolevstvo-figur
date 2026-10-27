@@ -163,25 +163,36 @@ const CAMS={yaw:0,dist:5.0,h:2.4,look:1.25,mode:'follow',pos:V3(0,5,-8),tgt:V3(0
 function shot(px,py,pz,lx,ly,lz,k){CAMS.mode='shot';CAMS.sp=V3(px,py,pz);CAMS.sl=V3(lx,ly,lz);CAMS.k=k||3}
 // в катсцене говорящий герой — крупным планом лицом к камере (через ~1 с после начала реплики)
 const TALKCH={dania:()=>DANIA,krug:()=>KRUG,queen:()=>QUEEN,kriv:()=>KRIV};
-function talkFrame(){if(typeof CUT==='undefined'||!CUT||!TALK||CAMS.wide||T-TALK.t0<1.1)return null;const g=TALKCH[TALK.who==='narr'&&scene==='intro'?'dania':TALK.who];const c=g&&g();if(!c||!c.root.visible||!c.root.parent)return null;
+function summonQueen(c){const h=HERO;let vx=CAMS.sl.x-CAMS.sp.x,vz=CAMS.sl.z-CAMS.sp.z;const n=Math.hypot(vx,vz)||1;vx/=n;vz/=n;
+ const x=h.x+vz*1.9-vx*.4,z=h.z-vx*1.9-vz*.4;place(c,x,z,Math.atan2(h.x-x,h.z-z)-.5);c.root.visible=true;if(typeof burst==='function')burst(V3(x,1.5,z),0xffe080,30);if(typeof SFX!=='undefined'&&SFX.magic)SFX.magic()}
+function talkFrame(){if(typeof CUT==='undefined'||!CUT||!TALK||CAMS.wide)return null;const g=TALKCH[TALK.who==='narr'&&scene==='intro'?'dania':TALK.who];const c=g&&g();if(!c||!c.root.parent)return null;
+ if(c===QUEEN&&scene==='ch'&&(!c.root.visible||Math.hypot(c.root.position.x-HERO.x,c.root.position.z-HERO.z)>14))summonQueen(c);if(!c.root.visible)return null;
+ if(CAMS.tw!==TALK){CAMS.tw=TALK;if(CAMS.twc!==c){CAMS.twc=c;CAMS.snap=true}}
  const p=c.root.position,hh=c.h,D=clamp(hh*2.1,3.6,6.4);let vx=CAMS.sl.x-CAMS.sp.x,vz=CAMS.sl.z-CAMS.sp.z;const n=Math.hypot(vx,vz)||1;vx/=n;vz/=n;
  const fy=c.vyaw!=null?c.vyaw:c.root.rotation.y,fx=Math.sin(fy),fz=Math.cos(fy);if(-(vx*fx+vz*fz)<.35){const a=fy+Math.PI+.35;vx=Math.sin(a);vz=Math.cos(a)}
  return[V3(p.x-vx*D,p.y+hh*.75+.5,p.z-vz*D),V3(p.x+vx*.6,p.y+hh*.62,p.z+vz*.6)]}
 function followCam(){CAMS.mode='follow';CAMS.k=5}
-// ---- прозрачность препятствий: всё, что между камерой и героем или ближе ~1.5 м к камере, тает ----
-const _cf=new THREE.Vector3(),_ob=new THREE.Box3(),_os=new THREE.Sphere(),_oc=new THREE.Vector3();
-function occInfo(o){let u=o.userData.occ;if(u===undefined){_ob.setFromObject(o);if(_ob.isEmpty()){u=o.userData.occ=null;return u}_ob.getBoundingSphere(_os);
- u=o.userData.occ=_os.radius>7||o.userData.noFade?null:{ox:_os.center.x-o.position.x,oy:_os.center.y-o.position.y,oz:_os.center.z-o.position.z,r:_os.radius,f:1}}return u}
+// ---- прозрачность препятствий: всё, что между камерой и героем или ближе ~1.5 м к камере, тает (любого размера) ----
+const _cf=new THREE.Vector3(),_ob=new THREE.Box3(),_os=new THREE.Sphere(),_oray=new THREE.Ray(),_ohit=new THREE.Vector3(),_otg=new THREE.Vector3();
+// единицы прозрачности: маленькие группы целиком, большие группы/меши — по мешам; кеш пересобирается при смене мира
+let OCC={w:null,u:[],t:0};
+function occBuild(){const U=[];const add=(o)=>{if(o.userData.noFade||!o.visible&&o.isMesh)return;_ob.setFromObject(o);if(_ob.isEmpty())return;_ob.getBoundingSphere(_os);
+  if(_os.radius>3.5&&o.children.length){for(const c of o.children)add(c);return}
+  if(o.isMesh&&o.geometry&&o.geometry.type==='PlaneGeometry'&&_os.radius>30)return;
+  U.push({o,f:1,box:new THREE.Box3(),dyn:true})};
+ for(const o of WORLD.children)add(o);OCC={w:WORLD,u:U,t:0,n:WORLD.children.length}}
 function occSet(o,u,f){u.f=f;const on=f<.995;o.traverse(m=>{const mt=m.material;if(!mt)return;
- if(on){if(!m.userData.om){m.userData.om=mt;m.material=Array.isArray(mt)?mt.map(x=>{const c=x.clone();c.transparent=true;c.userData.bo=x.opacity;return c}):(()=>{const c=mt.clone();c.transparent=true;c.userData.bo=mt.opacity;return c})()}
+ if(on){if(!m.userData.om){m.userData.om=mt;const cl=x=>{const c=x.clone();c.transparent=true;c.userData.bo=x.opacity;return c};m.material=Array.isArray(mt)?mt.map(cl):cl(mt)}
   for(const c of [].concat(m.material)){c.opacity=c.userData.bo*f;c.depthWrite=f>.9}}
  else if(m.userData.om){for(const c of [].concat(m.material))c.dispose();m.material=m.userData.om;m.userData.om=null}})}
-function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;const C=CAM.position;let tx,ty,tz;
- if(CAMS.mode==='follow'){tx=HERO.x;ty=HERO.y+1;tz=HERO.z}else{tx=CAMS.tgt.x;ty=CAMS.tgt.y;tz=CAMS.tgt.z}
- CAM.getWorldDirection(_cf);const dx=tx-C.x,dy=ty-C.y,dz=tz-C.z,L=Math.hypot(dx,dy,dz)||1,ux=dx/L,uy=dy/L,uz=dz/L;
- for(const o of WORLD.children){if(!o.visible)continue;const u=occInfo(o);if(!u)continue;
-  const cx=o.position.x+u.ox,cy=o.position.y+u.oy,cz=o.position.z+u.oz;const vx=cx-C.x,vy=cy-C.y,vz=cz-C.z;const dc=Math.hypot(vx,vy,vz);
-  const fw=(vx*_cf.x+vy*_cf.y+vz*_cf.z);let want=1;if(dc<u.r+1.5||(fw>0&&dc<u.r+2.4))want=.18;else{const t=vx*ux+vy*uy+vz*uz;if(t>0&&t<L-.7){const px=vx-ux*t,py=vy-uy*t,pz=vz-uz*t;if(Math.hypot(px,py,pz)<u.r*.8)want=.28}}
+function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORLD||OCC.n!==WORLD.children.length)occBuild();const C=CAM.position;
+ if(CAMS.mode==='follow'||!CUT)_otg.set(HERO.x,HERO.y+1,HERO.z);else _otg.copy(CAMS.tgt);
+ CAM.getWorldDirection(_cf);const L=C.distanceTo(_otg);_oray.origin.copy(C);_oray.direction.copy(_otg).sub(C).normalize();
+ for(const u of OCC.u){const o=u.o;if(!o.parent||!o.visible){continue}
+  u.box.setFromObject(o);const b=u.box;let want=1;
+  const h=b.max.y-b.min.y;if(h>.25&&!b.containsPoint(_otg)){
+   const dn=b.distanceToPoint(C);if(dn<1.5)want=.15;else if(dn<2.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=.18}
+   if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-.9)want=.25}
   if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}}
 function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));if(Math.abs(d)<2.3)CAMS.yaw+=d*Math.min(1,dt*1.3)}
