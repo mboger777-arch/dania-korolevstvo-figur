@@ -1,5 +1,6 @@
 'use strict';
 // ===== Герои: нарисованные 2.5D-персонажи из атласов assets/heroes/*.webp (по refs/lineup.jpg) =====
+// все боковые/3-4 кадры в атласах смотрят ВЛЕВО: mir=rt разворачивает вправо
 // виды спереди / 3/4 / сбоку / сзади, бег (3 направления × 4 кадра), позы (ура, ой, сидя, колдует, прыжок), моргание, дыхание, взгляд на ребёнка
 const HTEX={};
 const SPR_READY=Promise.all(Object.keys(HMETA).map(n=>new Promise(res=>{const t=new THREE.TextureLoader().load('assets/heroes/'+n+'.webp',()=>res(),undefined,()=>{console.warn('hero atlas',n);res()});t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;HTEX[n]=t})));
@@ -42,8 +43,8 @@ function heroUpdate(c,dt,sp){c.F.step(dt);c.root.getWorldPosition(_hp);
   if(sit){fr=ar<100?'sitf':'sitb';mir=ar<100&&ar>20&&rt}
   else if(oops){fr='oops';mir=false;tilt=Math.sin(T*3)*.03}
   else if(cheer){fr='cheer';mir=false;yo=Math.abs(Math.sin((T-c.cheerT)*6))*.22*(1-(T-c.cheerT)/1.6)}
-  else if(air){if(ar<55){fr='cheer';mir=false}else if(ar<125){fr='rs1';mir=!rt}else{fr='jumpb';mir=false}}
-  else if(c.anim==='run'){c.ph+=dt*(2.6+sp*1.2);const i=Math.floor(c.ph)%4;if(ar<50){fr='rf'+i;mir=false}else if(ar<130){fr='rs'+i;mir=!rt}else{fr='rb'+i;mir=false}}
+  else if(air){if(ar<55){fr='cheer';mir=false}else if(ar<125){fr='rs1';mir=rt}else{fr='jumpb';mir=false}}
+  else if(c.anim==='run'){c.ph+=dt*(2.6+sp*1.2);const i=Math.floor(c.ph)%4;if(ar<50){fr='rf'+i;mir=false}else if(ar<130){fr='rs'+i;mir=rt}else{fr='rb'+i;mir=false}}
   else if(c.hold&&ar>100){fr='cast';mir=false}
   if(T-c.kickT<.35){const u=(T-c.kickT)/.35;lean=Math.sin(u*Math.PI)*.12*(mir?-1:1);c.sq=Math.max(c.sq,Math.sin(u*Math.PI)*.06)}
   if(tk&&!sit&&c.anim!=='run')tilt=Math.sin(T*5)*.035}

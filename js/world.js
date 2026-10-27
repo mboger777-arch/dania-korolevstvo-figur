@@ -195,7 +195,7 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
    if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-.9)want=.25}
   if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}}
 function camStep(dt){let P,L;
- if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));if(Math.abs(d)<2.3)CAMS.yaw+=d*Math.min(1,dt*1.3)}
+ if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));const ad=Math.abs(d);if(ad<1.25)CAMS.yaw+=d*Math.min(1,dt*1.1*(1-ad/1.25))}// бег вбок не крутит камеру по кругу
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
   const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);P=V3(h.x-fx*CAMS.dist,h.y+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,h.y+CAMS.look,h.z+fz*1.2);
   const gp=groundAt(P.x,P.z)+.6;if(P.y<gp)P.y=gp}
