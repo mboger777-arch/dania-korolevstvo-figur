@@ -10,7 +10,7 @@ const SHC={tri:0xff5a6a,sq:0x3d8fe8,rect:0x3fbf63,disc:0xffb52e},SHH={tri:.6,sq:
 function eyes(p,x,y,z,s){for(const e of [-1,1]){mesh(GEO.sph,0xffffff,x+e*.2*s,y,z,p,[.13*s,.15*s,.06]);mesh(GEO.sph,0x221133,x+e*.2*s,y,z-.05,p,[.06*s,.08*s,.04])}}
 // фигуры не касаются плоскости cannon (её трение «прилипает»): пол и торможение — вручную в tick
 function slideMat(b){b.collisionFilterGroup=2;b.collisionFilterMask=2}
-function mkShape(kind,x,z){const g=new THREE.Group();const geo=new THREE.ExtrudeGeometry(shapePath(kind),{depth:.8,bevelEnabled:true,bevelSize:.05,bevelThickness:.05,bevelSegments:2,curveSegments:28});geo.translate(0,0,-.4);
+function mkShape(kind,x,z){const g=new THREE.Group();const geo=new THREE.ExtrudeGeometry(shapePath(kind),{depth:.8,bevelEnabled:true,bevelSize:.09,bevelThickness:.09,bevelSegments:4,curveSegments:32});geo.translate(0,0,-.4);
  mesh(geo,M(SHC[kind]),0,0,0,g);eyes(g,0,kind==='tri'?-.05:.1,-.47,1);WORLD.add(g);const h=SHH[kind];
  const b=physBody(g,new CANNON.Box(new CANNON.Vec3(SHW[kind],h,.45)),1,x,h,z,{fixed:true,damp:.6});slideMat(b);return{kind,g,b,alive:true,passed:false}}
 LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc86a);BOUNDS=[-9.5,9.5,-3,13.2];

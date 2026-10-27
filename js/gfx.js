@@ -48,7 +48,7 @@ function gfxDecor(){GFX.w=WORLD;const gp=WORLD.children.find(o=>o.isMesh&&o.mate
  const FC=[0xff6fa8,0xffe14a,0xffffff,0xb07cff,0xff8a3a,0x7ec8ff].map(c=>new THREE.Color(c));let i=0,j=0,tries=0;
  while((i<nT||j<nF)&&tries<(nT+nF)*3){tries++;const x=x0+Math.random()*(x1-x0),z=z0+Math.random()*(z1-z0);if(!ok(x,z))continue;const y=baseAt(x,z);_ge.set(0,Math.random()*6.28,0);_gq.setFromEuler(_ge);
   if(i<nT&&(j>=nF||Math.random()<.85)){_gs.set(.7+Math.random()*.5,.55+Math.random()*.6,.7+Math.random()*.5);_gm.compose(_gp.set(x,y,z),_gq,_gs);tg.setMatrixAt(i++,_gm)}else if(j<nF){_gs.setScalar(.8+Math.random()*.6);_gm.compose(_gp.set(x,y,z),_gq,_gs);fg.setMatrixAt(j,_gm);fg.setColorAt(j++,FC[(Math.random()*FC.length)|0])}}
- tg.count=i;fg.count=j;tg.frustumCulled=fg.frustumCulled=false;tg.userData.decor=fg.userData.decor=1;WORLD.add(tg);WORLD.add(fg);GFX.grass=tg;GFX.fl=fg;
+ tg.count=i;fg.count=j;tg.frustumCulled=fg.frustumCulled=false;tg.userData.decor=fg.userData.decor=1;WORLD.add(tg);WORLD.add(fg);GFX.grass=tg;GFX.fl=fg;try{gfxProps(ok,x0,x1,z0,z1,lowQ)}catch(e){console.error(e)}
  // бабочки
  const wc=['#ff7ab0','#ffd23a','#8ad0ff','#c08aff'];for(let k=0;k<(lowQ?3:6);k++){const t=cvTex(64,64,(x,w,h)=>{x.fillStyle=wc[k%4];x.beginPath();x.ellipse(36,24,24,18,-.4,0,7);x.fill();x.beginPath();x.ellipse(32,46,16,12,.3,0,7);x.fill();x.fillStyle='rgba(255,255,255,.7)';x.beginPath();x.arc(40,22,6,0,7);x.fill();x.strokeStyle='#40204a';x.lineWidth=3;x.beginPath();x.ellipse(36,24,24,18,-.4,0,7);x.stroke()});
   const m=new THREE.MeshBasicMaterial({map:t,transparent:true,side:THREE.DoubleSide,depthWrite:false,alphaTest:.1});const g=new THREE.Group();
@@ -68,3 +68,29 @@ function gfxStep(dt){GFXU.time.value+=dt;SKY.material.uniforms.t.value+=dt;SKY.p
  for(const g of GFX.birds){const u=g.userData;u.a+=dt*u.sp;g.position.set(hx+Math.cos(u.a)*u.r,u.y+Math.sin(T0*.5+u.ph)*2,hz+20+Math.sin(u.a)*u.r*.5);g.rotation.y=-u.a;const f=Math.sin(T0*6+u.ph)*.5;g.children[0].rotation.z=f;g.children[1].rotation.z=f}
  if(GFX.pol){const p=GFX.pol.geometry.attributes.position,a=p.array,cx=CAM.position.x,cz=CAM.position.z;for(let k=0;k<a.length;k+=3){a[k]+=Math.sin(T0*.7+k)*dt*.12;a[k+1]+=dt*(.05+.04*Math.sin(k));a[k+2]+=Math.cos(T0*.6+k)*dt*.12;
   if(a[k+1]>5.5)a[k+1]=.2;if(a[k]-cx>12)a[k]-=24;else if(a[k]-cx<-12)a[k]+=24;if(a[k+2]-cz>12)a[k+2]-=24;else if(a[k+2]-cz<-12)a[k+2]+=24}p.needsUpdate=true}}
+// ---- скруглённые коробки: GEO.box с масштабом-массивом получает фаску ~6 см (гладкие нормали), радиусы считаются в мировых единицах ----
+const RBC={};
+function roundBoxGeo(sx,sy,sz){const r=Math.min(.07,.2*Math.min(sx,sy,sz));const k=[sx,sy,sz].map(v=>v.toFixed(2)).join(',')+r.toFixed(3);if(RBC[k])return RBC[k];
+ const g=new THREE.BoxGeometry(1,1,1,3,3,3);const ra=[r/sx,r/sy,r/sz],p=g.attributes.position,n=g.attributes.normal,v=[0,0,0],inn=[0,0,0],d=[0,0,0];
+ for(let i=0;i<p.count;i++){v[0]=p.getX(i);v[1]=p.getY(i);v[2]=p.getZ(i);
+  for(let a=0;a<3;a++){const s=Math.sign(v[a])||1;if(Math.abs(v[a])<.3)v[a]=s*(.5-ra[a]);inn[a]=Math.max(-(.5-ra[a]),Math.min(.5-ra[a],v[a]));d[a]=(v[a]-inn[a])/ra[a]}
+  let l=Math.hypot(d[0],d[1],d[2]);if(l<1e-6){d[0]=n.getX(i);d[1]=n.getY(i);d[2]=n.getZ(i);l=1}
+  p.setXYZ(i,inn[0]+d[0]/l*ra[0],inn[1]+d[1]/l*ra[1],inn[2]+d[2]/l*ra[2]);const nx=d[0]/l/ra[0],ny=d[1]/l/ra[1],nz=d[2]/l/ra[2],nl=Math.hypot(nx,ny,nz);n.setXYZ(i,nx/nl,ny/nl,nz/nl)}
+ // нормаль в «единичном» пространстве; three сам применит normalMatrix масштаба
+ RBC[k]=g;return g}
+{const _mesh=mesh;mesh=function(g,m,x,y,z,p,s){if(g===GEO.box&&Array.isArray(s)&&s[0]>0&&s[1]>0&&s[2]>0&&Math.max(s[0],s[1],s[2])<60)g=roundBoxGeo(s[0],s[1],s[2]);return _mesh(g,m,x,y,z,p,s)}}
+// ---- камни и забор по краю площадки ----
+function rockGeo(){const g=new THREE.IcosahedronGeometry(1,2);const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const f=1+.18*Math.sin(x*3.1+z*2.3)+.12*Math.sin(y*4.7+x*1.9);p.setXYZ(i,x*f,Math.max(-.2,y*f*.7),z*f)}g.computeVertexNormals();return g}
+function gfxProps(ok,x0,x1,z0,z1,lowQ){const B=BOUNDS||[-14,14,-6,30];
+ const nR=lowQ?24:50,rm=new THREE.InstancedMesh(rockGeo(),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95,metalness:0}),nR);const RC=[0x9a9aa6,0x8c8478,0xb0aca0,0x7d8590].map(c=>new THREE.Color(c));let i=0,t=0;
+ while(i<nR&&t<nR*20){t++;const x=x0+Math.random()*(x1-x0),z=z0+Math.random()*(z1-z0);const edge=Math.min(Math.abs(x-B[0]),Math.abs(x-B[1]),Math.abs(z-B[2]),Math.abs(z-B[3]));if(edge>3.5&&Math.random()<.8)continue;if(!ok(x,z))continue;
+  const s=.12+Math.random()*Math.random()*.45;_ge.set(rnd(-.3,.3),Math.random()*6.28,rnd(-.3,.3));_gq.setFromEuler(_ge);_gs.set(s*rnd(.8,1.4),s,s*rnd(.8,1.3));_gm.compose(_gp.set(x,baseAt(x,z)+s*.15,z),_gq,_gs);rm.setMatrixAt(i,_gm);rm.setColorAt(i++,RC[(Math.random()*4)|0])}
+ rm.count=i;rm.userData.decor=1;rm.frustumCulled=false;WORLD.add(rm);
+ // заборчик из кольев с двумя жердями, только там, где свободно
+ const posts=[],rails=[];const wood=new THREE.MeshStandardMaterial({color:0xb07a46,roughness:.85});const fx0=B[0]-1.2,fx1=B[1]+1.2,fz0=B[2]-1.2,fz1=B[3]+1.2;
+ const side=(ax,az,bx,bz)=>{const L=Math.hypot(bx-ax,bz-az),n=Math.max(2,Math.round(L/1.6));let prev=null;for(let k=0;k<=n;k++){const x=ax+(bx-ax)*k/n,z=az+(bz-az)*k/n;const f=ok(x,z);if(f)posts.push([x,z]);if(f&&prev)rails.push([prev[0],prev[1],x,z]);prev=f?[x,z]:null}};
+ side(fx0,fz0,fx1,fz0);side(fx1,fz0,fx1,fz1);side(fx1,fz1,fx0,fz1);side(fx0,fz1,fx0,fz0);
+ const pg=new THREE.CylinderGeometry(.06,.07,.9,7);pg.translate(0,.45,0);const cap=new THREE.ConeGeometry(.085,.14,7);cap.translate(0,.97,0);
+ const pm=new THREE.InstancedMesh(pg,wood,posts.length),cm=new THREE.InstancedMesh(cap,wood,posts.length);posts.forEach(([x,z],k)=>{_gm.makeTranslation(x,baseAt(x,z),z);pm.setMatrixAt(k,_gm);cm.setMatrixAt(k,_gm)});
+ const rg=roundBoxGeo(1,.07,.05),rl=new THREE.InstancedMesh(rg,wood,rails.length*2);rails.forEach(([ax,az,bx,bz],k)=>{const L=Math.hypot(bx-ax,bz-az);_ge.set(0,-Math.atan2(bz-az,bx-ax),0);_gq.setFromEuler(_ge);for(const h of [0,1]){_gs.set(L,1,1);_gm.compose(_gp.set((ax+bx)/2,baseAt(ax,az)+.35+h*.32,(az+bz)/2),_gq,_gs);rl.setMatrixAt(k*2+h,_gm)}});
+ for(const o of [pm,cm,rl]){o.userData.decor=1;o.frustumCulled=false;WORLD.add(o)}}
