@@ -154,7 +154,7 @@ LEVELS[5]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xb8e070);h
   TASK.help=async()=>{await say('c6_t2')};
   BSTEER=()=>{const nx=rocks.filter(r=>!r.passed).sort((a,b)=>a.z-b.z)[0];if(!nx)return 0;if(TASK.err===0)return nx.x;return nx.x>0?nx.x-2.6:nx.x<0?nx.x+2.6:2.6};
   botTask(async()=>{await bUntil(()=>done,60)});
-  const tick=dt=>{if(done)return;sp.v=Math.min(8,sp.v+dt*4);HERO.vx=HERO.vz=0;HERO.z+=sp.v*dt;HERO.x=clamp(HERO.x-INP.jx*6*dt,-3.6,3.6);HERO.y=0;HERO.gr=true;HERO.yaw=-INP.jx*.25;
+  const tick=dt=>{if(done)return;sp.v=Math.min(8,sp.v+dt*4);HERO.vx=HERO.vz=0;HERO.z+=sp.v*dt;HERO.lx=lerp(HERO.lx||0,-INP.jx*6,1-Math.exp(-dt*6));HERO.x=clamp(HERO.x+HERO.lx*dt,-3.6,3.6);if(Math.abs(HERO.x)>=3.6)HERO.lx*=-.3;HERO.y=0;HERO.gr=true;HERO.yaw=lerp(HERO.yaw,HERO.lx/6*.25,1-Math.exp(-dt*8));
    const c=L.cart;c.position.set(HERO.x,0,HERO.z);c.rotation.y=HERO.yaw;L.cartB.on=false;DANIA.root.position.set(HERO.x,1.66,HERO.z);DANIA.anim='sit';
    for(const w of L.right.concat(L.slots[0].w?[L.slots[0].w.g]:[]))w.children[0].rotation.x+=sp.v*dt*1.5;if(L.slots[0].w)L.slots[0].w.g.position.set(HERO.x-1.15,.6,HERO.z+1);
    KRUG.root.position.set(HERO.x-1.45,0,HERO.z-1);KRUG.root.rotation.y=HERO.yaw;KRUG.anim='sit';

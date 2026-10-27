@@ -19,14 +19,14 @@ async def main():
     for nm,jx,jy in DIRS:
       await pg.evaluate(f'heroAt({SX},{SZ},0);if(TALK)skipTalk();ACT.pend&&(ACT.pend.length=0);INPMODE="play";JOY=null')
       await pg.wait_for_timeout(900)
-      await pg.evaluate(f'JOY={{id:-7,x0:300,y0:500,x:300+({jx})*90,y:500-({jy})*90}};window.MLOG=[];window.MLT=setInterval(()=>MLOG.push([+HERO.x.toFixed(3),+HERO.y.toFixed(3),+HERO.z.toFixed(3),DANIA.fr,DANIA.mir,HERO.gr]),33)')
+      await pg.evaluate(f'JOY={{id:-7,x0:300,y0:500,x:300+({jx})*90,y:500-({jy})*90}};window.MLOG=[];window.MLT=1;(function f(){{if(!window.MLT)return;MLOG.push([+HERO.x.toFixed(3),+HERO.y.toFixed(3),+HERO.z.toFixed(3),DANIA.fr,DANIA.mir,HERO.gr,+T.toFixed(4),+(DANIA.root.position.y-groundAt(HERO.x,HERO.z,HERO.y+.1)).toFixed(3)]);requestAnimationFrame(f)}})()')
       await pg.wait_for_timeout(700);await pg.screenshot(path=f'{OUT}/{nm}.png')
       await pg.evaluate('JOY=null');await pg.wait_for_timeout(500)
-      res[nm]=await pg.evaluate('clearInterval(MLT);MLOG');print(nm,res[nm][len(res[nm])//2],flush=True)
-    await pg.evaluate(f'heroAt({SX},{SZ},0);JOY={{id:-7,x0:300,y0:500,x:300,y:430}};window.MLOG=[];window.MLT=setInterval(()=>MLOG.push([+HERO.x.toFixed(3),+HERO.y.toFixed(3),+HERO.z.toFixed(3),DANIA.fr,DANIA.mir,HERO.gr]),33)')
+      res[nm]=await pg.evaluate('MLT=0;MLOG');print(nm,res[nm][len(res[nm])//2],flush=True)
+    await pg.evaluate(f'heroAt({SX},{SZ},0);JOY={{id:-7,x0:300,y0:500,x:300,y:430}};window.MLOG=[];window.MLT=1;(function f(){{if(!window.MLT)return;MLOG.push([+HERO.x.toFixed(3),+HERO.y.toFixed(3),+HERO.z.toFixed(3),DANIA.fr,DANIA.mir,HERO.gr,+T.toFixed(4),+(DANIA.root.position.y-groundAt(HERO.x,HERO.z,HERO.y+.1)).toFixed(3)]);requestAnimationFrame(f)}})()')
     await pg.wait_for_timeout(500);await pg.evaluate('INP.tapQ=T');
     for k,t in enumerate([120,200,200,250]):
       await pg.wait_for_timeout(t);await pg.screenshot(path=f'{OUT}/jump{k}.png')
-    await pg.wait_for_timeout(600);res['jump']=await pg.evaluate('clearInterval(MLT);JOY=null;MLOG')
+    await pg.wait_for_timeout(600);res['jump']=await pg.evaluate('MLT=0;JOY=null;MLOG')
     json.dump(res,open(f'{OUT}/log.json','w'));print('errors',errs[:5]);await b.close()
 asyncio.run(main())

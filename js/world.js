@@ -49,11 +49,11 @@ function collide(p,r,y){y=y||0;for(const b of BLOCKS){if(!b.on||b.y1<=y+.5||b.y0
 function nogo(x,z){for(const f of NOGO)if(f(x,z))return true;return false}
 // ---- физика (cannon-es) ----
 let PW=null;const SYNC=[];let HB=null;
-function physReset(){PW=new CANNON.World({gravity:new CANNON.Vec3(0,-22,0)});PW.defaultContactMaterial.friction=.35;PW.defaultContactMaterial.restitution=.15;
+function physReset(){PW=new CANNON.World({gravity:new CANNON.Vec3(0,-22,0)});PW.defaultContactMaterial.friction=.35;PW.defaultContactMaterial.restitution=.15;PW.allowSleep=true;
  const gp=new CANNON.Body({mass:0,shape:new CANNON.Plane()});gp.quaternion.setFromEuler(-Math.PI/2,0,0);PW.addBody(gp);
  HB=new CANNON.Body({mass:0,type:CANNON.Body.KINEMATIC,shape:new CANNON.Sphere(.45)});PW.addBody(HB);PW.usePhys=false}
 function physBody(m,shape,mass,x,y,z,o){o=o||{};const b=new CANNON.Body({mass,shape,linearDamping:o.damp==null?.35:o.damp,angularDamping:.6,fixedRotation:!!o.fixed});b.position.set(x,y,z);PW.addBody(b);SYNC.push({m,b});PW.usePhys=true;return b}
-function stepPhys(dt){if(!PW||!PW.usePhys)return;HB.position.set(HERO.x,HERO.y+.5,HERO.z);HB.velocity.set(HERO.vx,0,HERO.vz);PW.step(1/60,dt,3);for(const s of SYNC){s.m.position.copy(s.b.position);s.m.quaternion.copy(s.b.quaternion)}}
+function stepPhys(dt){if(!PW||!PW.usePhys)return;HB.position.set(HERO.x,HERO.y+.5,HERO.z);HB.velocity.set(HERO.vx,0,HERO.vz);PW.step(1/60,dt,3);for(const s of SYNC){s.m.position.copy(s.b.interpolatedPosition);s.m.quaternion.copy(s.b.interpolatedQuaternion)}}
 // ---- частицы и эффекты ----
 const FX=[];
 function burst(p,col,n,sp,size){const g=new THREE.BufferGeometry();const N=n||24,pos=new Float32Array(N*3),vel=[];for(let i=0;i<N;i++){pos[i*3]=p.x;pos[i*3+1]=p.y;pos[i*3+2]=p.z;const a=Math.random()*6.28,b=Math.random()*1.4,v=(sp||4)*(.5+Math.random()*.7);vel.push([Math.cos(a)*Math.cos(b)*v,Math.sin(b)*v+2,Math.sin(a)*Math.cos(b)*v])}
@@ -133,23 +133,41 @@ function heroAt(x,z,yaw){HERO.x=x;HERO.z=z;HERO.y=groundAt(x,z);HERO.vy=0;HERO.v
 function camYawNow(){return Math.atan2(CAMS.tgt.x-CAMS.pos.x,CAMS.tgt.z-CAMS.pos.z)}
 // направление джойстика в мире (относительно камеры) или null
 function joyWorld(){const cy=camYawNow();const fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);const mx=fx*INP.jy+rx*INP.jx,mz=fz*INP.jy+rz*INP.jx;const m=Math.hypot(mx,mz);return m>.3?{x:mx/m,z:mz/m,a:Math.atan2(mx,mz),m}:null}
-function heroStep(dt){const h=HERO;const m=h.model;if(!m)return;
- if(h.mode==='walk'&&!h.lock){const cy=camYawNow();const fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);let mx=fx*INP.jy+rx*INP.jx,mz=fz*INP.jy+rz*INP.jx;const mag=Math.hypot(mx,mz);
-  const tv=h.speed*Math.min(1,mag);const tx=mag>.05?mx/mag*tv:0,tz=mag>.05?mz/mag*tv:0;const k=1-Math.exp(-dt*(h.gr?12:4));h.vx=lerp(h.vx,tx,k);h.vz=lerp(h.vz,tz,k);
-  if(mag>.1){const ty=Math.atan2(mx,mz);let d=ty-h.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));h.yaw+=d*Math.min(1,dt*12)}
-  if(takeTap()&&h.gr){h.vy=7.6;h.gr=false;SFX.jump()}}
- else if(h.lock||h.mode==='still'){h.vx=lerp(h.vx,0,.3);h.vz=lerp(h.vz,0,.3);takeTap()}
- // перемещение + стены
- const p={x:h.x+h.vx*dt,z:h.z+h.vz*dt};if(nogo(p.x,p.z)){if(!nogo(p.x,h.z))p.z=h.z;else if(!nogo(h.x,p.z))p.x=h.x;else{p.x=h.x;p.z=h.z}}
- collide(p,.4,h.y);if(nogo(p.x,p.z)){p.x=h.x;p.z=h.z}
- const g=groundAt(p.x,p.z,h.y);if(g>h.y+.5){p.x=h.x;p.z=h.z}// слишком высоко — стоп
- h.x=p.x;h.z=p.z;
- // вертикаль: прыжок всегда приземляется на опору
- const gg=groundAt(h.x,h.z,h.y);if(!h.gr||h.y>gg+.02){h.gr=false;h.vy-=24*dt;h.y+=h.vy*dt;h.airT+=dt;if(h.y<=gg){h.y=gg;if(h.vy<-3)SFX.land();h.vy=0;h.gr=true;h.airT=0}}else{h.y=gg;h.vy=0;h.gr=true;h.airT=0}
+// ---- контроллер героя: настройки (см. PROGRESS.md «Физика движения») ----
+const MOVE={acc:16,dec:22,turnDec:30,airK:.35,turn:13,dead:.12,jumpV:7.6,g:24,gFall:38,maxFall:18,coyote:.1,buffer:.12,step:.5,stepLerp:18,runPerM:2.1};
+function heroStep(dt){const h=HERO;const m=h.model;if(!m)return;let jumped=false;
+ // fixed timestep для героя: шаги по 1/120 с, рендер получает последнее состояние (без дрожи при скачущем fps)
+ h.acc=(h.acc||0)+dt;const H=1/120;let n=0;while(h.acc>=H&&n<12){heroTick(H);h.acc-=H;n++}if(n>=12)h.acc=0;
  h.sp=Math.hypot(h.vx,h.vz);
  m.root.position.set(h.x,h.y,h.z);m.root.rotation.y=h.yaw;m.hold=INP.hold&&(h.mode==='walk'||h.mode==='still');
  if(h.mode==='walk'||h.mode==='still')m.anim=!h.gr?'air':h.sp>.6?'run':'idle';
+ if(h.landQ){const v=h.landQ;h.landQ=0;if(m)m.sq=Math.min(.16,.06+v*.012);if(v>4&&typeof burst==='function')burst(V3(h.x,h.y+.1,h.z),0xe8dcc0,10,1.6,.25)}
+ if(h.jumpQ){h.jumpQ=0;if(m)m.sq=-.08}
  if(h.mode==='walk'&&!h.lock&&takeSwipe()){m.kickT=T;SFX.kick();h.kickT=T}}
+function heroTick(dt){const h=HERO;
+ if(h.gr)h.coy=MOVE.coyote;else h.coy=Math.max(0,(h.coy||0)-dt);
+ if(INP.tapQ&&T-INP.tapQ<MOVE.buffer+.02&&h.mode==='walk'&&!h.lock){if(h.coy>0&&h.vy<=0){INP.tapQ=0;h.vy=MOVE.jumpV;h.gr=false;h.coy=0;h.jumpQ=1;SFX.jump()}}
+ else if(INP.tapQ&&T-INP.tapQ>=MOVE.buffer+.02&&h.mode==='walk')INP.tapQ=0;
+ if(h.mode==='walk'&&!h.lock){const cy=camYawNow();const fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);let mx=fx*INP.jy+rx*INP.jx,mz=fz*INP.jy+rz*INP.jx;let mag=Math.hypot(mx,mz);
+  const a=mag<MOVE.dead?0:Math.min(1,(mag-MOVE.dead)/(1-MOVE.dead));// мёртвая зона + аналоговая скорость (шаг/бег)
+  const tv=h.speed*a;const tx=a>0?mx/mag*tv:0,tz=a>0?mz/mag*tv:0;
+  let dvx=tx-h.vx,dvz=tz-h.vz;const dl=Math.hypot(dvx,dvz);
+  const opp=h.vx*tx+h.vz*tz<0;let ac=a>0?(opp?MOVE.turnDec:MOVE.acc):MOVE.dec;if(!h.gr)ac*=MOVE.airK;
+  const st=ac*dt*Math.max(1,h.speed*.35);if(dl>st){dvx*=st/dl;dvz*=st/dl}h.vx+=dvx;h.vz+=dvz;
+  if(a>0){const ty=Math.atan2(mx,mz);let d=angW(ty-h.yaw);const mt=MOVE.turn*dt;h.yaw+=clamp(d*Math.min(1,dt*16),-mt,mt)}}
+ else if(h.lock||h.mode==='still'){const k=Math.exp(-dt*20);h.vx*=k;h.vz*=k;if(Math.hypot(h.vx,h.vz)<.02)h.vx=h.vz=0;INP.tapQ=0}
+ // перемещение + скольжение вдоль стен (без залипания)
+ const p={x:h.x+h.vx*dt,z:h.z+h.vz*dt};if(nogo(p.x,p.z)){if(!nogo(p.x,h.z)){p.z=h.z;h.vz*=.5}else if(!nogo(h.x,p.z)){p.x=h.x;h.vx*=.5}else{p.x=h.x;p.z=h.z;h.vx=h.vz=0}}
+ collide(p,.4,h.y);if(nogo(p.x,p.z)){p.x=h.x;p.z=h.z}
+ const g=groundAt(p.x,p.z,h.y,MOVE.step);if(g>h.y+MOVE.step){p.x=h.x;p.z=h.z}
+ if(p.x!==h.x||p.z!==h.z){const ddx=p.x-h.x,ddz=p.z-h.z,want=Math.hypot(h.vx,h.vz)*dt;if(want>1e-4){const got=Math.hypot(ddx,ddz);if(got<want*.98){h.vx=ddx/dt;h.vz=ddz/dt}}}
+ else if(h.vx||h.vz){h.vx=h.vz=0}
+ h.x=p.x;h.z=p.z;
+ // вертикаль: подъём на ступеньку плавно, падение быстрее подъёма, предел скорости падения
+ const gg=groundAt(h.x,h.z,h.y,MOVE.step);
+ if(h.gr&&gg>h.y+.005&&gg<=h.y+MOVE.step){h.y=Math.min(gg,h.y+Math.max(.02,(gg-h.y)*Math.min(1,dt*MOVE.stepLerp)));h.vy=0}
+ else if(!h.gr||h.y>gg+.03){if(h.gr&&h.y-gg<.18){h.y=gg}else{h.gr=false;const gv=h.vy>0?MOVE.g:MOVE.gFall;h.vy=Math.max(-MOVE.maxFall,h.vy-gv*dt);h.y+=h.vy*dt;h.airT+=dt;if(h.y<=gg){h.y=gg;if(h.vy<-3)SFX.land();h.landQ=-h.vy;h.vy=0;h.gr=true;h.airT=0}}}
+ else{h.y=gg;h.vy=0;h.gr=true;h.airT=0}}
 // спутник следует за героем
 function krugStep(dt){const k=KRUG;if(!k)return;const r=k.root.position;let sp=0;
  if(k.mode==='follow'){const fx=Math.sin(HERO.yaw),fz=Math.cos(HERO.yaw);const tx=HERO.x-fx*1.5-fz*1.3,tz=HERO.z-fz*1.5+fx*1.3;const dx=tx-r.x,dz=tz-r.z,d=Math.hypot(dx,dz);
@@ -193,7 +211,12 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
   const h=b.max.y-b.min.y;if(h>.25&&!b.containsPoint(_otg)){
    const dn=b.distanceToPoint(C);if(dn<1.5)want=.15;else if(dn<2.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=.18}
    if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-.9)want=.25}
-  if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}}
+  if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}
+ // персонажи (кроме Дани и говорящего) тают, если оказались у самой камеры или закрывают Даню
+ const tk=typeof TALK!=='undefined'&&TALK&&TALKCH[TALK.who]?TALKCH[TALK.who]():null;
+ for(const c of CHARS){if(c===DANIA||c===tk||!c.root.visible)continue;const p=c.root.position;let want=1;const dn=Math.hypot(p.x-C.x,p.z-C.z);
+  if(dn<2.8)want=.15;else if(!CUT){_ohit.set(p.x,p.y+c.h*.5,p.z);const t=_ohit.clone().sub(C).dot(_oray.direction);if(t>0&&t<L-.8){const q=C.clone().addScaledVector(_oray.direction,t);if(Math.hypot(q.x-p.x,q.z-p.z)<.7)want=.3}}
+  const f0=c.mat.opacity;let f=f0+(want-f0)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==f0){c.mat.opacity=f;c.mat.depthWrite=f>.9}}}
 function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));const ad=Math.abs(d);if(ad<1.25)CAMS.yaw+=d*Math.min(1,dt*1.1*(1-ad/1.25))}// бег вбок не крутит камеру по кругу
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
