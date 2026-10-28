@@ -65,10 +65,12 @@ function snowfall(B){const n=FPS<40?500:1100,pos=new Float32Array(n*3);for(let i
  let t=0;TICK.push(dt=>{t+=dt;for(let i=0;i<n;i++){let y=pos[i*3+1]-dt*(.8+(i%7)*.08);if(y<0)y+=16;pos[i*3+1]=y;pos[i*3]+=Math.sin(t+i)*dt*.15}g.attributes.position.needsUpdate=true})}
 function wrapBuild(i,fn){const b=LEVELS[i].build;LEVELS[i].build=function(){const r=b.apply(this,arguments);try{fn.call(this)}catch(e){console.error(e)}return r}}
 wrapBuild(0,()=>dressCh({ci:0}));
-wrapBuild(1,()=>{dressCh({ci:1,snow:true,stoneC:0xb8c8dc,flowers:false,lampC:0xbfe4ff});const B=BOUNDS;for(let z=B[2]+8;z<B[3];z+=26)for(const sd of[-1,1])snowman(sd<0?B[0]-2.2:B[1]+2.2,z+(sd>0?13:0),sd<0?Math.PI/2:-Math.PI/2);snowfall(B)});
+wrapBuild(1,()=>{dressCh({ci:1,snow:true,stoneC:0xb8c8dc,flowers:false,lampC:0xbfe4ff});const B=BOUNDS;for(let z=B[2]+8;z<B[3];z+=26)for(const sd of[-1,1])snowman(sd<0?B[0]-2.2:B[1]+2.2,z+(sd>0?13:0),sd<0?Math.PI/2:-Math.PI/2);snowfall(B);
+ // фон за местом разговора в начале (камера смотрит на Королеву к -x/-z): заснеженные домики, ёлки, снеговики
+ house(-8.5,-13.5,1.1,0,1);house(-1.5,-15,1,0,2);house(-15,-9.5,1,Math.PI/2,3);for(const h of [[-4.5,-10.5,1.3],[-11.8,-11,1.5],[2.5,-11.5,1.1],[-13.2,-6.5,1.2],[-6.5,-16,1.4]])pine(h[0],h[1],h[2],true);snowman(-6.2,-8.6,.3);snowman(.8,-9.2,-.2);snowman(-12,-4,1.3)});
 wrapBuild(2,()=>dressCh({ci:2,off:9,lamps:false,path:false,flowers:false}));
-wrapBuild(3,()=>dressCh({ci:3}));
-wrapBuild(4,()=>dressCh({ci:4}));
+wrapBuild(3,()=>dressCh({ci:3,flowers:false}));// каменная площадь — без цветов на плитах
+wrapBuild(4,()=>dressCh({ci:4,step:11,off:6.5}));// реже домики
 wrapBuild(5,()=>dressCh({ci:5,off:6}));
 wrapBuild(6,()=>dressCh({ci:0,off:6}));
 // ch4: ульи и пчёлы

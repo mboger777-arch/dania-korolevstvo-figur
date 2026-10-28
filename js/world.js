@@ -221,7 +221,7 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
   u.box.setFromObject(o);const b=u.box;let want=1;
   const h=b.max.y-b.min.y;if(h>.25&&!b.containsPoint(_otg)){
    const dn=b.distanceToPoint(C);if(dn<1.8)want=.15;else if(dn<3.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=.18}
-   if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-.9)want=.25}
+   if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-(CUT?1.5:.9))want=.25}
   if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}
  // персонажи (кроме Дани и говорящего) тают, если оказались у самой камеры или закрывают Даню
  const tk=typeof TALK!=='undefined'&&TALK&&TALKCH[TALK.who]?TALKCH[TALK.who]():null;

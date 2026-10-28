@@ -64,8 +64,8 @@ function forgeDecor(){const gp=WORLD.children.find(o=>o.isMesh&&o.geometry.type=
  bookGate(-8,46.9,7.6,5.4,0x3a5ac8);bookGate(8,46.9,7.6,5.4,0xc83a4a);
  const arch=new THREE.Mesh(new THREE.TorusGeometry(4.2,.35,10,24,Math.PI),M(0xe8b040,{em:0x806000,ei:.3}));arch.position.set(0,5,46.6);arch.userData.decor=1;WORLD.add(arch);
  WORLD.children.forEach(o=>{if(o.isMesh&&Math.abs(o.position.z-10)<.01&&Math.abs(o.scale.y-2.4)<.01&&Math.abs(o.scale.z-.5)<.01&&o.material.color&&o.material.color.getHex()===0x6a4a3a){o.material=M(o.position.x<0?0x2e4aa8:0xa83040);const w=o.scale.x;
-  for(const sx of[-1,1])for(const sy of[0,1])for(const sz of[-1,1]){dm(GEO.box,M(0xffd040,{em:0x806000,ei:.35}),o.position.x+sx*(w/2-.15),sy?2.25:.15,10+sz*.26,null,[.34,.3,.04])}
-  dm(GEO.box,0xfff3d6,o.position.x,1.2,10,null,[w-.3,2.1,.52])}});
+  for(const sx of[-1,1])for(const sy of[0,1])for(const sz of[-1,1]){dm(GEO.box,M(0xffd040,{em:0x806000,ei:.35}),o.position.x+sx*(w/2-.15),sy?2.25:.15,10+sz*.26,null,[.34,.3,.04]).userData.decor=0}
+  dm(GEO.box,0xfff3d6,o.position.x,1.2,10,null,[w-.3,2.1,.52]).userData.decor=0}});// страницы стен тают вместе со стеной
  // пол: тёплые отблески у печей
 }
 {const b2=LEVELS[2].build;LEVELS[2].build=function(){const r=b2.apply(this,arguments);try{forgeDecor()}catch(e){console.error(e)}return r}}
