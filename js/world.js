@@ -170,7 +170,7 @@ function heroTick(dt){const h=HERO;
  else{h.y=gg;h.vy=0;h.gr=true;h.airT=0}}
 // спутник следует за героем
 function krugStep(dt){const k=KRUG;if(!k)return;const r=k.root.position;let sp=0;
- if(k.mode==='follow'){const fx=Math.sin(HERO.yaw),fz=Math.cos(HERO.yaw);const tx=HERO.x-fx*1.5-fz*1.3,tz=HERO.z-fz*1.5+fx*1.3;const dx=tx-r.x,dz=tz-r.z,d=Math.hypot(dx,dz);
+ if(k.mode==='follow'){let fx=HERO.x-CAMS.pos.x,fz=HERO.z-CAMS.pos.z;{const n=Math.hypot(fx,fz);if(n>.3&&CAMS.mode==='follow'&&!CUT){fx/=n;fz/=n}else{fx=Math.sin(HERO.yaw);fz=Math.cos(HERO.yaw)}}const fc=CAMS.mode==='follow'&&!CUT,ks=fc?(((r.x-HERO.x)*fz-(r.z-HERO.z)*fx)>=0?1:-1):-1,kb=fc?.4:1.5,kw=fc?1.6:1.3;const tx=HERO.x-fx*kb+fz*kw*ks,tz=HERO.z-fz*kb-fx*kw*ks;/* сбоку, не между камерой и Даней */const dx=tx-r.x,dz=tz-r.z,d=Math.hypot(dx,dz);
   if(d>14){r.x=tx;r.z=tz}else if(d>.4){sp=Math.min(HERO.speed*1.05,d*2.2);
    // обход: пробуем прямое направление, затем ±35°, ±70°, ±105° (сначала в сторону цели); отталкиваемся от Дани
    let ux=dx/d,uz=dz/d;const hx=r.x-HERO.x,hz=r.z-HERO.z,hd=Math.hypot(hx,hz);if(hd<1.1&&hd>.01){const w=(1.1-hd)*2.2;ux+=hx/hd*w;uz+=hz/hd*w;const n=Math.hypot(ux,uz);ux/=n;uz/=n}
@@ -229,15 +229,21 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
  // персонажи (кроме Дани и говорящего) тают, если оказались у самой камеры или закрывают Даню
  const tk=typeof TALK!=='undefined'&&TALK&&TALKCH[TALK.who]?TALKCH[TALK.who]():null;
  for(const c of CHARS){if(c===DANIA||c===tk||!c.root.visible)continue;const p=c.root.position;let want=1;const dn=Math.hypot(p.x-C.x,p.z-C.z);
-  if(dn<2.8)want=.15;else if(!CUT){_ohit.set(p.x,p.y+c.h*.5,p.z);const t=_ohit.clone().sub(C).dot(_oray.direction);if(t>0&&t<L-.8){const q=C.clone().addScaledVector(_oray.direction,t);if(Math.hypot(q.x-p.x,q.z-p.z)<.7)want=.3}}
+  if(dn<1.5)want=.15;else if(dn<2.3)want=.6;else if(!CUT){_ohit.set(p.x,p.y+c.h*.5,p.z);const t=_ohit.clone().sub(C).dot(_oray.direction);if(t>0&&t<L-.8){const q=C.clone().addScaledVector(_oray.direction,t);if(Math.hypot(q.x-p.x,q.z-p.z)<.55)want=.5}}
   const f0=c.mat.opacity;let f=f0+(want-f0)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==f0){c.mat.opacity=f;c.mat.depthWrite=f>.9}}}
 function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));const ad=Math.abs(d);if(ad<1.25)CAMS.yaw+=d*Math.min(1,dt*1.1*(1-ad/1.25))}// бег вбок не крутит камеру по кругу
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
   const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);if(h.cy==null||Math.abs(h.cy-h.y)>3)h.cy=h.y;h.cy+=(h.y-h.cy)*Math.min(1,dt*(h.y>h.cy?7:12));const hy=h.cy;P=V3(h.x-fx*CAMS.dist,hy+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,hy+CAMS.look,h.z+fz*1.2);
-  if(BOUNDS){const B=BOUNDS,m=.5,mn=2.6;let cx=clamp(P.x,B[0]+m,B[1]-m),cz=clamp(P.z,B[2]+m,B[3]-m);// камера внутри поля (минус отступ): подтягиваем вперёд и поднимаем,
-   if(Math.abs(cx-h.x)<mn&&cx!==P.x)cx=h.x+Math.sign(P.x-h.x)*Math.min(mn,Math.abs(P.x-h.x));if(Math.abs(cz-h.z)<mn&&cz!==P.z)cz=h.z+Math.sign(P.z-h.z)*Math.min(mn,Math.abs(P.z-h.z));// но не ближе 2.6 м к герою
-   const c=Math.hypot(cx-P.x,cz-P.z);if(c>.01){P.x=cx;P.z=cz;P.y+=Math.min(1.6,c*.4);L.lerp(V3(h.x,hy+1,h.z),Math.min(1,c/3))}}
+  if(BOUNDS){const B=BOUNDS,m=.5,mn=2.6,D=Math.hypot(P.x-h.x,P.z-h.z);let cx=clamp(P.x,B[0]+m,B[1]-m),cz=clamp(P.z,B[2]+m,B[3]-m);const zc=cz!==P.z,xc=cx!==P.x;
+   // камера внутри поля (минус отступ): сдвигаем её вдоль края вбок, чтобы остаться позади на прежнем расстоянии, а не задираем вверх
+   if(zc!==xc){if(CAMS.cs==null)CAMS.cs=zc?(Math.abs(P.x-h.x)>.3?Math.sign(P.x-h.x):((B[0]+B[1])/2>h.x?1:-1)):(Math.abs(P.z-h.z)>.3?Math.sign(P.z-h.z):((B[2]+B[3])/2>h.z?1:-1));
+    if(zc){const need=Math.sqrt(Math.max(0,D*D-(cz-h.z)**2));let x=clamp(h.x+CAMS.cs*need,B[0]+m,B[1]-m);if(Math.abs(x-h.x)<need*.6){CAMS.cs=-CAMS.cs;x=clamp(h.x+CAMS.cs*need,B[0]+m,B[1]-m)}cx=x}
+    else{const need=Math.sqrt(Math.max(0,D*D-(cx-h.x)**2));let z=clamp(h.z+CAMS.cs*need,B[2]+m,B[3]-m);if(Math.abs(z-h.z)<need*.6){CAMS.cs=-CAMS.cs;z=clamp(h.z+CAMS.cs*need,B[2]+m,B[3]-m)}cz=z}}
+   else if(!zc&&!xc)CAMS.cs=null;
+   if(Math.hypot(cx-h.x,cz-h.z)<mn){const k=mn/(Math.hypot(P.x-h.x,P.z-h.z)||1);cx=h.x+(P.x-h.x)*k;cz=h.z+(P.z-h.z)*k}// не ближе 2.6 м к герою (тогда чуть за краем)
+   const c=Math.hypot(cx-P.x,cz-P.z);if(c>.01){P.x=cx;P.z=cz;L.lerp(V3(h.x,hy+1.1,h.z),Math.min(1,c/3))}}
+  {const hd=Math.hypot(P.x-L.x,P.z-L.z),my=L.y+Math.tan(.44)*Math.max(hd,1);if(P.y>my)P.y=my}// наклон камеры не круче ~25°
   const gp=groundAt(P.x,P.z)+.6;if(P.y<gp)P.y=gp}
  else{P=CAMS.sp;L=CAMS.sl;const tf=talkFrame();if(tf){P=tf[0];L=tf[1]}}
  const k=CAMS.snap?1:1-Math.exp(-dt*CAMS.k);CAMS.pos.lerp(P,k);CAMS.tgt.lerp(L,k);CAMS.snap=false;CAM.position.copy(CAMS.pos);CAM.lookAt(CAMS.tgt);

@@ -138,3 +138,11 @@
 - popups talk_npc/talk_krug: test-script bug, not a game bug — pg.evaluate awaited the Promise of run(say()) so the snap happened after the line ended. Fixed in tools/popups.py; panels visible (sheets/r9_talkpopups.png).
 - Live check b6 OK (version present, ch6 loads, no errors). The R8 test chain (b5) was lost in the box reset before it finished any chapter.
 - Tests on b6 run one after another with nohup sh /tmp/chain9.sh: FULL 844x390 → 667x375 → 932x430 (TMO 300), then voicecheck VP=800x380. Logs: /tmp/full9_*.log and /tmp/vc_r9.log; status: /tmp/chain9.status. When step15 was written up, the 844 run was still in ch0.
+
+## R10 (setv 20261028b7)
+- Камера follow при упоре в край арены: не поднимается, а скользит вдоль края вбок/вперёд (держит дистанцию до Дани), мин. 2.6 м; наклон ограничен ~25° (tan .44) — небо в кадре (ch6).
+- Кругляш в игре идёт сбоку от Дани относительно камеры (не на линии камера→Даня); в катсценах — прежняя позиция (talkFrame настроен под неё).
+- Мягче фейд персонажей у камеры (.15 только <1.5 м, .6 <2.3 м; на линии — .5).
+- Тесты (b6-цепочка, FULL): 844x390 — ch0..6 ok; 667/932 и voicecheck — см. /tmp/chain9.status (идут последовательно).
+- Листы: sheets/r10_ch0..6.png, r10_popups.png.
+- Остаётся: c1_p0 тёмный кадр перехода; дымка cut0; высокие ящики ch2 на среднем плане (не перекрывают); вариативный прыжок на тач не сделан.
