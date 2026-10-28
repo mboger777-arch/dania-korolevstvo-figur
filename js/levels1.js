@@ -17,7 +17,8 @@ function dotsDecor(n,x0,x1,z0,z1){const cols=[0xffe066,0xff7ab8,0x7fd0ff,0xfffff
 // захват золотой ручки удержанием: hp() — позиция ручки, move(), rel()
 function grabber(o){const st={on:true,g:false,h:goldHandle(),rope:segMesh(V3(0,0,0),V3(0,1,0),.05,0xfff4c0,{op:.9})};st.rope.visible=false;
  TICK.push(dt=>{const p=o.hp();st.h.position.copy(p);st.h.visible=st.on;if(!st.on){st.rope.visible=false;return}
-  if(!st.g&&INP.hold&&!HERO.lock&&hd(p.x,p.z)<1.7){st.g=true;SFX.chalk();o.grab&&o.grab()}
+  if(!st.g&&!HERO.lock&&hd(p.x,p.z)<3.4)aimSet({kind:'grab',x:p.x,y:p.y+.2,z:p.z,r:40,ready:hd(p.x,p.z)<1.9,from:hd(p.x,p.z)<1.9?null:wandPos()});/* кольцо на ручке: «держи здесь» */
+  if(!st.g&&INP.hold&&!HERO.lock&&hd(p.x,p.z)<1.9){st.g=true;SFX.chalk();o.grab&&o.grab()}
   if(st.g){if(INP.hold){o.move(dt);st.rope.visible=true;setSeg(st.rope,wandPos(),o.hp(),.05)}else{st.g=false;st.rope.visible=false;o.rel()}}});return st}
 // дуга угла: центр P, базис u,v, от a1 до a2
 function arcMesh(){const N=28;const g=new THREE.BufferGeometry();const pos=new Float32Array((N+1)*6);g.setAttribute('position',new THREE.BufferAttribute(pos,3));const idx=[];for(let i=0;i<N;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}g.setIndex(idx);

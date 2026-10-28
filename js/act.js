@@ -129,9 +129,9 @@ function chalkDone(pts){const D=ACT.draw;if(!D)return;const r=recogShape(pts);D.
  // фигура появляется на площадке
  const kind=r==='quad'?'square':r;const g=gemMesh(kind);const n=o.made.length;const a=n*2.1;g.position.set(o.x+Math.cos(a)*2.2,baseAt(o.x,o.z)+.6,o.z+Math.sin(a)*2.2);g.scale.setScalar(1.6);o.made.push(g);TICK.push(dt=>{g.rotation.y+=dt})}
 // распознавание: замкнутость, круглость, число углов (упрощение ломаной)
-function recogShape(P){if(!P||P.length<8)return null;let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(L<220)return null;
+function recogShape(P){if(!P||P.length<8)return null;/* сглаживание дрожащего пальца */P=P.map((p,i)=>{const b=P[Math.max(0,i-1)],c=P[Math.min(P.length-1,i+1)];return[(b[0]+2*p[0]+c[0])/4,(b[1]+2*p[1]+c[1])/4]});let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(L<220)return null;
  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const [x,y] of P){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}const dg=Math.hypot(x1-x0,y1-y0);
- const gap=Math.hypot(P[0][0]-P[P.length-1][0],P[0][1]-P[P.length-1][1]);if(gap>Math.max(110,dg*.45))return null;/* магнитное замыкание для детских рук */
+ const gap=Math.hypot(P[0][0]-P[P.length-1][0],P[0][1]-P[P.length-1][1]);if(gap>Math.max(110,dg*.45))return null;/* магнитное замыкание для детских рук */if(gap>4){P=P.concat([[P[0][0],P[0][1]]]);L+=gap}
  // равномерная выборка
  const N=64,Q=[];const step=L/N;let acc=0;Q.push(P[0]);for(let i=1;i<P.length&&Q.length<N;i++){let a=P[i-1],b=P[i];let s=Math.hypot(b[0]-a[0],b[1]-a[1]);while(acc+s>=step&&Q.length<N){const t=(step-acc)/s;const q=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];Q.push(q);a=q;s=Math.hypot(b[0]-a[0],b[1]-a[1]);acc=0}acc+=s}
  const cx=Q.reduce((s,p)=>s+p[0],0)/Q.length,cy=Q.reduce((s,p)=>s+p[1],0)/Q.length;const R=Q.map(p=>Math.hypot(p[0]-cx,p[1]-cy));const mr=R.reduce((a,b)=>a+b,0)/R.length;const sd=Math.sqrt(R.reduce((s,r)=>s+(r-mr)**2,0)/R.length)/mr;
@@ -156,6 +156,9 @@ function drawChalk(){const D=ACT.draw;if(!D)return;const v=vis();X.fillStyle='rg
  const ic=[['circle','ch_circle'],['tri','ch_tri'],['square','ch_quad']];ic.forEach(([k,id],j)=>{const ix=b.x+50,iy=b.y+110+j*90;shapeIcon(k,ix,iy,28,SV.st[id]?GEMCSS[k]:null,SV.st[id]?'#fff':'rgba(255,255,255,.5)')});
  X.lineCap=X.lineJoin='round';const S0=D.pts||((D.res!==undefined&&T-D.resT<1.4)?D.last:null);
  if(S0&&S0.length>1){X.strokeStyle=D.pts?'rgba(255,255,255,.95)':(D.res?'#ffd23a':'rgba(255,140,140,.9)');X.lineWidth=12;X.beginPath();X.moveTo(S0[0][0],S0[0][1]);for(const p of S0)X.lineTo(p[0],p[1]);X.stroke()}
+ if(D.pts&&D.pts.length>3){/* старт светится — «вернись сюда», кончик мела под пальцем */const p0=D.pts[0],pl=D.pts[D.pts.length-1];let ln=0;for(let i=1;i<D.pts.length;i++)ln+=Math.hypot(D.pts[i][0]-D.pts[i-1][0],D.pts[i][1]-D.pts[i-1][1]);const near=ln>220&&Math.hypot(pl[0]-p0[0],pl[1]-p0[1])<110;const pu=.5+.5*Math.sin(T*7);
+  X.save();X.shadowColor='#ffe680';X.shadowBlur=near?30:14;X.fillStyle=near?'#ffd23a':'rgba(255,230,140,.85)';X.beginPath();X.arc(p0[0],p0[1],(near?20:13)+pu*5,0,7);X.fill();if(near){X.strokeStyle='rgba(255,210,60,.8)';X.lineWidth=6;X.setLineDash([10,10]);X.beginPath();X.moveTo(pl[0],pl[1]);X.lineTo(p0[0],p0[1]);X.stroke();X.setLineDash([])}
+  X.shadowBlur=18;X.strokeStyle='rgba(255,255,255,.9)';X.lineWidth=4;X.beginPath();X.arc(pl[0],pl[1],22,0,7);X.stroke();X.restore()}
  if(D.res&&T-D.resT<2){const nm={circle:'Круг!',tri:'Треугольник!',quad:'Четыре угла!'}[D.res];txt(nm,b.x+b.w/2,b.y+b.h-46,56,'#ffd23a',{f:FONT,st:'#1a2a20',lw:8,id:'chalkR'})}
  // рука показывает, как рисовать, пока ребёнок не начал
  if(!D.touched){const u=((T-D.t0)%3)/2.4;if(u<1){const P=chalkPts('tri');const k=Math.min(P.length-1,Math.floor(u*P.length));X.strokeStyle='rgba(255,255,255,.6)';X.lineWidth=10;X.beginPath();X.moveTo(P[0][0],P[0][1]);for(let i=1;i<=k;i++)X.lineTo(P[i][0],P[i][1]);X.stroke();drawHandShape(P[k][0]-10,P[k][1]-4,true)}}

@@ -203,7 +203,7 @@ function drawJoy(){if(INPMODE!=='play'||!(SCN&&SCN.world))return;X.save();
  X.globalAlpha=Math.min(1,a+.3);X.fillStyle='#ffd23a';X.beginPath();X.arc(kx,ky,40,0,7);X.fill();X.lineWidth=5;X.strokeStyle='#7a4a00';X.stroke();X.restore()}
 function drawHand(){if(!HINT.g||INPMODE!=='play')return;const idle=T-INP.last;let ph=-1;
  if(T-HINT.shownT<3.2)ph=(T-HINT.shownT);else if(idle>5){ph=(idle-5)%4.5;if(ph>3.2)ph=-1}
- if(ph<0)return;const v=vis();const g=HINT.g;const lx=safeL()+190,ly=safeB()-150,rx=safeR()-210,ry=safeB()-170;
+ if(ph<0)return;const v=vis();const g=HINT.g;if((g==='kick'||g==='swipe')&&typeof aimLive==='function'&&aimLive()&&AIM.t.fire)return;/* у цели своё кольцо с рукой */const lx=safeL()+190,ly=safeB()-150,rx=safeR()-210,ry=safeB()-170;
  let hx,hy,press=false,a=Math.min(1,ph*3,(3.2-ph)*3);X.save();X.globalAlpha=a;
  if(g==='move'){const u=ph*2.2;hx=lx+Math.sin(u)*70;hy=ly-Math.abs(Math.cos(u))*60;press=true;ring(lx,ly,95,'rgba(255,255,255,.35)');}
  else if(g==='tap'){hx=rx;hy=ry;press=(ph%1)<.25;if(press)ring(rx,ry,40+((ph%1)*200),'rgba(255,240,120,.8)')}

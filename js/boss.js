@@ -13,7 +13,7 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
  async play(){const L=this,KV=KRIV;
   await cutscene(async()=>{shot(3.5,2.6,5,0,1.8,11,2.2);KV.F.mood='angry';await say('b_s');followCam()});
   // ---- фаза 1: отбивай клубки ----
-  newTask('Отбей комок: проведи пальцем','kick');run(()=>say('b_t1'));
+  newTask('Отбей комок: нажми на кольцо','kick');run(()=>say('b_t1'));
   const ball=mesh(GEO.sph,new THREE.MeshLambertMaterial({map:TEX.yarn,color:0xc080ff}),0,-5,0,null,.5);
   const B={st:'wait',t:T+2.5,lk:HERO.kickT||0};let hits=0;
   TASK.help=async()=>{await say('b_t1')};
