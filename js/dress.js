@@ -81,3 +81,19 @@ function hiveDecor(){const B=BOUNDS,lowQ=FPS<40;const H=[[B[0]-3.2,B[3]-4,1.3],[
  H.forEach(h=>hive(h[0],h[1],h[2]));const bees=[];H.forEach((h,hi)=>{for(let i=0;i<(lowQ?2:4);i++){const b=bee();bees.push({b,h,r:rnd(1.4,2.6),a:rnd(0,6),sp:rnd(.8,1.4)*(i%2?1:-1),y:rnd(1,2.4)*h[2],ph:rnd(0,6)})}});
  let t=0;TICK.push(dt=>{t+=dt;for(const o of bees){o.a+=dt*o.sp;const x=o.h[0]+Math.cos(o.a)*o.r,z=o.h[1]+Math.sin(o.a)*o.r*.8;o.b.position.set(x,baseAt(o.h[0],o.h[1])+o.y+Math.sin(t*3+o.ph)*.25,z);o.b.rotation.y=-o.a+(o.sp>0?Math.PI:0);for(const w of o.b.userData.w)w.rotation.z=Math.sin(t*40+o.ph)*.6}})}
 wrapBuild(4,hiveDecor);
+// ch5: убранство дороги — разметка, бордюры, забор по краю, знаки-фигуры, тюки сена
+TEX.hay=cvTex(64,64,(x,w,h)=>{x.fillStyle='#e8c25a';x.fillRect(0,0,w,h);for(let i=0;i<120;i++){x.strokeStyle=['#c99a35','#f6dc84','#b88a2a'][i%3];x.lineWidth=1.2;const a=rnd(0,w),b=rnd(0,h);x.beginPath();x.moveTo(a,b);x.lineTo(a+rnd(-6,6),b+rnd(4,10));x.stroke()}},0);
+function roadSign(x,z,k,a){const g=dGroup(x,z,a);g.position.y=baseAt(x,z);dm(GEO.cylL,0x8a8a96,0,1.1,0,g,[.06,2.2,.06]);
+ const cv=document.createElement('canvas');cv.width=cv.height=128;const c=cv.getContext('2d');c.fillStyle='#fff';c.strokeStyle=['#e03a3a','#2a6ad8','#2a9a4a'][k];c.lineWidth=14;c.beginPath();
+ if(k===0){c.moveTo(64,10);c.lineTo(120,112);c.lineTo(8,112);c.closePath()}else if(k===1)c.arc(64,64,54,0,7);else c.rect(12,12,104,104);c.fill();c.stroke();
+ c.fillStyle='#333';c.font='bold 54px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(['!','→','P'][k],64,k===0?78:66);
+ const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(.9,.9),new THREE.MeshLambertMaterial({map:t,transparent:true,side:THREE.DoubleSide,alphaTest:.5}));m.position.set(0,2.2,.05);m.userData.decor=1;g.add(m);return g}
+function roadDecor(){const B=BOUNDS,lowQ=FPS<40,dash=[],kerb=[],post=[],rail=[],hay=[];
+ for(let z=B[2];z<B[3]+6;z+=3)dash.push([0,.03,z,[.18,.02,1.4]]);
+ for(const s of[-1,1])for(let z=B[2]-2;z<B[3]+6;z+=1.1)kerb.push([s*4.6,.06,z,[.25,.12,1.0]]);
+ for(const s of[-1,1])for(let z=B[2]-2;z<B[3]+6;z+=2.4){if(((z/2.4)|0)%9===4)continue;post.push([s*8.9,.6,z,[.12,1.2,.12]]);for(const y of[.45,.95])rail.push([s*8.9,y,z+1.2,[.06,.1,2.4]])}
+ for(let z=16;z<B[3];z+=lowQ?24:13){const s=((z/13)|0)%2?1:-1;hay.push([s*rnd(6.4,7.6),.45,z,[.55,.9,.55]]);hay.push([s*rnd(6.4,7.6),.45,z+1.25,[.55,.9,.55]])}
+ inst(GEO.box,M(0xffffff),dash);inst(GEO.box,M(0xbfb4a0),kerb);inst(GEO.box,M(0x9a6a3a),post);inst(GEO.box,M(0xb07a44),rail);
+ const hm=inst(GEO.cyl,new THREE.MeshLambertMaterial({map:TEX.hay}),hay);if(hm){const m4=new THREE.Matrix4(),r=new THREE.Matrix4().makeRotationZ(Math.PI/2);for(let i=0;i<hay.length;i++){hm.getMatrixAt(i,m4);m4.multiply(r);hm.setMatrixAt(i,m4)}hm.instanceMatrix.needsUpdate=true}
+ for(let z=20,k=0;z<B[3];z+=lowQ?40:22,k++)roadSign(k%2?5.6:-5.6,z,k%3,k%2?-.3:.3)}
+wrapBuild(5,roadDecor);
