@@ -40,3 +40,34 @@ function house(x,z,s,ang,ci,solid){s=s||1;ci=ci==null?Math.floor(Math.random()*6
  // козырёк над дверью
  for(const zz of[1,-1])mesh(ROOFG,hMat(TEX.roof,HC[(ci+2)%6]),0,1.5*s,zz*1.1*s,g,[.36*s,.3*s,.12*s]);
  WORLD.add(g);if(solid!==false)block(x,z,1.05*s,1.05*s,4*s,ang||0);return g}
+// снежная шапка на крыше
+function snowCap(g,s){const c=mesh(ROOFG,M(0xfbfdff),0,2.06*s+.4*1.05*s,0,g,[.64*s,.64*s,1.06*s]);c.rotation.y=Math.PI/2;c.userData.decor=1}
+// инстансы: камни дорожки, цветы, кусты, сугробы
+function inst(geo,mat,list,fn){if(!list.length)return null;const im=new THREE.InstancedMesh(geo,mat,list.length);const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),p=V3(0,0,0),sc=V3(1,1,1),col=new THREE.Color();
+ list.forEach((o,i)=>{p.set(o[0],baseAt(o[0],o[2])+o[1],o[2]);e.set(0,o[4]||0,0);q.setFromEuler(e);const s=o[3];if(Array.isArray(s))sc.set(s[0],s[1],s[2]);else sc.setScalar(s);m4.compose(p,q,sc);im.setMatrixAt(i,m4);if(o[5]!=null){col.set(o[5]);im.setColorAt(i,col)}});
+ im.userData.decor=1;im.frustumCulled=false;WORLD.add(im);return im}
+const FLC=[0xff5a8a,0xffe14a,0xffffff,0xb07cff,0xff8a3a,0x5ad0ff];
+// убранство главы по краям BOUNDS: домики, фонари, дорожки, цветы, кусты
+function dressCh(o){o=o||{};const B=BOUNDS;if(!B)return;const lowQ=FPS<40,len=B[3]-B[2],step=Math.max(o.step||7,len/(lowQ?6:11)),off=o.off||5;
+ let ci=o.ci||0;const st=[],fl=[],bu=[],dr=[];
+ for(let z=B[2]+2;z<=B[3]+2;z+=step)for(const sd of[-1,1]){const x=(sd<0?B[0]-off:B[1]+off)+sd*rnd(0,1.2),zz=z+rnd(-1,1)+(sd>0?step/2:0);if(o.skip&&o.skip(x,zz))continue;
+  const h=house(x,zz,o.s||rnd(.9,1.15),sd<0?Math.PI/2:-Math.PI/2,(ci++)%6,false);h.traverse(m=>m.userData.decor=1);if(o.snow)snowCap(h,h.children[1].scale.y/1.9);
+  if(o.lamps!==false&&!(o.skip&&o.skip(sd<0?B[0]-1.4:B[1]+1.4,z)))lamp(sd<0?B[0]-1.4:B[1]+1.4,z+step*.25,o.lampC);
+  for(let k=0;k<3;k++){const bx=x-sd*rnd(1.6,2.4),bz=zz+rnd(-2.6,2.6);if(o.snow)dr.push([bx,0,bz,[rnd(.6,1.2),rnd(.25,.45),rnd(.6,1.1)],rnd(0,3)]);else bu.push([bx,.3,bz,rnd(.45,.75),0,[0x4fa84a,0x3f9a3a,0x5cb85a][k]])}}
+ if(o.path!==false)for(const sd of[-1,1])for(let z=B[2];z<=B[3];z+=1.15){const x=(sd<0?B[0]-2.6:B[1]+2.6)+Math.sin(z*.7)*.25;if(o.skip&&o.skip(x,z))continue;st.push([x,.03,z,[rnd(.36,.48),.05,rnd(.28,.36)],rnd(0,3)])}
+ if(!o.snow&&o.flowers!==false)for(let i=0;i<(lowQ?120:260);i++){const sd=i%2?1:-1,x=(sd<0?B[0]:B[1])+sd*rnd(-.3,3.2),z=rnd(B[2]-2,B[3]+3);if(o.skip&&o.skip(x,z))continue;fl.push([x,.16,z,rnd(.09,.14),0,FLC[i%6]])}
+ inst(GEO.cylL,M(o.stoneC||0xcfc4b0),st);inst(GEO.sphL,M(0xffffff),fl);inst(GEO.sphL,M(0xffffff),bu);inst(GEO.sphL,M(0xf6faff),dr)}
+function snowman(x,z,a){const g=dGroup(x,z,a);g.position.y=baseAt(x,z);for(const[y,r]of[[.45,.5],[1.15,.36],[1.68,.26]])dm(GEO.sph,0xfbfdff,0,y,0,g,r);
+ dm(GEO.cone,0xff8a2a,0,1.68,.32,g,[.06,.3,.06]).rotation.x=Math.PI/2;for(const s of[-1,1])dm(GEO.sphL,0x2a2a33,s*.1,1.76,.22,g,.04);for(const y of[1.05,1.25])dm(GEO.sphL,0x2a2a33,0,y,.35,g,.045);
+ dm(GEO.cylL,0x3a3a48,0,1.98,0,g,[.2,.3,.2]);dm(GEO.cylL,0x3a3a48,0,1.84,0,g,[.3,.04,.3]);dm(GEO.box,0xe05a5a,0,1.42,0,g,[.6,.1,.5]);return g}
+function snowfall(B){const n=FPS<40?500:1100,pos=new Float32Array(n*3);for(let i=0;i<n;i++){pos[i*3]=rnd(B[0]-14,B[1]+14);pos[i*3+1]=rnd(0,16);pos[i*3+2]=rnd(B[2]-6,B[3]+10)}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));const p=new THREE.Points(g,new THREE.PointsMaterial({map:TEX.dot,size:.16,transparent:true,depthWrite:false,color:0xffffff}));p.userData.decor=1;p.frustumCulled=false;WORLD.add(p);
+ let t=0;TICK.push(dt=>{t+=dt;for(let i=0;i<n;i++){let y=pos[i*3+1]-dt*(.8+(i%7)*.08);if(y<0)y+=16;pos[i*3+1]=y;pos[i*3]+=Math.sin(t+i)*dt*.15}g.attributes.position.needsUpdate=true})}
+function wrapBuild(i,fn){const b=LEVELS[i].build;LEVELS[i].build=function(){const r=b.apply(this,arguments);try{fn.call(this)}catch(e){console.error(e)}return r}}
+wrapBuild(0,()=>dressCh({ci:0}));
+wrapBuild(1,()=>{dressCh({ci:1,snow:true,stoneC:0xb8c8dc,flowers:false,lampC:0xbfe4ff});const B=BOUNDS;for(let z=B[2]+8;z<B[3];z+=26)for(const sd of[-1,1])snowman(sd<0?B[0]-2.2:B[1]+2.2,z+(sd>0?13:0),sd<0?Math.PI/2:-Math.PI/2);snowfall(B)});
+wrapBuild(2,()=>dressCh({ci:2,off:9,lamps:false,path:false,flowers:false}));
+wrapBuild(3,()=>dressCh({ci:3}));
+wrapBuild(4,()=>dressCh({ci:4}));
+wrapBuild(5,()=>dressCh({ci:5,off:6}));
+wrapBuild(6,()=>dressCh({ci:0,off:6}));
