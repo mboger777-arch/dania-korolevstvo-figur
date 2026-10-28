@@ -53,7 +53,7 @@ function chalkMesh(x,z){const g=new THREE.Group();g.position.set(x,groundAt(x,z)
  const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;const m=mesh(new THREE.CircleGeometry(1.5,40),new THREE.MeshBasicMaterial({map:tx}),0,.03,0,g);m.rotation.x=-Math.PI/2;
  const ch=mesh(GEO.cylL,M(0xffffff,{em:0xffffff,ei:.3}),1.1,.6,-1.1,g,[.08,.5,.08]);ch.rotation.z=.6;label3D('Мел','#fff',.5,{p:g,st:'#2a1050'}).position.set(0,1.9,0);WORLD.add(g);return g}
 
-function actSetup(i){ACT.on=false;ACT.items=[];ACT.gems=[];ACT.ci=i;ACT.pend=[];ACT.draw=null;ACT.tour=new Set();const C=ACTS[i];if(!C)return;ACT.on=true;
+function actSetup(i){ACT.on=false;ACT.items=[];ACT.gems=[];ACT.ci=i;ACT.pend=[];ACT.draw=null;ACT.nearChalk=null;ACT.tour=new Set();const C=ACTS[i];if(!C)return;ACT.on=true;
  const sh=(x,z)=>{let ok=!nogo(x,z);for(const b of BLOCKS)if(b.on&&inBlock(b,x,z,.3))ok=false;for(const c of CYLS)if(c.on&&Math.hypot(x-c.x,z-c.z)<c.r+.3)ok=false;if(!ok)console.warn('act blocked',i,x,z);return ok};
  const mkGem=(x,z,kind,y)=>{const b=baseAt(x,z);const g=gemMesh(kind);const gy=y!=null?b+y:b+1.0;g.position.set(x,gy,z);const s=gemShadow(x,b,z,GEMCOL[kind]);const o={k:'gem',x,z,y:gy,kind,g,s,got:false,ph:Math.random()*6};ACT.gems.push(o);ACT.items.push(o);return o};
  for(const [x,z,k] of C.gems)mkGem(x,z,k);
