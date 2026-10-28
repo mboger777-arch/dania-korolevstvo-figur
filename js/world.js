@@ -197,9 +197,9 @@ function talkFrame(){if(typeof CUT==='undefined'||!CUT||!TALK||CAMS.wide)return 
  const p=c.root.position,hh=c.h,D=clamp(hh*2.1,3.6,6.4);let vx=CAMS.sl.x-CAMS.sp.x,vz=CAMS.sl.z-CAMS.sp.z;const n=Math.hypot(vx,vz)||1;vx/=n;vz/=n;
  const fy=c.vyaw!=null?c.vyaw:c.root.rotation.y,fx=Math.sin(fy),fz=Math.cos(fy);if(-(vx*fx+vz*fz)<.35){const a=fy+Math.PI+.35;vx=Math.sin(a);vz=Math.cos(a)}
  // соседи (Королева/Кругляш/Даня рядом) — держим в кадре целиком: центр между говорящим и ними, камера чуть дальше
- let mx=p.x,mz=p.z,nn=1,sp=0;for(const o of [QUEEN,KRUG,DANIA]){if(!o||o===c||!o.root.visible||!o.root.parent)continue;const q=o.root.position,d=Math.hypot(q.x-p.x,q.z-p.z);if(d>4.2)continue;mx+=q.x*.6;mz+=q.z*.6;nn+=.6;const lat=Math.abs((q.x-p.x)*vz-(q.z-p.z)*vx);sp=Math.max(sp,lat)}
- mx/=nn;mz/=nn;const D2=D+Math.max(0,sp-1.2)*1.1;
- return[V3(mx-vx*D2,p.y+hh*.75+.5,mz-vz*D2),V3(mx+vx*.6,p.y+hh*.62,mz+vz*.6)]}
+ let mx=p.x,mz=p.z,nn=1,sp=0,hm=hh;for(const o of [QUEEN,KRUG,DANIA]){if(!o||o===c||!o.root.visible||!o.root.parent)continue;const q=o.root.position,d=Math.hypot(q.x-p.x,q.z-p.z);if(d>4.2)continue;mx+=q.x*.6;mz+=q.z*.6;nn+=.6;hm=Math.max(hm,o.h||0);const lat=Math.abs((q.x-p.x)*vz-(q.z-p.z)*vx);sp=Math.max(sp,lat)}
+ mx/=nn;mz/=nn;const H2=Math.max(hh,hm*.85),D2=clamp(H2*2.1,3.6,6.4)+Math.max(0,sp-1.2)*1.1;// рядом высокий сосед (Даня у Кругляша) — кадр по его росту, голова не режется
+ return[V3(mx-vx*D2,p.y+H2*.75+.5,mz-vz*D2),V3(mx+vx*.6,p.y+H2*.62,mz+vz*.6)]}
 function followCam(){CAMS.mode='follow';CAMS.k=5}
 // ---- прозрачность препятствий: всё, что между камерой и героем или ближе ~1.5 м к камере, тает (любого размера) ----
 const _cf=new THREE.Vector3(),_ob=new THREE.Box3(),_os=new THREE.Sphere(),_oray=new THREE.Ray(),_ohit=new THREE.Vector3(),_otg=new THREE.Vector3();
