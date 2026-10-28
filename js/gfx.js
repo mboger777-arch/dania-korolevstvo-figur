@@ -83,14 +83,14 @@ function roundBoxGeo(sx,sy,sz){const r=Math.min(.07,.2*Math.min(sx,sy,sz));const
 function rockGeo(){const g=new THREE.IcosahedronGeometry(1,2);const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const f=1+.18*Math.sin(x*3.1+z*2.3)+.12*Math.sin(y*4.7+x*1.9);p.setXYZ(i,x*f,Math.max(-.2,y*f*.7),z*f)}g.computeVertexNormals();return g}
 function gfxProps(ok,x0,x1,z0,z1,lowQ){const B=BOUNDS||[-14,14,-6,30];
  const nR=lowQ?24:50,rm=new THREE.InstancedMesh(rockGeo(),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95,metalness:0}),nR);const RC=[0x9a9aa6,0x8c8478,0xb0aca0,0x7d8590].map(c=>new THREE.Color(c));let i=0,t=0;
- while(i<nR&&t<nR*20){t++;const x=x0+Math.random()*(x1-x0),z=z0+Math.random()*(z1-z0);const edge=Math.min(Math.abs(x-B[0]),Math.abs(x-B[1]),Math.abs(z-B[2]),Math.abs(z-B[3]));if(edge>3.5&&Math.random()<.8)continue;if(!ok(x,z))continue;
+ while(i<nR&&t<nR*20){t++;const x=x0+Math.random()*(x1-x0),z=z0+Math.random()*(z1-z0);const edge=Math.min(Math.abs(x-B[0]),Math.abs(x-B[1]),Math.abs(z-B[2]),Math.abs(z-B[3]));if(edge>3.5&&Math.random()<.8)continue;if(z<B[2]+.5)continue;// не за задним краем: там камераif(!ok(x,z))continue;
   const s=.12+Math.random()*Math.random()*.45;_ge.set(rnd(-.3,.3),Math.random()*6.28,rnd(-.3,.3));_gq.setFromEuler(_ge);_gs.set(s*rnd(.8,1.4),s,s*rnd(.8,1.3));_gm.compose(_gp.set(x,baseAt(x,z)+s*.15,z),_gq,_gs);rm.setMatrixAt(i,_gm);rm.setColorAt(i++,RC[(Math.random()*4)|0])}
  rm.count=i;rm.userData.decor=1;rm.frustumCulled=false;WORLD.add(rm);
  // заборчик из кольев с двумя жердями, только там, где свободно
  const posts=[],rails=[];const wood=new THREE.MeshStandardMaterial({color:0xb07a46,roughness:.85});const fx0=B[0]-1.2,fx1=B[1]+1.2,fz0=B[2]-1.2,fz1=B[3]+1.2;
  const side=(ax,az,bx,bz)=>{const L=Math.hypot(bx-ax,bz-az),n=Math.max(2,Math.round(L/1.6));let prev=null;for(let k=0;k<=n;k++){const x=ax+(bx-ax)*k/n,z=az+(bz-az)*k/n;const f=ok(x,z);if(f)posts.push([x,z]);if(f&&prev)rails.push([prev[0],prev[1],x,z]);prev=f?[x,z]:null}};
- side(fx0,fz0,fx1,fz0);side(fx1,fz0,fx1,fz1);side(fx1,fz1,fx0,fz1);side(fx0,fz1,fx0,fz0);
+ side(fx1,fz0+2.5,fx1,fz1);side(fx1,fz1,fx0,fz1);side(fx0,fz1,fx0,fz0+2.5);// без задней стороны: там камера
  const pg=new THREE.CylinderGeometry(.06,.07,.9,7);pg.translate(0,.45,0);const cap=new THREE.ConeGeometry(.085,.14,7);cap.translate(0,.97,0);
  const pm=new THREE.InstancedMesh(pg,wood,posts.length),cm=new THREE.InstancedMesh(cap,wood,posts.length);posts.forEach(([x,z],k)=>{_gm.makeTranslation(x,baseAt(x,z),z);pm.setMatrixAt(k,_gm);cm.setMatrixAt(k,_gm)});
- const rg=roundBoxGeo(1,.07,.05),rl=new THREE.InstancedMesh(rg,wood,rails.length*2);rails.forEach(([ax,az,bx,bz],k)=>{const L=Math.hypot(bx-ax,bz-az);_ge.set(0,-Math.atan2(bz-az,bx-ax),0);_gq.setFromEuler(_ge);for(const h of [0,1]){_gs.set(L,1,1);_gm.compose(_gp.set((ax+bx)/2,baseAt(ax,az)+.35+h*.32,(az+bz)/2),_gq,_gs);rl.setMatrixAt(k*2+h,_gm)}});
+ const rg=roundBoxGeo(1,.07,.05),rl=new THREE.InstancedMesh(rg,wood,rails.length*2);rails.forEach(([ax,az,bx,bz],k)=>{const L=Math.hypot(bx-ax,bz-az);_ge.set(0,-Math.atan2(bz-az,bx-ax),0);_gq.setFromEuler(_ge);for(const h of [0,1]){_gs.set(L,.07,.05);_gm.compose(_gp.set((ax+bx)/2,baseAt(ax,az)+.35+h*.32,(az+bz)/2),_gq,_gs);rl.setMatrixAt(k*2+h,_gm)}});
  for(const o of [pm,cm,rl]){o.userData.decor=1;o.frustumCulled=false;WORLD.add(o)}}

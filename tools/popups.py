@@ -21,8 +21,8 @@ async def main():
       await pg.wait_for_timeout(600)
       if await pg.evaluate('(()=>{if(TALK)skipTalk();return scene==="ch"&&!CUT&&!TALK&&HERO.mode!=="cut"&&GOAL&&T>4})()'):break
     await snap('goal',1500)
-    await ev('run(()=>say("n_tri_ask"))');await snap('talk_npc',900)
-    await ev('stopTalk();run(()=>say("u_move"))');await snap('talk_krug',900)
+    await ev('(run(()=>say("n_tri_ask")),0)');await snap('talk_npc',900)  # не ждать промис реплики
+    await ev('stopTalk();void run(()=>say("u_move"))');await snap('talk_krug',900)
     await ev('stopTalk();ACT.pop={id:STK[0][0],t0:T}');await snap('sticker',700)
     await ev('ACT.pop=null;const o=ACT.items.find(o=>o.k==="chalk");chalkOpen(o)');await snap('chalk',1500)
     await ev('chalkClose()');await snap('_',300)

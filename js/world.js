@@ -235,6 +235,9 @@ function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));const ad=Math.abs(d);if(ad<1.25)CAMS.yaw+=d*Math.min(1,dt*1.1*(1-ad/1.25))}// бег вбок не крутит камеру по кругу
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
   const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);if(h.cy==null||Math.abs(h.cy-h.y)>3)h.cy=h.y;h.cy+=(h.y-h.cy)*Math.min(1,dt*(h.y>h.cy?7:12));const hy=h.cy;P=V3(h.x-fx*CAMS.dist,hy+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,hy+CAMS.look,h.z+fz*1.2);
+  if(BOUNDS){const B=BOUNDS,m=.5,mn=2.6;let cx=clamp(P.x,B[0]+m,B[1]-m),cz=clamp(P.z,B[2]+m,B[3]-m);// камера внутри поля (минус отступ): подтягиваем вперёд и поднимаем,
+   if(Math.abs(cx-h.x)<mn&&cx!==P.x)cx=h.x+Math.sign(P.x-h.x)*Math.min(mn,Math.abs(P.x-h.x));if(Math.abs(cz-h.z)<mn&&cz!==P.z)cz=h.z+Math.sign(P.z-h.z)*Math.min(mn,Math.abs(P.z-h.z));// но не ближе 2.6 м к герою
+   const c=Math.hypot(cx-P.x,cz-P.z);if(c>.01){P.x=cx;P.z=cz;P.y+=Math.min(1.6,c*.4);L.lerp(V3(h.x,hy+1,h.z),Math.min(1,c/3))}}
   const gp=groundAt(P.x,P.z)+.6;if(P.y<gp)P.y=gp}
  else{P=CAMS.sp;L=CAMS.sl;const tf=talkFrame();if(tf){P=tf[0];L=tf[1]}}
  const k=CAMS.snap?1:1-Math.exp(-dt*CAMS.k);CAMS.pos.lerp(P,k);CAMS.tgt.lerp(L,k);CAMS.snap=false;CAM.position.copy(CAMS.pos);CAM.lookAt(CAMS.tgt);
