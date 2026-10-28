@@ -5,7 +5,7 @@ function wavyTube(a,b,amp,col){const pts=[];const dx=b.x-a.x,dz=b.z-a.z,l=Math.h
 LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);hills(0x9bc86a);BOUNDS=[-10.5,10.5,-3,21.5];
  // двор замка: стены по кругу, башни с флажками
  const wm=new THREE.MeshLambertMaterial({map:TEX.stone,color:0xe8dcc6});
- for(const [x,z,w,d,h] of [[0,23.5,24,1,3.4],[-12.5,10,1,28,1.4],[12.5,10,1,28,1.4]]){const m=mesh(GEO.box,0xe8dcc6,x,h/2,z,null,[w,h,d]);m.material=wm}
+ for(const [x,z,w,d,h] of [[0,23.5,24,1,3.4],[-12.5,10,1,28,.8],[12.5,10,1,28,.8]]){const m=mesh(GEO.box,0xe8dcc6,x,h/2,z,null,[w,h,d]);m.material=wm}
  for(const [x,z] of [[-12.5,23.5],[12.5,23.5],[-12.5,-4],[12.5,-4]]){mesh(GEO.cyl,0xd8cbb2,x,2.6,z,null,[1.5,5.2,1.5]);mesh(GEO.cone,0x7a4ad8,x,6.1,z,null,[1.8,1.9,1.8]);mesh(GEO.box,[0xff5a6a,0xffd23a,0x3d8fe8,0x3fbf63][(x>0)+(z>0)*2],x+.45,7.3,z,null,[.8,.5,.04])}
  for(let i=0;i<14;i++)mesh(GEO.box,0xd8cbb2,-11.5+i*1.77,3.75,23.5,null,[.9,.7,1.1]);
  flowers(40,-10,10,-2,21);
