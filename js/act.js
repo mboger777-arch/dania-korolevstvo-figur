@@ -166,7 +166,14 @@ function actDraw(){if(!ACT.on)return;drawChalk();
 function drawConf(){const dt=DT;ACT.conf=ACT.conf.filter(c=>T-c.t0<3.5);for(const c of ACT.conf){c.x+=c.vx*dt;c.y+=c.vy*dt;c.r+=c.vr*dt;X.save();X.translate(c.x,c.y);X.rotate(c.r);X.fillStyle=c.c;X.fillRect(-8,-5,16,10);X.restore()}
  const P=ACT.pop;if(P){const u=T-P.t0;if(u>3){ACT.pop=null}else{const k=u<.3?ease(u/.3):u>2.6?(3-u)/.4:1;const v=vis();X.save();X.globalAlpha=Math.max(0,Math.min(1,k));const cx=v.x0+v.w/2,cy=v.y0+v.h*.58;X.translate(cx,cy);X.scale(k,k);
   rays(0,20,260,'#fff3b0',.5);panel(-190,-120,380,240,{fill:'rgba(255,250,236,.97)',st:'#ffb52e',lw:7,r:30});ribbon('Новая наклейка!',0,-118,330,'#d23a6a',36);X.save();X.translate(0,24);X.rotate(Math.sin(T*3)*.06);drawSticker(P.id,0,0,66,true);X.restore();X.restore()}}}
-function drawSticker(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s)return;const ic=s[1];X.save();X.translate(x,y);X.beginPath();X.arc(0,0,r,0,7);X.fillStyle=own?'#fff6d8':'rgba(120,110,150,.25)';X.fill();X.lineWidth=r*.09;X.strokeStyle=own?'#ffb52e':'rgba(120,110,150,.5)';X.setLineDash(own?[]:[8,8]);X.stroke();X.setLineDash([]);
+const STKC={circle:['#ffe27a','#ff9a3a'],tri:['#bfe8ff','#3a8ee0'],square:['#ffd0e0','#e0508a'],pent:['#d8ffc0','#4ab04a'],hex:['#f0d8ff','#8a4ad0'],star:['#fff4a0','#f0b020'],ball:['#c8f0ff','#2a9ad0'],cup:['#fff0c0','#e09a20'],spring:['#d0fff0','#20b090'],scrib:['#ffe0f8','#c050b0'],house:['#d8f0ff','#5a90e0'],tower:['#ffe8c8','#d07a30']};
+function stkBase(r,own,ic){const c=STKC[ic]||['#fff6d8','#ffb52e'];
+ if(own){X.save();X.shadowColor='rgba(40,20,60,.45)';X.shadowBlur=r*.18;X.shadowOffsetY=r*.07;X.beginPath();X.arc(0,0,r*1.06,0,7);X.fillStyle='#ffffff';X.fill();X.restore();
+  const g=X.createRadialGradient(-r*.3,-r*.35,r*.1,0,0,r);g.addColorStop(0,c[0]);g.addColorStop(1,c[1]);X.beginPath();X.arc(0,0,r*.9,0,7);X.fillStyle=g;X.fill();
+  X.save();X.globalAlpha=.25;X.fillStyle='#fff';for(let i=0;i<8;i++){const a=i/8*6.283;X.beginPath();X.moveTo(0,0);X.arc(0,0,r*.9,a,a+.22);X.fill()}X.restore();
+  X.fillStyle='rgba(255,255,255,.45)';X.beginPath();X.ellipse(-r*.3,-r*.5,r*.38,r*.16,-.5,0,7);X.fill();X.lineWidth=r*.05;X.strokeStyle='#e8b040';X.beginPath();X.arc(0,0,r*.9,0,7);X.stroke()}
+ else{X.beginPath();X.arc(0,0,r,0,7);X.fillStyle='rgba(140,110,80,.13)';X.fill();X.lineWidth=r*.06;X.strokeStyle='rgba(140,100,60,.55)';X.setLineDash([r*.18,r*.12]);X.stroke();X.setLineDash([]);X.save();X.globalAlpha=.6;txt('?',0,r*.62,r*.7,'rgba(140,100,60,.7)',{f:NUM,st:0});X.restore()}}
+function drawSticker(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s)return;const ic=s[1];X.save();X.translate(x,y);stkBase(r,own,s[1]);
  const col=own?null:'rgba(120,110,150,.35)';
  if(['circle','tri','square','pent','hex','star'].includes(ic))shapeIcon(ic,0,0,r*.55,col||GEMCSS[ic],own?'#2a1050':null);
  else if(ic==='ball'){X.beginPath();X.arc(0,0,r*.55,0,7);X.fillStyle=col||'#ffffff';X.fill();if(own){X.lineWidth=4;X.strokeStyle='#2a1050';X.stroke();shapeIcon('pent',0,0,r*.2,'#2a1050')}}
@@ -176,9 +183,15 @@ function drawSticker(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s)return;c
  X.restore()}
 // ---- альбом наклеек на карте ----
 let ALBUM=false;
-function drawAlbum(){const v=vis();X.fillStyle='rgba(20,10,50,.6)';X.fillRect(v.x0,v.y0,v.w,v.h);const w=Math.min(1100,v.w-120),h=Math.min(600,v.h-60);const x=640-w/2,y=v.y0+v.h/2-h/2;X.save();popAt('album',640,y+h/2);panel(x,y,w,h,{fill:'rgba(255,250,236,.98)',st:'#ffb52e',lw:7,r:30});
+function drawAlbum(){const v=vis();X.fillStyle='rgba(20,10,50,.6)';X.fillRect(v.x0,v.y0,v.w,v.h);if(okI(IM.u_book))return drawBook(v);const w=Math.min(1100,v.w-120),h=Math.min(600,v.h-60);const x=640-w/2,y=v.y0+v.h/2-h/2;X.save();popAt('album',640,y+h/2);panel(x,y,w,h,{fill:'rgba(255,250,236,.98)',st:'#ffb52e',lw:7,r:30});
  const n=STK.filter(s=>SV.st[s[0]]).length;ribbon('Альбом наклеек  '+n+' / '+STK.length,640,y+30,Math.min(560,w*.6),'#6a4bb8',40);
  const cols=Math.ceil(STK.length/2),cw=(w-60)/cols,chh=(h-110)/2;STK.forEach((s,j)=>{const cx=x+30+cw*(j%cols+.5),cy=y+96+chh*(Math.floor(j/cols)+.42);const r=Math.min(cw,chh)*.36;drawSticker(s[0],cx,cy,r,!!SV.st[s[0]]);txt(s[2],cx,cy+r+24,22,SV.st[s[0]]?'#3a1a6a':'#9a90b0',{f:FONT,st:0,box:[cx-cw/2,cy,cx+cw/2,cy+r+50]})});
+ X.restore();hitBtn('albX',640,v.y0+v.h/2,v.w,v.h,()=>{ALBUM=false})}
+function drawBook(v){let bw=Math.min(1240,v.w-40),bh=bw*623/972;if(bh>v.h-30){bh=v.h-30;bw=bh*972/623}const x=640-bw/2,y=v.y0+v.h/2-bh/2+8;X.save();popAt('album',640,y+bh/2);X.save();X.shadowColor='rgba(0,0,0,.5)';X.shadowBlur=30;X.shadowOffsetY=12;X.drawImage(IM.u_book,x,y,bw,bh);X.restore();
+ const n=STK.filter(s=>SV.st[s[0]]).length;ribbon('Альбом наклеек  '+n+' / '+STK.length,640,y+bh*.04,Math.min(600,bw*.5),'#6a4bb8',40);
+ const half=Math.ceil(STK.length/2),pg=[[x+bw*.13,x+bw*.47],[x+bw*.53,x+bw*.87]],py0=y+bh*.14,py1=y+bh*.84;
+ STK.forEach((s,j)=>{const p=j<half?0:1,k=p?j-half:j,cnt=p?STK.length-half:half,cols=Math.ceil(cnt/3),rows=3,cw=(pg[p][1]-pg[p][0])/cols,chh=(py1-py0)/rows;const cx=pg[p][0]+cw*(k%cols+.5),cy=py0+chh*(Math.floor(k/cols)+.36);const r=Math.min(cw*.3,chh*.3),own=!!SV.st[s[0]];
+  X.save();X.translate(cx,cy);X.rotate(own?((j*37)%7-3)*.025:0);drawSticker(s[0],0,0,r,own);X.restore();textIn(s[2],cx,cy+r+chh*.15,cw*.98,chh*.22,24,own?'#4a2410':'#9a8060',{f:FONT,st:0,id:'stk'+j})});
  X.restore();hitBtn('albX',640,v.y0+v.h/2,v.w,v.h,()=>{ALBUM=false})}
 {const md=SC.map.draw;SC.map.draw=function(){md.call(this);const n=STK.filter(s=>SV.st[s[0]]).length;
   if(ALBUM){UI.length=0;drawAlbum();return}

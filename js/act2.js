@@ -106,7 +106,7 @@ function drawBuild(){const D=ACT2.bld;if(!D)return;bldStep(DT);const v=vis();X.f
  const B=ACT2.bst;if(B){if(B.made.house)drawSticker('house',b.x+b.w-60,b.y+60,30,true);if(B.made.tower)drawSticker('tower',b.x+b.w-130,b.y+60,30,true)}
  labelBtn('bldX',b.x+b.w-90,b.y+b.h+2,190,72,'Готово',()=>bldClose(),{size:38})}
 {const _ds=drawSticker;drawSticker=function(id,x,y,r,own){const s=STK.find(s=>s[0]===id);if(!s||(s[1]!=='house'&&s[1]!=='tower'))return _ds(id,x,y,r,own);
- X.save();X.translate(x,y);X.beginPath();X.arc(0,0,r,0,7);X.fillStyle=own?'#fff6d8':'rgba(120,110,150,.25)';X.fill();X.lineWidth=r*.09;X.strokeStyle=own?'#ffb52e':'rgba(120,110,150,.5)';X.setLineDash(own?[]:[8,8]);X.stroke();X.setLineDash([]);
+ X.save();X.translate(x,y);stkBase(r,own,s[1]);
  const c1=own?'#3d8fe8':'rgba(120,110,150,.35)',c2=own?'#3fbf63':'rgba(120,110,150,.35)';X.lineWidth=r*.06;X.strokeStyle=own?'#2a1050':'rgba(0,0,0,0)';
  if(s[1]==='house'){X.fillStyle=c1;X.fillRect(-r*.35,-r*.05,r*.7,r*.5);X.strokeRect(-r*.35,-r*.05,r*.7,r*.5);X.fillStyle=c2;X.beginPath();X.moveTo(-r*.48,-r*.05);X.lineTo(0,-r*.5);X.lineTo(r*.48,-r*.05);X.closePath();X.fill();X.stroke()}
  else for(let j=0;j<3;j++){X.fillStyle=c1;X.fillRect(-r*.18,r*.4-(j+1)*r*.3,r*.36,r*.3);X.strokeRect(-r*.18,r*.4-(j+1)*r*.3,r*.36,r*.3)}

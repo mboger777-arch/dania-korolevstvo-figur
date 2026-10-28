@@ -14,7 +14,7 @@ async def main():
     async def ev(s): await pg.evaluate(s)
     await snap('title',1500)
     await ev('go("map")');await snap('map',1500)
-    await ev('ALBUM=true');await snap('album')
+    await ev('STK.slice(0,7).forEach(s=>SV.st[s[0]]=1);ALBUM=true');await snap('album')
     await ev('ALBUM=false;SV.medal=1');await snap('map_medal')
     await ev('go("ch",0)');await snap('talk_queen',2500)
     for i in range(150):
