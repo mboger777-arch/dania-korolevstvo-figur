@@ -71,3 +71,13 @@ wrapBuild(3,()=>dressCh({ci:3}));
 wrapBuild(4,()=>dressCh({ci:4}));
 wrapBuild(5,()=>dressCh({ci:5,off:6}));
 wrapBuild(6,()=>dressCh({ci:0,off:6}));
+// ch4: ульи и пчёлы
+function hive(x,z,s){s=s||1;const g=dGroup(x,z);g.position.y=baseAt(x,z);dm(GEO.cylL,0x8a5a32,0,.35*s,0,g,[.9*s,.7*s,.9*s]);dm(GEO.cylL,0x6a4022,0,.72*s,0,g,[1.05*s,.08*s,1.05*s]);
+ const R=[1,.98,.92,.82,.68,.5,.3];R.forEach((r,i)=>dm(GEO.sph,i%2?0xf0b030:0xe09a20,0,(.95+i*.3)*s,0,g,[.85*r*s,.2*s,.85*r*s]));
+ dm(GEO.sph,0x3a2410,0,1.15*s,.78*s,g,[.18*s,.13*s,.06*s]);dm(GEO.box,0x8a5a32,0,1.0*s,.86*s,g,[.5*s,.05*s,.2*s]);return g}
+function bee(){const g=new THREE.Group();dm(GEO.sph,0xffd030,0,0,0,g,[.16,.13,.2]);for(const z of[-.05,.07])dm(GEO.cylL,0x2a2018,0,0,z,g,[.15,.04,.15]).rotation.x=Math.PI/2;
+ dm(GEO.sph,0x2a2018,0,.02,.19,g,.08);const wm=M(0xffffff,{op:.6});const w=[];for(const s of[-1,1]){const m=dm(GEO.sph,wm,s*.1,.14,-.02,g,[.12,.03,.07]);w.push(m)}g.userData.w=w;g.userData.decor=1;WORLD.add(g);return g}
+function hiveDecor(){const B=BOUNDS,lowQ=FPS<40;const H=[[B[0]-3.2,B[3]-4,1.3],[B[1]+3.2,B[3]-14,1.1],[B[0]-3.4,8,1],[B[1]+3.6,22,1.2]];
+ H.forEach(h=>hive(h[0],h[1],h[2]));const bees=[];H.forEach((h,hi)=>{for(let i=0;i<(lowQ?2:4);i++){const b=bee();bees.push({b,h,r:rnd(1.4,2.6),a:rnd(0,6),sp:rnd(.8,1.4)*(i%2?1:-1),y:rnd(1,2.4)*h[2],ph:rnd(0,6)})}});
+ let t=0;TICK.push(dt=>{t+=dt;for(const o of bees){o.a+=dt*o.sp;const x=o.h[0]+Math.cos(o.a)*o.r,z=o.h[1]+Math.sin(o.a)*o.r*.8;o.b.position.set(x,baseAt(o.h[0],o.h[1])+o.y+Math.sin(t*3+o.ph)*.25,z);o.b.rotation.y=-o.a+(o.sp>0?Math.PI:0);for(const w of o.b.userData.w)w.rotation.z=Math.sin(t*40+o.ph)*.6}})}
+wrapBuild(4,hiveDecor);
