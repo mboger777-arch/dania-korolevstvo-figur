@@ -136,3 +136,5 @@
 - Camera rule (world.js camStep follow): camera clamped into BOUNDS minus .5 m, but never closer than 2.6 m to the hero per axis; when clamped it rises (≤1.6 m) and looks toward the hero. Verified c6_p0..p3, c0.
 - boss.js: back corner towers moved to z=-8.5, side walls extended.
 - popups talk_npc/talk_krug: test-script bug, not a game bug — pg.evaluate awaited the Promise of run(say()) so the snap happened after the line ended. Fixed in tools/popups.py; panels visible (sheets/r9_talkpopups.png).
+- Live check b6 OK (version present, ch6 loads, no errors). The R8 test chain (b5) was lost in the box reset before it finished any chapter.
+- Tests on b6 run one after another with nohup sh /tmp/chain9.sh: FULL 844x390 → 667x375 → 932x430 (TMO 300), then voicecheck VP=800x380. Logs: /tmp/full9_*.log and /tmp/vc_r9.log; status: /tmp/chain9.status. When step15 was written up, the 844 run was still in ch0.
