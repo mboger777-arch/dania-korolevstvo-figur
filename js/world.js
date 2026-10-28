@@ -146,7 +146,7 @@ function heroStep(dt){const h=HERO;const m=h.model;if(!m)return;let jumped=false
  if(h.mode==='walk'&&!h.lock&&takeSwipe()){m.kickT=T;SFX.kick();h.kickT=T}}
 function heroTick(dt){const h=HERO;
  if(h.gr)h.coy=MOVE.coyote;else h.coy=Math.max(0,(h.coy||0)-dt);
- if(INP.tapQ&&T-INP.tapQ<MOVE.buffer+.02&&h.mode==='walk'&&!h.lock){if(h.coy>0&&h.vy<=0){INP.tapQ=0;h.vy=MOVE.jumpV;h.gr=false;h.coy=0;h.jumpQ=1;SFX.jump()}}
+ if(INP.tapQ&&T-INP.tapQ<MOVE.buffer+.02&&h.mode==='walk'&&!h.lock){if(h.coy>0&&h.vy<=0){INP.tapQ=0;h.vy=MOVE.jumpV;h.gr=false;h.coy=0;h.jumpQ=1;h.jT=T;if(KEYS.Space||!INP.jumpCut||T-INP.jumpCut>.3)INP.jumpCut=0;SFX.jump()}}
  else if(INP.tapQ&&T-INP.tapQ>=MOVE.buffer+.02&&h.mode==='walk')INP.tapQ=0;
  if(h.mode==='walk'&&!h.lock){const cy=camYawNow();const fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);let mx=fx*INP.jy+rx*INP.jx,mz=fz*INP.jy+rz*INP.jx;let mag=Math.hypot(mx,mz);
   const a=mag<MOVE.dead?0:Math.min(1,(mag-MOVE.dead)/(1-MOVE.dead));// мёртвая зона + аналоговая скорость (шаг/бег)
@@ -166,12 +166,20 @@ function heroTick(dt){const h=HERO;
  // вертикаль: подъём на ступеньку плавно, падение быстрее подъёма, предел скорости падения
  const gg=groundAt(h.x,h.z,h.y,MOVE.step);
  if(h.gr&&gg>h.y+.005&&gg<=h.y+MOVE.step){h.y=gg;h.vy=0}// ноги сразу на ступеньке, плавность даёт камера (HERO.cy)
- else if(!h.gr||h.y>gg+.03){if(h.gr&&h.y-gg<.18){h.y=gg}else{h.gr=false;const gv=h.vy>0?MOVE.g:MOVE.gFall;h.vy=Math.max(-MOVE.maxFall,h.vy-gv*dt);h.y+=h.vy*dt;h.airT+=dt;if(h.y<=gg){h.y=gg;if(h.vy<-3)SFX.land();h.landQ=-h.vy;h.vy=0;h.gr=true;h.airT=0}}}
+ else if(!h.gr||h.y>gg+.03){if(h.gr&&h.y-gg<.18){h.y=gg}else{h.gr=false;if(INP.jumpCut&&h.vy>2.5&&T-(h.jT||0)<.5){h.vy*=.6;INP.jumpCut=0}const gv=h.vy>0?MOVE.g:MOVE.gFall;h.vy=Math.max(-MOVE.maxFall,h.vy-gv*dt);h.y+=h.vy*dt;h.airT+=dt;if(h.y<=gg){h.y=gg;if(h.vy<-3)SFX.land();h.landQ=-h.vy;h.vy=0;h.gr=true;h.airT=0}}}
  else{h.y=gg;h.vy=0;h.gr=true;h.airT=0}}
 // спутник следует за героем
 function krugStep(dt){const k=KRUG;if(!k)return;const r=k.root.position;let sp=0;
  if(k.mode==='follow'){const fx=Math.sin(HERO.yaw),fz=Math.cos(HERO.yaw);const tx=HERO.x-fx*1.5-fz*1.3,tz=HERO.z-fz*1.5+fx*1.3;const dx=tx-r.x,dz=tz-r.z,d=Math.hypot(dx,dz);
-  if(d>14){r.x=tx;r.z=tz}else if(d>.4){sp=Math.min(HERO.speed*1.05,d*2.2);const p={x:r.x+dx/d*sp*dt,z:r.z+dz/d*sp*dt};collide(p,.45,r.y);if(!nogo(p.x,p.z)){r.x=p.x;r.z=p.z}k.root.rotation.y=Math.atan2(dx,dz)}
+  if(d>14){r.x=tx;r.z=tz}else if(d>.4){sp=Math.min(HERO.speed*1.05,d*2.2);
+   // обход: пробуем прямое направление, затем ±35°, ±70°, ±105° (сначала в сторону цели); отталкиваемся от Дани
+   let ux=dx/d,uz=dz/d;const hx=r.x-HERO.x,hz=r.z-HERO.z,hd=Math.hypot(hx,hz);if(hd<1.1&&hd>.01){const w=(1.1-hd)*2.2;ux+=hx/hd*w;uz+=hz/hd*w;const n=Math.hypot(ux,uz);ux/=n;uz/=n}
+   const kFree=(x,z)=>{const q={x,z};collide(q,.45,r.y);return Math.hypot(q.x-x,q.z-z)<.02&&!nogo(x,z)};const sd=(k.side||1);let best=null;
+   for(const a of[0,.6,-.6,1.2,-1.2,1.8,-1.8]){const aa=a*sd,c=Math.cos(aa),si=Math.sin(aa),vx=ux*c+uz*si,vz=-ux*si+uz*c;if(kFree(r.x+vx*.9,r.z+vz*.9)&&kFree(r.x+vx*.45,r.z+vz*.45)){best=[vx,vz];if(a)k.side=Math.sign(a)*sd;break}}
+   if(!best)best=[ux,uz];const p={x:r.x+best[0]*sp*dt,z:r.z+best[1]*sp*dt};collide(p,.45,r.y);if(!nogo(p.x,p.z)){r.x=p.x;r.z=p.z}
+   k.stuck=(sp*dt>.001&&Math.hypot(r.x-(k.lx??r.x),r.z-(k.lz??r.z))<sp*dt*.25)?(k.stuck||0)+dt:0;k.lx=r.x;k.lz=r.z;
+   if(k.stuck>2.2&&d>2.5&&kFree(tx,tz)){r.x=tx;r.z=tz;k.stuck=0}
+   k.root.rotation.y=Math.atan2(best[0],best[1])}
   else{const a=Math.atan2(CAM.position.x-r.x,CAM.position.z-r.z);k.root.rotation.y+=Math.atan2(Math.sin(a-k.root.rotation.y),Math.cos(a-k.root.rotation.y))*.05}
   r.y=groundAt(r.x,r.z,r.y+.3)}
  else if(k.mode==='go'&&k.tgt){const dx=k.tgt.x-r.x,dz=k.tgt.z-r.z,d=Math.hypot(dx,dz);if(d>.15){sp=Math.min(5,d*3);r.x+=dx/d*sp*dt;r.z+=dz/d*sp*dt;k.root.rotation.y=Math.atan2(dx,dz)}r.y=groundAt(r.x,r.z,r.y+.3)}

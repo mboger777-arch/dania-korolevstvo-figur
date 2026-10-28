@@ -179,7 +179,7 @@ const _up=e=>{if(typeof ACTPTR!=='undefined')ACTPTR.up(e.pointerId);if(JOY&&JOY.
 C.addEventListener('pointerup',_up);C.addEventListener('pointercancel',_up);
 ['dblclick','contextmenu','gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
-const KEYS={};addEventListener('keydown',e=>{if(!KEYS[e.code]){if(e.code==='Space'){INP.tapQ=T;INP.used.tap=1}if(e.code==='KeyF'||e.code==='Enter'){INP.swipeQ=T;INP.used.swipe=1}}KEYS[e.code]=1;INP.last=T});addEventListener('keyup',e=>{KEYS[e.code]=0});
+const KEYS={};addEventListener('keydown',e=>{if(!KEYS[e.code]){if(e.code==='Space'){INP.tapQ=T;INP.used.tap=1}if(e.code==='KeyF'||e.code==='Enter'){INP.swipeQ=T;INP.used.swipe=1}}KEYS[e.code]=1;INP.last=T});addEventListener('keyup',e=>{KEYS[e.code]=0;if(e.code==='Space')INP.jumpCut=T});
 const BOT={on:false,jx:0,jy:0,hold:false};// автопилот теста пишет сюда
 function stepInput(){let jx=0,jy=0;
  if(JOY){const dx=JOY.x-JOY.x0,dy=JOY.y-JOY.y0,R=90,d=Math.hypot(dx,dy);if(d>R){JOY.x0=JOY.x-dx/d*R;JOY.y0=JOY.y-dy/d*R}const k=Math.min(d,R)/R;if(d>8){jx=dx/d*k;jy=-dy/d*k}}
