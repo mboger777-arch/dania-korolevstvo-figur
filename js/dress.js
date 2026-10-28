@@ -52,7 +52,7 @@ function dressCh(o){o=o||{};const B=BOUNDS;if(!B)return;const lowQ=FPS<40,len=B[
  let ci=o.ci||0;const st=[],fl=[],bu=[],dr=[];
  for(let z=B[2]+2;z<=B[3]+2;z+=step)for(const sd of[-1,1]){const x=(sd<0?B[0]-off:B[1]+off)+sd*rnd(0,1.2),zz=z+rnd(-1,1)+(sd>0?step/2:0);if(o.skip&&o.skip(x,zz))continue;
   const h=house(x,zz,o.s||rnd(.9,1.15),sd<0?Math.PI/2:-Math.PI/2,(ci++)%6,false);h.traverse(m=>m.userData.decor=1);if(o.snow)snowCap(h,h.children[1].scale.y/1.9);
-  if(o.lamps!==false&&!(o.skip&&o.skip(sd<0?B[0]-1.4:B[1]+1.4,z)))lamp(sd<0?B[0]-1.4:B[1]+1.4,z+step*.25,o.lampC);
+  if(o.lamps!==false&&!(o.skip&&o.skip(sd<0?B[0]-3.4:B[1]+3.4,z)))lamp(sd<0?B[0]-3.4:B[1]+3.4,z+step*.25,o.lampC);// за дорожкой, вне коридора камеры
   for(let k=0;k<3;k++){const bx=x-sd*rnd(1.6,2.4),bz=zz+rnd(-2.6,2.6);if(o.snow)dr.push([bx,0,bz,[rnd(.6,1.2),rnd(.25,.45),rnd(.6,1.1)],rnd(0,3)]);else bu.push([bx,.3,bz,rnd(.45,.75),0,[0x4fa84a,0x3f9a3a,0x5cb85a][k]])}}
  if(o.path!==false)for(const sd of[-1,1])for(let z=B[2];z<=B[3];z+=1.15){const x=(sd<0?B[0]-2.6:B[1]+2.6)+Math.sin(z*.7)*.25;if(o.skip&&o.skip(x,z))continue;st.push([x,.03,z,[rnd(.36,.48),.05,rnd(.28,.36)],rnd(0,3)])}
  if(!o.snow&&o.flowers!==false)for(let i=0;i<(lowQ?120:260);i++){const sd=i%2?1:-1,x=(sd<0?B[0]:B[1])+sd*rnd(-.3,3.2),z=rnd(B[2]-2,B[3]+3);if(o.skip&&o.skip(x,z))continue;fl.push([x,.16,z,rnd(.09,.14),0,FLC[i%6]])}
@@ -99,3 +99,14 @@ function roadDecor(){const B=BOUNDS,lowQ=FPS<40,dash=[],kerb=[],post=[],rail=[],
  const hm=inst(GEO.cyl,new THREE.MeshLambertMaterial({map:TEX.hay}),hay);if(hm){const m4=new THREE.Matrix4(),r=new THREE.Matrix4().makeRotationZ(Math.PI/2);for(let i=0;i<hay.length;i++){hm.getMatrixAt(i,m4);m4.multiply(r);hm.setMatrixAt(i,m4)}hm.instanceMatrix.needsUpdate=true}
  for(let z=20,k=0;z<B[3];z+=lowQ?40:22,k++)roadSign(k%2?5.6:-5.6,z,k%3,k%2?-.3:.3)}
 wrapBuild(5,roadDecor);
+
+// ПРАВИЛО: украшения никогда не стоят в коридоре камеры. Коридор = полоса за стартом (камера сзади героя, z от B2-7 до B2)
+// и боковые полосы шириной 2.6 м у краёв BOUNDS (камера у края поля). Высокие (>0.7 м) украшения оттуда убираем/отодвигаем.
+function isDecor(o){if(o.userData.decor)return true;let any=0,all=1;o.traverse(m=>{if(m.isMesh){any=1;if(!m.userData.decor)all=0}});return any&&all}
+function corridorClear(){const B=BOUNDS;if(!B)return;const bx=new THREE.Box3();let n=0;
+ for(const o of WORLD.children.slice()){if(o.isPoints||o.isInstancedMesh||!isDecor(o))continue;bx.setFromObject(o);if(bx.isEmpty()||bx.max.y-bx.min.y<.7)continue;
+  if(bx.max.x>B[0]-2&&bx.min.x<B[1]+2&&bx.max.z>B[2]-7&&bx.min.z<B[2]-.2){WORLD.remove(o);n++;continue}
+  if(bx.max.z>B[2]-7&&bx.min.z<B[3]+1){const cx=(bx.min.x+bx.max.x)/2,hw=(bx.max.x-bx.min.x)/2;
+   if(hw<1.6){if(cx<B[0]&&bx.max.x>B[0]-2.6){o.position.x-=bx.max.x-(B[0]-2.6);n++}else if(cx>B[1]&&bx.min.x<B[1]+2.6){o.position.x+=(B[1]+2.6)-bx.min.x;n++}}}}
+ if(n)console.log('corridorClear',n)}
+for(let i=0;i<7;i++)if(LEVELS[i]&&i!==1)wrapBuild(i,corridorClear);// ch1 — санки вниз по склону: за стартом фон для разговора, камера туда не попадает

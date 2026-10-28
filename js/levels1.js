@@ -107,7 +107,7 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
  BOUNDS=[-11,11,-6,128];this.chasm=true;{const pit=mesh(new THREE.PlaneGeometry(80,13),M(0x1a2650,{basic:1}),0,-31,103);pit.rotation.x=-Math.PI/2}const lb=[[0,95],[3,100],[-3,105],[0,111]];this.lb=lb;
  NOGO.push((x,z)=>{if(z<96||z>110)return false;if(!this.chasm)return false;for(let i=0;i<3;i++){const[a,b]=[lb[i],lb[i+1]];const dx=b[0]-a[0],dz=b[1]-a[1];const t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);if(Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)<1.05&&this.bridge)return false}return true});
  
- this.sled=new THREE.Group();mesh(GEO.box,0xe0303a,0,.22,0,this.sled,[1,.14,1.9]);for(const s of [-.42,.42]){mesh(GEO.box,0x888899,s,.06,0,this.sled,[.08,.08,2]);const t=mesh(GEO.cylL,0x888899,s,.14,1,this.sled,[.05,.25,.05]);t.rotation.x=.6}WORLD.add(this.sled);
+ this.sled=new THREE.Group();mesh(GEO.box,0xe0303a,0,.22,0,this.sled,[1,.14,1.9]);for(const s of [-.42,.42]){mesh(GEO.box,0x888899,s,.06,0,this.sled,[.08,.08,2]);const t=mesh(GEO.cylL,0x888899,s,.14,1,this.sled,[.05,.25,.05]);t.rotation.x=.6}WORLD.add(this.sled);this.sled.position.set(3.4,baseAt(3.4,-4.6),-4.6);this.sled.rotation.y=.5;// ждут сбоку, не перед камерой разговора
  this.flags=[];heroAt(0,-3,0);QUEEN.root.visible=true;place(QUEEN,-3,-1,.6);
  this.trail=[];this.goal=marker(0,118);this.goal.visible=false},
  mkFlags(list){for(const f of this.flags){WORLD.remove(f.g)}this.flags=list.map(([x,z,c])=>{const g=new THREE.Group();g.position.set(x,SLOPE(z),z);mesh(GEO.cylL,0x5a4030,0,1.2,0,g,[.06,2.4,.06]);const fl=mesh(GEO.tri||GEO.box,M(c,{em:c,ei:.4}),.45,2.1,0,g,[.9,.6,.08]);if(!GEO.tri)fl.scale.set(.9,.55,.05);

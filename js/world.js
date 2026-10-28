@@ -197,6 +197,9 @@ function talkFrame(){if(typeof CUT==='undefined'||!CUT||!TALK||CAMS.wide)return 
  const p=c.root.position,hh=c.h,D=clamp(hh*2.1,3.6,6.4);let vx=CAMS.sl.x-CAMS.sp.x,vz=CAMS.sl.z-CAMS.sp.z;const n=Math.hypot(vx,vz)||1;vx/=n;vz/=n;
  const fy=c.vyaw!=null?c.vyaw:c.root.rotation.y,fx=Math.sin(fy),fz=Math.cos(fy);if(-(vx*fx+vz*fz)<.35){const a=fy+Math.PI+.35;vx=Math.sin(a);vz=Math.cos(a)}
  // соседи (Королева/Кругляш/Даня рядом) — держим в кадре целиком: центр между говорящим и ними, камера чуть дальше
+ // сосед стоит между камерой и говорящим — поворачиваем ракурс вбок, чтобы говорящего было видно
+ for(const o of [QUEEN,KRUG,DANIA]){if(!o||o===c||!o.root.visible||!o.root.parent)continue;const q=o.root.position,rx=q.x-p.x,rz=q.z-p.z;if(Math.hypot(rx,rz)>4.2)continue;const al=-(rx*vx+rz*vz),lt=rx*vz-rz*vx;
+  if(al>-.3&&Math.abs(lt)<1.3){const n2=Math.hypot(rx,rz)||1;let px=rz/n2,pz=-rx/n2;if(px*vx+pz*vz<0){px=-px;pz=-pz}vx=px;vz=pz;break}}// смотрим поперёк линии «говорящий—сосед»: оба рядом в кадре
  let mx=p.x,mz=p.z,nn=1,sp=0,hm=hh;for(const o of [QUEEN,KRUG,DANIA]){if(!o||o===c||!o.root.visible||!o.root.parent)continue;const q=o.root.position,d=Math.hypot(q.x-p.x,q.z-p.z);if(d>4.2)continue;mx+=q.x*.6;mz+=q.z*.6;nn+=.6;hm=Math.max(hm,o.h||0);const lat=Math.abs((q.x-p.x)*vz-(q.z-p.z)*vx);sp=Math.max(sp,lat)}
  mx/=nn;mz/=nn;const H2=Math.max(hh,hm*.85),D2=clamp(H2*2.1,3.6,6.4)+Math.max(0,sp-1.2)*1.1;// рядом высокий сосед (Даня у Кругляша) — кадр по его росту, голова не режется
  return[V3(mx-vx*D2,p.y+H2*.75+.5,mz-vz*D2),V3(mx+vx*.6,p.y+H2*.62,mz+vz*.6)]}
@@ -212,7 +215,7 @@ function occBuild(){const U=[];const add=(o)=>{if(o.userData.noFade||o.userData.
  for(const o of WORLD.children)add(o);OCC={w:WORLD,u:U,t:0,n:WORLD.children.length}}
 function occSet(o,u,f){u.f=f;const on=f<.995;o.traverse(m=>{const mt=m.material;if(!mt)return;
  if(on){if(!m.userData.om){m.userData.om=mt;const cl=x=>{const c=x.clone();c.transparent=true;c.userData.bo=x.opacity;return c};m.material=Array.isArray(mt)?mt.map(cl):cl(mt)}
-  for(const c of [].concat(m.material)){c.opacity=c.userData.bo*f;c.depthWrite=f>.9}}
+  for(const c of [].concat(m.material)){c.opacity=c.userData.bo*f;c.depthWrite=f>.9;c.visible=f>.02}}// полностью прозрачное не рисуется — без «призраков»
  else if(m.userData.om){for(const c of [].concat(m.material))c.dispose();m.material=m.userData.om;m.userData.om=null}})}
 function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORLD||OCC.n!==WORLD.children.length)occBuild();const C=CAM.position;
  if(CAMS.mode==='follow'||!CUT)_otg.set(HERO.x,HERO.y+1,HERO.z);else _otg.copy(CAMS.tgt);
@@ -220,8 +223,8 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
  for(const u of OCC.u){const o=u.o;if(!o.parent||!o.visible){continue}
   u.box.setFromObject(o);const b=u.box;let want=1;
   const h=b.max.y-b.min.y;if(h>.25&&!b.containsPoint(_otg)){
-   const dn=b.distanceToPoint(C);if(dn<1.8)want=.15;else if(dn<3.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=.18}
-   if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-(CUT?1.5:.9))want=.25}
+   const dn=b.distanceToPoint(C);if(dn<1.8)want=0;else if(dn<3.4){b.getCenter(_ohit);if(_ohit.sub(C).dot(_cf)>0)want=0}
+   if(want===1&&_oray.intersectBox(b,_ohit)&&_ohit.distanceTo(C)<L-.6&&b.max.y>_otg.y-(CUT?1.5:.9))want=0}
   if(want===1&&u.f>=.995)continue;let f=u.f+(want-u.f)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==u.f)occSet(o,u,f)}
  // персонажи (кроме Дани и говорящего) тают, если оказались у самой камеры или закрывают Даню
  const tk=typeof TALK!=='undefined'&&TALK&&TALKCH[TALK.who]?TALKCH[TALK.who]():null;
