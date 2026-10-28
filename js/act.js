@@ -80,14 +80,17 @@ function actTick(dt){if(!ACT.on||scene!=='ch')return;
    if(walk&&d<.95&&HERO.gr&&HERO.y<o.g.position.y+.5){HERO.vy=13.2;HERO.gr=false;HERO.y+=.05;o.sq=1;o.n++;SFX.boing();burst(V3(o.x,o.g.position.y+.4,o.z),0x8fe0ff,16,3);alog('pad');if(o.n===1)sticker('pad')}}
   else if(o.k==='scrib'){if(!o.alive)continue;o.g.rotation.y+=dt*1.3;o.g.rotation.x=Math.sin(T*2+o.ph)*.3;o.g.position.y=baseAt(o.x,o.z)+1+Math.sin(T*3+o.ph)*.15;
    const d=Math.hypot(HERO.x-o.x,HERO.z-o.z);if(d<4&&walk)aIntro('scrib','a_scrib','move');
-   if(!CUT&&d<1.15){o.alive=false;o.g.visible=false;SFX.pop();burst(o.g.position,0x8e44d8,30,4,.3);burst(o.g.position,0xffe066,16,3);alog('scrib');const left=ACT.items.filter(s=>s.k==='scrib'&&s.alive).length;if(!left){sticker('scrib');ACT.pend.unshift('a_scrib_all')}}}
+   if(!CUT&&d<1.5){o.alive=false;o.g.visible=false;SFX.pop();burst(o.g.position,0x8e44d8,30,4,.3);burst(o.g.position,0xffe066,16,3);alog('scrib');const left=ACT.items.filter(s=>s.k==='scrib'&&s.alive).length;if(!left){sticker('scrib');ACT.pend.unshift('a_scrib_all')}}}
   else if(o.k==='ball')ballTick(o,dt,walk);
   else if(o.k==='race')raceTick(o,dt,walk);
   else if(o.k==='chalk')chalkTick(o,dt,walk)}}
 
 function ballTick(o,dt,walk){const d=Math.hypot(HERO.x-o.bx,HERO.z-o.bz);if(d<3&&walk)aIntro('ball','a_ball','swipe');
  const kicked=(HERO.kickT||0)!==o.lk;o.lk=HERO.kickT||0;
- if(kicked&&walk&&d<1.9){const a=HERO.yaw;const sp=10;o.vx=Math.sin(a)*sp;o.vz=Math.cos(a)*sp;SFX.kick();alog('kick')}
+ const aG=Math.atan2(o.gx-o.bx,o.gz+.5-o.bz);
+ if(walk&&d<3.4&&!(o.cool>0)&&!CUT)aimSet({kind:'goal',x:o.gx,y:.95,z:o.gz+.45,from:{x:o.bx,y:.4,z:o.bz},arc:.8,r:54,ready:d<2.6,alt:{x:o.bx,y:.4,z:o.bz},tapR:150,
+  fire:()=>{if(Math.hypot(HERO.x-o.bx,HERO.z-o.bz)>2.6)return false;HERO.yaw=Math.atan2(o.bx-HERO.x,o.bz-HERO.z);HERO.kickT=T;if(DANIA)DANIA.kickT=T;o.tapK=T}});
+ if(kicked&&walk&&(d<1.9||(T-(o.tapK||-9)<.2&&d<2.6))){const a=(Math.abs(adiff(HERO.yaw,aG))<1.25||T-(o.tapK||-9)<.2)?aG:HERO.yaw;/* мягкий захват ворот */const sp=10;o.vx=Math.sin(a)*sp;o.vz=Math.cos(a)*sp;SFX.kick();alog('kick')}
  else if(walk&&d<.75&&HERO.sp>.5){const nx=(o.bx-HERO.x)/(d||1),nz=(o.bz-HERO.z)/(d||1);o.vx+=nx*4;o.vz+=nz*4}
  o.bx+=o.vx*dt;o.bz+=o.vz*dt;const f=Math.pow(.35,dt);o.vx*=f;o.vz*=f;
  if(BOUNDS){if(o.bx<BOUNDS[0]+.4||o.bx>BOUNDS[1]-.4){o.vx*=-.7;o.bx=clamp(o.bx,BOUNDS[0]+.4,BOUNDS[1]-.4)}if(o.bz<BOUNDS[2]+.4||o.bz>BOUNDS[3]-.4){o.vz*=-.7;o.bz=clamp(o.bz,BOUNDS[2]+.4,BOUNDS[3]-.4)}}
@@ -128,7 +131,7 @@ function chalkDone(pts){const D=ACT.draw;if(!D)return;const r=recogShape(pts);D.
 // распознавание: замкнутость, круглость, число углов (упрощение ломаной)
 function recogShape(P){if(!P||P.length<8)return null;let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(L<220)return null;
  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const [x,y] of P){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}const dg=Math.hypot(x1-x0,y1-y0);
- const gap=Math.hypot(P[0][0]-P[P.length-1][0],P[0][1]-P[P.length-1][1]);if(gap>Math.max(70,dg*.3))return null;
+ const gap=Math.hypot(P[0][0]-P[P.length-1][0],P[0][1]-P[P.length-1][1]);if(gap>Math.max(110,dg*.45))return null;/* магнитное замыкание для детских рук */
  // равномерная выборка
  const N=64,Q=[];const step=L/N;let acc=0;Q.push(P[0]);for(let i=1;i<P.length&&Q.length<N;i++){let a=P[i-1],b=P[i];let s=Math.hypot(b[0]-a[0],b[1]-a[1]);while(acc+s>=step&&Q.length<N){const t=(step-acc)/s;const q=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];Q.push(q);a=q;s=Math.hypot(b[0]-a[0],b[1]-a[1]);acc=0}acc+=s}
  const cx=Q.reduce((s,p)=>s+p[0],0)/Q.length,cy=Q.reduce((s,p)=>s+p[1],0)/Q.length;const R=Q.map(p=>Math.hypot(p[0]-cx,p[1]-cy));const mr=R.reduce((a,b)=>a+b,0)/R.length;const sd=Math.sqrt(R.reduce((s,r)=>s+(r-mr)**2,0)/R.length)/mr;

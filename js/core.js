@@ -169,6 +169,7 @@ C.addEventListener('pointerdown',e=>{if(PORTRAIT())return;e.preventDefault();ac(
  if(typeof ACTPTR!=='undefined'&&ACTPTR.down(x,y,e.pointerId))return;
  if(TALK&&TALK.box){const[bx,by,bw,bh]=TALK.box;if(x>bx&&x<bx+bw&&y>by&&y<by+bh){skipTalk();return}}
  if(SCN&&SCN.tap&&INPMODE==='ui'){SCN.tap(x,y);return}
+ if(INPMODE==='play'&&typeof aimTap==='function'&&aimTap(x,y))return;
  if(INPMODE!=='play')return;INP.last=T;
  const mid=vis().x0+vis().w*.45;
  if(x<mid&&!JOY){JOY={id:e.pointerId,x0:x,y0:y,x,y}}
@@ -268,7 +269,7 @@ function loop(now){requestAnimationFrame(loop);DT=clamp((now-last)/1000,0,.05);l
  X.setTransform(DPR,0,0,DPR,0,0);X.clearRect(0,0,W,H);X.setTransform(DPR*S,0,0,DPR*S,DPR*OX,DPR*OY);UI=[];if(G.auditReq){G.auditReq=0;AUD={t:[],scene}}else AUD=null;
  if(SCN&&SCN.draw)SCN.draw();
  if(SCN&&SCN.hud!==false&&scene!=='title')hudButtons();
- drawJoy();drawGoal();drawBig();drawTalk();drawHand();
+ if(typeof drawAim==='function')drawAim();drawJoy();drawGoal();drawBig();drawTalk();drawHand();
  if(SCN&&SCN.cut)cutButtons(SCN.skip);
  if(fade>0){fade=Math.max(0,fade-DT*2.5);const v=vis();X.fillStyle=`rgba(20,10,50,${fade})`;X.fillRect(v.x0,v.y0,v.w,v.h)}
  if(AUD)G.lastAudit=AUD}

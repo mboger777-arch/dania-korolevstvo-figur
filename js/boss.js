@@ -20,7 +20,7 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
   const tk=dt=>{const hp=V3(HERO.x,1.0,HERO.z),p=ball.position;ball.rotation.x+=dt*6;
    if(B.st==='wait'){if(hits<3&&T>B.t&&!CUT){B.st='in';p.set(KV.root.position.x,2.2,KV.root.position.z-.8);SFX.whoosh();KV.cheerT=T}return}
    const kicked=(HERO.kickT||0)!==B.lk;B.lk=HERO.kickT||0;
-   if(B.st==='in'){const d=p.distanceTo(hp);if(kicked&&d<3.4){B.st='out';SFX.kick();burst(p,0xffffff,14,3,.3);clearGesture();return}
+   if(B.st==='in'){const d=p.distanceTo(hp);aimSet({kind:'boss',x:p.x,y:p.y,z:p.z,r:44,ready:d<3.8,tapR:150,fire:()=>{if(p.distanceTo(V3(HERO.x,1,HERO.z))>4.4)return false;HERO.kickT=T;if(DANIA)DANIA.kickT=T}});if(kicked&&d<3.8){B.st='out';SFX.kick();burst(p,0xffffff,14,3,.3);clearGesture();return}
     const sp=(TASK.err>=2?3.2:5.2)*(d<3.6?.45:1);const v=hp.clone().sub(p).normalize().multiplyScalar(sp*dt);p.add(v);p.y=Math.max(.5,p.y);
     if(d<.75){B.st='wait';B.t=T+2.6;burst(p,0xc080ff,24,3);p.y=-5;SFX.bump();if(DANIA)DANIA.cheerT=-9;mistake('b_dodge')}}
    else if(B.st==='out'){const kp=V3(KV.root.position.x,1.6,KV.root.position.z);const d=p.distanceTo(kp);p.add(kp.clone().sub(p).normalize().multiplyScalar(14*dt));
