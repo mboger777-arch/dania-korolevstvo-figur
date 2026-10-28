@@ -105,7 +105,7 @@ LEVELS[4]={cast:{queen:true},build(){groundPlane(TEX.grass,0xd8e890);hills(0x8cc
    const P=pt||L.mkPlate(0,27.5,3.8,6,0xffd060);if(!pt){burst(V3(0,1,27.5),0xffe066,40,5);SFX.magic()}
    newTask('Держи палец, обеги край плиты','hold');run(()=>say(lineT));
    TASK.help=async()=>{for(const e of P.edges)burst(e.position,0xffe066,8,2);await say('c5_off')};
-   botTask(async()=>{const e0=TASK.err;await bGo(P.cx,P.cz,.8);bHold(true);await bUntil(()=>TASK.err>e0,4);bHold(false);await bWait(.3);await bGo(P.P[0].x,P.P[0].z,.4);bHold(true);for(let i=1;i<=P.n;i++)await bGo(P.P[i%P.n].x,P.P[i%P.n].z,.45);bHold(false)});
+   botTask(async()=>{const e0=TASK.err;await bGo(P.cx,P.cz,.8);bHold(true);await bUntil(()=>TASK.err>e0,4);bHold(false);await bWait(.3);for(let r=0;r<3&&P.lamps.some(l=>!l.lit);r++){await bGo(P.P[0].x,P.P[0].z,.4,8);bHold(true);for(let i=1;i<=P.n;i++)await bGo(P.P[i%P.n].x,P.P[i%P.n].z,.45,6);bHold(false);await bWait(.4)}});
    await L.lightTask(P);GOAL='';clearGesture();await until(()=>!TALK);
    newTask('Прыгни на камень с числом углов','jump');const st=L.stones(nums,sz);run(()=>sayAll(ask,'u_jump'));
    TASK.help=async()=>{await say('c5_help');await countAloud(P.lamps.map(l=>V3(l.g.position.x,1.9,l.g.position.z)))};
@@ -144,7 +144,7 @@ LEVELS[5]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xb8e070);h
    const t0=T;await until(()=>{const k=T-t0;c.rotation.z=(w.k==='sq'?(Math.floor(k*6)%2?.1:-.06):Math.sin(k*9)*.07);c.position.y=w.k==='sq'?Math.abs(Math.sin(k*10))*.15:0;w.g.position.y=.6+c.position.y;return k>1.2});
    c.rotation.z=0;c.position.y=0;SFX.bump();mistake(w.k==='sq'?'c6_sq':'c6_ov');await until(()=>!TALK||TALK.k!=='c6_sq'&&TALK.k!=='c6_ov');const [hx,hz]=w.home;w.g.position.set(hx,w.k==='ov'?.38:.6,hz);burst(V3(hx,1,hz),0xffffff,14,2);busy=false;return false};
   TASK.help=async()=>{const w=L.wheels.find(w=>w.k==='ci');burst(V3(w.g.position.x,1.5,w.g.position.z),0xffe066,40,4);await say('c6_help')};
-  botTask(async()=>{const e0=TASK.err;for(const k of ['sq','ci']){const w=L.wheels.find(w=>w.k===k);if(w.used)continue;await bGo(w.g.position.x+1.2,w.g.position.z,.4);bHold(true);await bWait(.4);await bGo(-2.5,8.3,.5);await bWait(.3);bHold(false);if(k==='sq')await bUntil(()=>TASK.err>e0,6);await bWait(1.6)}});
+  botTask(async()=>{const e0=TASK.err;for(let r=0;r<3&&!ok;r++)for(const k of (r?['ci']:['sq','ci'])){const w=L.wheels.find(w=>w.k===k);if(w.used||ok)continue;await bUntil(()=>!busy,6);await bGo(w.g.position.x+1.2,w.g.position.z,.4,8);bHold(true);await bWait(.4);await bGo(-2.5,8.3,.6,6);await bWait(.3);bHold(false);if(k==='sq')await bUntil(()=>TASK.err>e0,6);await bWait(1.6)}});
   await until(()=>ok);gr.on=false;L.slotMk.visible=false;GOAL='';await good('c6_ok');
   // второго круглого колеса нет — Кругляш сам становится колесом
   await cutscene(async()=>{shot(-6,2.6,4,-.5,1,8,2.5);heroAt(-3,5,.6);await say('c6_last');KRUG.mode='none';const a=KRUG.root.position.clone(),t0=T;
