@@ -24,10 +24,11 @@ async def main():
     await start(0)
     await ev('heroAt(L.A.x,L.A.z,Math.atan2(L.B.x-L.A.x,L.B.z-L.A.z)+.75)');await pg.wait_for_timeout(1200);await skip()
     await pg.mouse.move(W*.8,H*.6);await pg.mouse.down();await pg.wait_for_timeout(1400);await pg.screenshot(path=f'{out}/beam.png');a=await aimxy()
+    await pg.wait_for_timeout(1600);await pg.mouse.up()
     for i in range(16):
       await pg.wait_for_timeout(500)
       if await ev('!!L.bridge'):break
-    await pg.mouse.up();ok=await ev('!!L.bridge');res['beam']={'aim':a,'bridge':ok}
+    ok=await ev('!!L.bridge');res['beam']={'aim':a,'bridge':ok}
     # 3) фонарь на туман (гл.1)
     for i in range(60):
       await pg.wait_for_timeout(500);await skip()
@@ -36,9 +37,11 @@ async def main():
     for i in range(60):
       await pg.wait_for_timeout(500)
       if not shot and i==3: await pg.screenshot(path=f'{out}/fog.png');shot=True
+      if os.environ.get('DBG'):print(await ev('JSON.stringify([GOAL,CUT,!!TALK,INP.hold,INPMODE,HERO.x.toFixed(1),HERO.z.toFixed(1),HERO.yaw.toFixed(2),L.clouds.map(c=>c.alive?c.hp.toFixed(2):0),AIM.t&&AIM.t.kind])'))
       if await ev('!L.fog||L.clouds.every(c=>!c.alive)'):break
       if i%8==7: await pg.mouse.up();await skip();await pg.mouse.down()
     await pg.mouse.up();res['fog']={'cleared':await ev('L.clouds.every(c=>!c.alive)')}
+    if os.environ.get('ONLY')=='fog':print(json.dumps(res));return
     # 1) мяч в ворота (гл.0): Даня смотрит мимо ворот, тап по кольцу
     await ev('(()=>{const o=ACT.items.find(i=>i.k==="ball");heroAt(o.bx-.6,o.bz-1.5,1.1);ACT.pend.length=0})()');await pg.wait_for_timeout(500);await skip()
     await pg.wait_for_timeout(500);await pg.screenshot(path=f'{out}/ball.png');a=await aimxy();ok=False
@@ -47,7 +50,7 @@ async def main():
     # 4) пнуть фигуру в дырку (гл.3)
     await start(3);g0=await ev('GOAL');n=0
     for k in range(6):
-      s=await ev('(()=>{const s=L.shapes.find(s=>s.alive&&!s.passed);if(!s)return null;const p=s.b.position;heroAt(p.x+.8,p.z-2.2,-.9);return[p.x,p.z]})()')
+      s=await ev('(()=>{const s=L.shapes.find(s=>s.alive&&!s.passed&&L.holes.some(h=>h.open&&!h.full&&h.accept(s.kind)))||L.shapes.find(s=>s.alive&&!s.passed);if(!s)return null;const p=s.b.position;heroAt(p.x+.8,p.z-2.2,-.9);return[p.x,p.z]})()')
       if not s:break
       await pg.wait_for_timeout(700);await skip()
       if k==0: await pg.screenshot(path=f'{out}/shape.png')

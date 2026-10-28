@@ -88,9 +88,9 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
   botTask(async()=>{const e0=TASK.err;await bPath([[.6,9.8],[3.2,14.2],[2,16.5]]);await bGo(0,17,.6);bHold(true);await bUntil(()=>TASK.err>e0,6);bHold(false);await bGo(0,22,.3);bHold(true);for(const c of L.clouds){if(!c.alive)continue;bAim(c.position.x,c.position.z);await bUntil(()=>!c.alive,8)}bHold(false);bAimA(null)});
   const onL=()=>hd(0,22)<1.2;
   TICK.push(dt=>{if(rs.done)return;if(onL()){mk2.visible=false;if(!rs.cam){rs.cam=1;shot(0,5.5,13.5,0,2,30,2.5)}}else if(rs.cam&&!INP.hold){rs.cam=0;followCam()}
-   let fc=null,fa=1.15;if(onL())for(const c of L.clouds){if(!c.alive)continue;const a=Math.atan2(c.position.x-HERO.x,c.position.z-HERO.z),df=Math.abs(adiff(HERO.yaw,a));if(df<fa){fa=df;fc=c}}
+   let fc=null,fa=3.2;if(onL())for(const c of L.clouds){if(!c.alive)continue;const a=Math.atan2(c.position.x-HERO.x,c.position.z-HERO.z),df=Math.abs(adiff(HERO.yaw,a));if(df<fa){fa=df;fc=c}}
    if(fc)aimSet({kind:'fog',x:fc.position.x,y:fc.position.y,z:fc.position.z,r:50,ready:INP.hold,from:wandPos()});
-   if(INP.hold&&onL()){HERO.mode='still';if(!(fc&&aimTurn(dt,Math.atan2(fc.position.x-HERO.x,fc.position.z-HERO.z),1.5,1.15)))turnHero(dt,1.8);rs.len=Math.min(70,rs.len+dt*45);const O=wandPos();const dir=V3(Math.sin(HERO.yaw),.04,Math.cos(HERO.yaw));const end=O.clone().addScaledVector(dir,rs.len);rb.visible=rg.visible=true;setSeg(rb,O,end,.1);setSeg(rg,O,end,.32);
+   if(INP.hold&&onL()){HERO.mode='still';if(!(fc&&aimTurn(dt,Math.atan2(fc.position.x-HERO.x,fc.position.z-HERO.z),1.6,3.2)))turnHero(dt,1.8);rs.len=Math.min(70,rs.len+dt*45);const O=wandPos();const dir=V3(Math.sin(HERO.yaw),.04,Math.cos(HERO.yaw));const end=O.clone().addScaledVector(dir,rs.len);rb.visible=rg.visible=true;setSeg(rb,O,end,.1);setSeg(rg,O,end,.32);
     for(const c of L.clouds){if(!c.alive)continue;const a=Math.atan2(c.position.x-HERO.x,c.position.z-HERO.z);if(Math.abs(adiff(HERO.yaw,a))<.32&&rs.len>8){c.hp-=dt;c.position.x+=Math.sin(T*40)*.03;c.scale.setScalar(.6+c.hp/2);if(c.hp<=0){c.alive=false;c.visible=false;burst(c.position,0xffffff,40,5,.5);SFX.magic();rs.left--;if(rs.left>0)run(()=>sayNext('c1_fog'));else rs.done=true}}}}
    else{rb.visible=rg.visible=false;rs.len=0;HERO.mode='walk';
     }

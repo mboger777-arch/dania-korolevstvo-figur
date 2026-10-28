@@ -27,10 +27,10 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
  TICK.push(dt=>this.tick(dt))},
  open(h){h.open=true;const c=h.cover;const t0=T;SFX.creak();TICK.push(()=>{const k=clamp((T-t0)*1.6,0,1);c.rotation.x=-k*1.45;c.position.y=lerp(h.y,.1,k);c.position.z=13.45-k*.9;if(k>=1)c.visible=false})},
  add(kind,x,z){const s=mkShape(kind,x,z);this.shapes.push(s);burst(V3(x,1,z),SHC[kind],20,3);SFX.pop();return s},
- tick(dt){{let nb=null,nd=3.6;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<nd){nd=d;nb=s}}
+ tick(dt){{let nb=null,nd=3.6,ns=9;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z),sc=d-(this.holes.some(h=>h.open&&!h.full&&h.accept(s.kind))?.8:0);if(d<3.6&&sc<ns){ns=sc;nd=d;nb=s}}
   if(nb){const p=nb.b.position;const hl=this.holes.find(h=>h.open&&!h.full&&h.accept(nb.kind));aimSet({kind:'shape',x:p.x,y:p.y+.2,z:p.z,r:46,ready:nd<3.0,tapR:140,from:hl?{x:hl.x,y:.3,z:13.6}:null,arc:.6,
-   fire:()=>{if(hd(p.x,p.z)>3.0)return false;HERO.yaw=Math.atan2(p.x-HERO.x,p.z-HERO.z);HERO.kickT=T;if(DANIA)DANIA.kickT=T}})}}
-  if(HERO.kickT&&HERO.kickT!==this.lastKick){this.lastKick=HERO.kickT;clearGesture();let best=null,bd=3.0;for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<bd){bd=d;best=s}}
+   fire:()=>{if(hd(p.x,p.z)>3.0)return false;HERO.yaw=Math.atan2(p.x-HERO.x,p.z-HERO.z);HERO.kickT=T;if(DANIA)DANIA.kickT=T;this.aimS=nb;this.aimST=T}})}}
+  if(HERO.kickT&&HERO.kickT!==this.lastKick){this.lastKick=HERO.kickT;clearGesture();let best=null,bd=3.0;if(this.aimS&&T-this.aimST<.25&&this.aimS.alive&&!this.aimS.passed)best=this.aimS;else for(const s of this.shapes){if(!s.alive||s.passed)continue;const d=hd(s.b.position.x,s.b.position.z);if(d<bd){bd=d;best=s}}
    if(best){const p=best.b.position;let dx=p.x-HERO.x,dz=p.z-HERO.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const a0=Math.atan2(dx,dz);let ba=null,bdiff=.6;
     for(const h of this.holes){if(!h.open||h.full)continue;const a=Math.atan2(h.x-p.x,13.6-p.z);const df=Math.abs(adiff(a,a0))-(h.accept(best.kind)?.5:0);if(df<bdiff){bdiff=df;ba=a}}
     if(ba!=null){dx=Math.sin(ba);dz=Math.cos(ba)}const v=Math.max(9,Math.min(15,Math.hypot(13.6-p.z,0)*1.9+5));best.b.velocity.set(dx*v,2.2,dz*v);best.b.wakeUp();burst(V3(p.x,.6,p.z),0xffffff,12,3,.3)}}
