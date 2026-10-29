@@ -275,10 +275,10 @@ AIM.sp=[];AIM.fx=[];
 function rgba(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'}
 function glint(x,y,r,a,c){X.globalAlpha=a;const g=X.createRadialGradient(x,y,0,x,y,r*2.2);g.addColorStop(0,'rgba(255,255,240,1)');g.addColorStop(.25,rgba(c,.8));g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(x,y,r*2.2,0,7);X.fill();
  X.fillStyle='#fffbe8';X.beginPath();X.moveTo(x,y-r*1.8);X.quadraticCurveTo(x,y,x+r*1.8,y);X.quadraticCurveTo(x,y,x,y+r*1.8);X.quadraticCurveTo(x,y,x-r*1.8,y);X.quadraticCurveTo(x,y,x,y-r*1.8);X.fill()}
-function aimBurst(x,y,kind){const c=AIMC[kind]||AIMC.goal;AIM.fx.push({k:'ring',x,y,t0:T,c});for(let i=0;i<14;i++){const an=i/14*6.283+Math.random()*.3,v=180+Math.random()*220;AIM.fx.push({k:'st',x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-60,t0:T,c,r:4+Math.random()*4})}
+function aimBurst(x,y,kind){const c=AIMC[kind]||AIMC.goal;AIM.fx.push({k:'ring',x,y,t0:T,c});for(let i=0;i<14;i++){const an=i/14*6.283+Math.random()*.3,v=180+Math.random()*220;AIM.fx.push({k:'st',x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-60,t0:T,c,r:5.5+Math.random()*5})}AIM.fx.push({k:'fl',x,y,t0:T,c});
  if(typeof SFX!=='undefined'&&SFX.magic)try{SFX.magic()}catch(e){}}
 function drawAimFX(){if(!AIM.fx.length)return;X.save();X.globalCompositeOperation='lighter';AIM.fx=AIM.fx.filter(f=>{const u=T-f.t0;if(f.k==='ring'){if(u>.55)return false;const k=u/.55;X.globalAlpha=(1-k)*.9;X.lineWidth=10*(1-k)+2;X.strokeStyle=rgba(f.c,1);X.shadowColor=rgba(f.c,1);X.shadowBlur=20;X.beginPath();X.arc(f.x,f.y,30+k*110,0,7);X.stroke();X.shadowBlur=0;return true}
- if(u>.8)return false;const k=u/.8;glint(f.x+f.vx*u*(1-k*.5),f.y+f.vy*u+260*u*u,f.r*(1-k*.6),1-k,f.c);return true});X.restore()}
+ if(f.k==='fl'){if(u>.25)return false;const k=u/.25;X.globalAlpha=1-k;const g=X.createRadialGradient(f.x,f.y,0,f.x,f.y,90);g.addColorStop(0,'rgba(255,255,235,1)');g.addColorStop(.35,rgba(f.c,.7));g.addColorStop(1,rgba(f.c,0));X.fillStyle=g;X.beginPath();X.arc(f.x,f.y,90,0,7);X.fill();return true}if(u>.8)return false;const k=u/.8;glint(f.x+f.vx*u*(1-k*.5),f.y+f.vy*u+260*u*u,f.r*(1-k*.6),1-k,f.c);return true});X.restore()}
 function drawAim(){drawAimFX();if(!aimLive())return;const t=AIM.t,s=toScreen(t.x,t.y,t.z);if(!s.vis)return;const c=AIMC[t.kind]||AIMC.goal;X.save();
  const age=T-(AIM.t0||0),lk=Math.min(1,age/.35),ease=1-Math.pow(1-lk,3),pul=1+Math.sin(T*4)*.05+(t.ready?Math.sin(T*9)*.04:0);
  const r=Math.max(t.r||46,27/S)*pul*(1+(1-ease)*1.1),a=Math.min(1,age*4);
