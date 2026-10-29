@@ -169,3 +169,5 @@
 - Рука-подсказка везде — нарисованная (assets/ui/aim_hand.webp) с мягкой тенью; круги-волны при нажатии.
 - Мелок: старт — светящийся самоцвет, замыкание — мерцающая звёздная ниточка.
 - Ассеты: tools/aimassets.py (исходники refs/gen/aim_*.jpg). Лист: sheets/r12_aim.png.
+- Тесты b9: aimtest 667/844/932 — все цели ok, errors []. FULL 844x390: 7/7 ok, botTimeouts 0, feetBad 0, cut 0, suspend 0 (ch4 144.7 с), persist done×7+medal.
+  FULL 667x375 и 932x430 идут фоном по очереди (/tmp/r12chain.sh → /tmp/full12_<vp>.log, флаг /tmp/r12chain.done).
