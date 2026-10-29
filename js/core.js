@@ -211,7 +211,7 @@ function drawHand(){if(!HINT.g||INPMODE!=='play')return;const idle=T-INP.last;le
  else if(g==='swipe'){const u=(ph%1.1)/1.1;hx=rx-90+u*200;hy=ry+30-u*90;press=u<.7;X.strokeStyle='rgba(255,255,255,.75)';X.lineWidth=12;X.lineCap='round';X.beginPath();X.moveTo(rx-90,ry+30);X.lineTo(hx,hy);X.stroke()}
  drawHandShape(hx,hy,press);X.restore()}
 function ring(x,y,r,c){X.strokeStyle=c;X.lineWidth=8;X.beginPath();X.arc(x,y,r,0,7);X.stroke()}
-function drawHandShape(x,y,press){X.save();X.translate(x,y+(press?8:0));X.scale(1.25,1.25);X.lineJoin='round';X.lineWidth=6;X.strokeStyle='#3a2410';X.fillStyle='#ffe3c6';
+function drawHandShape(x,y,press){const HI=IM.u_aim_hand;if(okI(HI)){/* R12: нарисованная рука, кончик пальца в (x,y), мягкая тень */const w=150,dy=press?6:0;X.save();X.shadowColor='rgba(30,15,0,.45)';X.shadowBlur=14;X.shadowOffsetX=6;X.shadowOffsetY=10;X.drawImage(HI,x-w*.44,y-w*.05+dy,w,w);X.restore();return}X.save();X.translate(x,y+(press?8:0));X.scale(1.25,1.25);X.lineJoin='round';X.lineWidth=6;X.strokeStyle='#3a2410';X.fillStyle='#ffe3c6';
  X.beginPath();rr(-12,-2,24,60,12);X.fill();X.stroke();// палец
  X.beginPath();rr(-26,36,62,60,22);X.fill();X.stroke();X.beginPath();rr(10,32,18,30,9);X.fill();X.stroke();X.beginPath();rr(24,40,18,30,9);X.fill();X.stroke();
  X.fillStyle='rgba(255,255,255,.7)';X.beginPath();X.ellipse(-4,8,4,8,0,0,7);X.fill();X.restore()}

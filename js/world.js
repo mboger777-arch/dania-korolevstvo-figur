@@ -266,21 +266,46 @@ function aimLive(){return AIM.t&&T-AIM.setT<.15&&INPMODE==='play'&&!CUT}
 // тап по кольцу (щедрый радиус) — пинок/выстрел без точного разворота
 function aimTap(x,y){if(!aimLive()||!AIM.t.fire)return false;const t=AIM.t,s=toScreen(t.x,t.y,t.z);if(!s.vis)return false;
  let best=Math.hypot(x-s.x,y-s.y);if(t.alt){const s2=toScreen(t.alt.x,t.alt.y,t.alt.z);if(s2.vis)best=Math.min(best,Math.hypot(x-s2.x,y-s2.y))}
- if(best>(t.tapR||125))return false;INP.last=T;if(t.fire()===false)return false;AIM.tapT=T;AIM.tx=x;AIM.ty=y;return true}
-function drawAim(){if(!aimLive())return;const t=AIM.t,s=toScreen(t.x,t.y,t.z);if(!s.vis)return;X.save();
- const pul=1+Math.sin(T*5)*.08,r=(t.r||46)*pul,a=Math.min(1,(T-(AIM.t0||0))*4);X.globalAlpha=a;
- // линия-подсказка: пунктирная дуга от мяча/жезла к цели
- if(t.from){const N=14;X.lineCap='round';for(let i=1;i<N;i++){const k=i/N,hy=Math.sin(k*Math.PI)*(t.arc||0);const p=toScreen(lerp(t.from.x,t.x,k),lerp(t.from.y,t.y,k)+hy,lerp(t.from.z,t.z,k));if(!p.vis)continue;const ph=(k*N-T*6)%2;if(((ph%2)+2)%2>1.1)continue;
-  X.fillStyle='rgba(60,30,0,.35)';X.beginPath();X.arc(p.x+1.5,p.y+2,6.5,0,7);X.fill();X.fillStyle='#fff6c0';X.beginPath();X.arc(p.x,p.y,5.5,0,7);X.fill()}}
+ if(best>(t.tapR||125))return false;INP.last=T;if(t.fire()===false)return false;AIM.tapT=T;AIM.tx=x;AIM.ty=y;aimBurst(s.x,s.y,t.kind);return true}
+// R12: сказочный прицел — нарисованное кольцо с ореолом, цвет по типу цели, иконка в центре,
+// захват (кольцо «садится» на цель), искры вверх, звёздная пыль-дуга, вспышка при тапе
+const AIMC={goal:[255,196,60],boss:[196,120,255],beam:[255,236,140],fog:[120,210,255],grab:[255,170,70],shape:[110,240,170]};
+for(const n of ['aim_ring','aim_hand','ic_goal','ic_boss','ic_beam','ic_fog','ic_grab'])img('u_'+n,'assets/ui/'+n+'.webp');
+AIM.sp=[];AIM.fx=[];
+function rgba(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'}
+function glint(x,y,r,a,c){X.globalAlpha=a;const g=X.createRadialGradient(x,y,0,x,y,r*2.2);g.addColorStop(0,'rgba(255,255,240,1)');g.addColorStop(.25,rgba(c,.8));g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(x,y,r*2.2,0,7);X.fill();
+ X.fillStyle='#fffbe8';X.beginPath();X.moveTo(x,y-r*1.8);X.quadraticCurveTo(x,y,x+r*1.8,y);X.quadraticCurveTo(x,y,x,y+r*1.8);X.quadraticCurveTo(x,y,x-r*1.8,y);X.quadraticCurveTo(x,y,x,y-r*1.8);X.fill()}
+function aimBurst(x,y,kind){const c=AIMC[kind]||AIMC.goal;AIM.fx.push({k:'ring',x,y,t0:T,c});for(let i=0;i<14;i++){const an=i/14*6.283+Math.random()*.3,v=180+Math.random()*220;AIM.fx.push({k:'st',x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-60,t0:T,c,r:4+Math.random()*4})}
+ if(typeof SFX!=='undefined'&&SFX.magic)try{SFX.magic()}catch(e){}}
+function drawAimFX(){if(!AIM.fx.length)return;X.save();X.globalCompositeOperation='lighter';AIM.fx=AIM.fx.filter(f=>{const u=T-f.t0;if(f.k==='ring'){if(u>.55)return false;const k=u/.55;X.globalAlpha=(1-k)*.9;X.lineWidth=10*(1-k)+2;X.strokeStyle=rgba(f.c,1);X.shadowColor=rgba(f.c,1);X.shadowBlur=20;X.beginPath();X.arc(f.x,f.y,30+k*110,0,7);X.stroke();X.shadowBlur=0;return true}
+ if(u>.8)return false;const k=u/.8;glint(f.x+f.vx*u*(1-k*.5),f.y+f.vy*u+260*u*u,f.r*(1-k*.6),1-k,f.c);return true});X.restore()}
+function drawAim(){drawAimFX();if(!aimLive())return;const t=AIM.t,s=toScreen(t.x,t.y,t.z);if(!s.vis)return;const c=AIMC[t.kind]||AIMC.goal;X.save();
+ const age=T-(AIM.t0||0),lk=Math.min(1,age/.35),ease=1-Math.pow(1-lk,3),pul=1+Math.sin(T*4)*.05+(t.ready?Math.sin(T*9)*.04:0);
+ const r=(t.r||46)*pul*(1+(1-ease)*1.1),a=Math.min(1,age*4);
+ // звёздная пыль: светящиеся точки текут от мяча/жезла к цели, звёздочка в точке попадания
+ if(t.from){const N=22;X.globalCompositeOperation='lighter';for(let i=1;i<N;i++){const k=((i+T*2.2)%N)/N;if(k<.04||k>.93)continue;const hy=Math.sin(k*Math.PI)*(t.arc||0);const p=toScreen(lerp(t.from.x,t.x,k),lerp(t.from.y,t.y,k)+hy,lerp(t.from.z,t.z,k));if(!p.vis)continue;
+  const fa=a*Math.min(1,k*5)*(.55+.45*k),rd=2.2+k*2.6+Math.sin(i*2.1+T*8)*.6;X.globalAlpha=fa*.55;const g=X.createRadialGradient(p.x,p.y,0,p.x,p.y,rd*3.4);g.addColorStop(0,rgba(c,.9));g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(p.x,p.y,rd*3.4,0,7);X.fill();
+  X.globalAlpha=fa;X.fillStyle='#fffbe6';X.beginPath();X.arc(p.x,p.y,rd,0,7);X.fill()}
+  X.globalCompositeOperation='source-over'}
  X.translate(s.x,s.y);
- X.shadowColor='rgba(255,210,60,.95)';X.shadowBlur=18;X.lineWidth=7;X.strokeStyle='#ffd94a';X.beginPath();X.arc(0,0,r,0,7);X.stroke();X.shadowBlur=0;
- X.lineWidth=3;X.strokeStyle='#fff';X.beginPath();X.arc(0,0,r-7,0,7);X.stroke();X.strokeStyle='#8a3a00';X.lineWidth=2.5;X.beginPath();X.arc(0,0,r+5,0,7);X.stroke();
- // четыре звёздочки вращаются по кольцу
- for(let i=0;i<4;i++){const an=T*1.6+i*Math.PI/2;X.save();X.translate(Math.cos(an)*r,Math.sin(an)*r);X.rotate(an);X.fillStyle='#fff3a0';X.strokeStyle='#b8640a';X.lineWidth=2;X.beginPath();for(let j=0;j<10;j++){const rr2=j%2?5:12,aa=j*Math.PI/5-Math.PI/2;X[j?'lineTo':'moveTo'](Math.cos(aa)*rr2,Math.sin(aa)*rr2)}X.closePath();X.fill();X.stroke();X.restore()}
- if(t.ready){X.globalAlpha=a*(.55+.45*Math.sin(T*10));X.fillStyle='rgba(255,236,120,.35)';X.beginPath();X.arc(0,0,r-9,0,7);X.fill()}
- X.globalAlpha=a;X.restore();
+ // мягкий ореол
+ X.globalCompositeOperation='lighter';X.globalAlpha=a*(t.ready?.75:.5)*(.85+.15*Math.sin(T*3));let g=X.createRadialGradient(0,0,r*.55,0,0,r*1.6);g.addColorStop(0,rgba(c,0));g.addColorStop(.4,rgba(c,.55));g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(0,0,r*1.6,0,7);X.fill();
+ if(t.ready){X.globalAlpha=a*(.25+.2*Math.sin(T*9));g=X.createRadialGradient(0,0,0,0,0,r*.95);g.addColorStop(0,'rgba(255,255,230,.9)');g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(0,0,r*.95,0,7);X.fill()}
+ X.globalCompositeOperation='source-over';
+ // нарисованное рунное кольцо (вращается), тонированное каёмкой цвета цели
+ const RI=IM.u_aim_ring;X.globalAlpha=a;X.lineWidth=5;X.strokeStyle=rgba(c,.85);X.shadowColor=rgba(c,1);X.shadowBlur=14;X.beginPath();X.arc(0,0,r*.9,0,7);X.stroke();X.shadowBlur=0;
+ if(okI(RI)){X.save();X.rotate(T*.5);const w=r*2.5;X.drawImage(RI,-w/2,-w/2,w,w);X.restore();X.save();X.rotate(-T*.35);X.globalAlpha=a*.35;X.globalCompositeOperation='lighter';const w2=r*2.1;X.drawImage(RI,-w2/2,-w2/2,w2,w2);X.restore()}
+ else{X.lineWidth=7;X.strokeStyle='#ffd94a';X.beginPath();X.arc(0,0,r,0,7);X.stroke()}
+ // иконка цели в центре (маленькая, полупрозрачная — сам предмет виден сквозь кольцо)
+ const IC=IM['u_ic_'+t.kind];if(okI(IC)&&t.kind!=='goal'&&t.kind!=='shape'){const w=r*.62,by=Math.sin(T*3)*2;X.globalAlpha=a*.9;X.shadowColor='rgba(40,20,0,.5)';X.shadowBlur=6;X.shadowOffsetY=2;X.drawImage(IC,r*.62-w/2,-r*.62-w/2+by,w,w);X.shadowBlur=0;X.shadowOffsetY=0}
+ // искры поднимаются от кольца
+ X.globalCompositeOperation='lighter';if(Math.random()<.5)AIM.sp.push({an:Math.random()*6.283,t0:T,v:30+Math.random()*30});AIM.sp=AIM.sp.filter(p=>T-p.t0<1.1);
+ for(const p of AIM.sp){const u=(T-p.t0)/1.1;glint(Math.cos(p.an)*r*.95+Math.sin(u*6+p.an)*5,Math.sin(p.an)*r*.95-u*p.v*1.4,2.4*(1-u*.5),a*Math.sin(u*Math.PI),c)}
+ X.restore();
  // рука-демо: в первый раз (и после простоя 5 с) рука тапает по кольцу
  const idle=T-INP.last;let ph=-1;if(AIM.hintK===t.kind&&T-AIM.hintT<3.4)ph=T-AIM.hintT;else if(idle>5&&t.fire){ph=(idle-5)%4.5;if(ph>3.2)ph=-1}
- if(ph>=0&&t.fire&&typeof drawHandShape==='function'){const press=(ph%1.1)<.3;X.save();X.globalAlpha=Math.min(1,ph*3,(3.4-ph)*3);if(press){X.strokeStyle='rgba(255,240,120,.9)';X.lineWidth=6;X.beginPath();X.arc(s.x,s.y,r+10+(ph%1.1)*60,0,7);X.stroke()}drawHandShape(s.x+8,s.y+6,press);X.restore()}}
+ if(ph>=0&&t.fire&&typeof drawHandShape==='function'){const q=ph%1.1,press=q<.3;X.save();X.globalAlpha=Math.min(1,ph*3,(3.4-ph)*3);
+  if(q<.6){const k=q/.6;X.globalCompositeOperation='lighter';X.globalAlpha*=1-k;X.strokeStyle=rgba(c,1);X.lineWidth=6;X.shadowColor=rgba(c,1);X.shadowBlur=12;X.beginPath();X.arc(s.x,s.y,r*.5+k*r*1.1,0,7);X.stroke();X.shadowBlur=0;X.globalCompositeOperation='source-over';X.globalAlpha=Math.min(1,ph*3,(3.4-ph)*3)}
+  drawHandShape(s.x+6,s.y+4,press);X.restore()}}
 // мягкий доворот героя к цели, когда джойстик отпущен (не мешает ручному прицелу)
 function aimTurn(dt,a,rate,cone){if(INP.jx||INP.jy)return false;const d=adiff(a,HERO.yaw);if(Math.abs(d)>cone)return false;HERO.yaw+=clamp(d,-rate*dt,rate*dt);return true}
