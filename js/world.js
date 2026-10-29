@@ -281,10 +281,10 @@ function drawAimFX(){if(!AIM.fx.length)return;X.save();X.globalCompositeOperatio
  if(u>.8)return false;const k=u/.8;glint(f.x+f.vx*u*(1-k*.5),f.y+f.vy*u+260*u*u,f.r*(1-k*.6),1-k,f.c);return true});X.restore()}
 function drawAim(){drawAimFX();if(!aimLive())return;const t=AIM.t,s=toScreen(t.x,t.y,t.z);if(!s.vis)return;const c=AIMC[t.kind]||AIMC.goal;X.save();
  const age=T-(AIM.t0||0),lk=Math.min(1,age/.35),ease=1-Math.pow(1-lk,3),pul=1+Math.sin(T*4)*.05+(t.ready?Math.sin(T*9)*.04:0);
- const r=(t.r||46)*pul*(1+(1-ease)*1.1),a=Math.min(1,age*4);
+ const r=Math.max(t.r||46,27/S)*pul*(1+(1-ease)*1.1),a=Math.min(1,age*4);
  // звёздная пыль: светящиеся точки текут от мяча/жезла к цели, звёздочка в точке попадания
  if(t.from){const N=22;X.globalCompositeOperation='lighter';for(let i=1;i<N;i++){const k=((i+T*2.2)%N)/N;if(k<.04||k>.93)continue;const hy=Math.sin(k*Math.PI)*(t.arc||0);const p=toScreen(lerp(t.from.x,t.x,k),lerp(t.from.y,t.y,k)+hy,lerp(t.from.z,t.z,k));if(!p.vis)continue;
-  const fa=a*Math.min(1,k*5)*(.55+.45*k),rd=2.2+k*2.6+Math.sin(i*2.1+T*8)*.6;X.globalAlpha=fa*.55;const g=X.createRadialGradient(p.x,p.y,0,p.x,p.y,rd*3.4);g.addColorStop(0,rgba(c,.9));g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(p.x,p.y,rd*3.4,0,7);X.fill();
+  const fa=a*Math.min(1,k*5)*(.55+.45*k),rd=(3+k*3.4+Math.sin(i*2.1+T*8)*.7)*Math.max(1,.75/S);X.globalAlpha=Math.min(1,fa*.8);const g=X.createRadialGradient(p.x,p.y,0,p.x,p.y,rd*3.4);g.addColorStop(0,rgba(c,.9));g.addColorStop(1,rgba(c,0));X.fillStyle=g;X.beginPath();X.arc(p.x,p.y,rd*3.4,0,7);X.fill();
   X.globalAlpha=fa;X.fillStyle='#fffbe6';X.beginPath();X.arc(p.x,p.y,rd,0,7);X.fill()}
   X.globalCompositeOperation='source-over'}
  X.translate(s.x,s.y);
@@ -297,7 +297,7 @@ function drawAim(){drawAimFX();if(!aimLive())return;const t=AIM.t,s=toScreen(t.x
  if(okI(RI)){X.save();X.rotate(T*.5);const w=r*2.5;X.drawImage(RI,-w/2,-w/2,w,w);X.restore();X.save();X.rotate(-T*.35);X.globalAlpha=a*.35;X.globalCompositeOperation='lighter';const w2=r*2.1;X.drawImage(RI,-w2/2,-w2/2,w2,w2);X.restore()}
  else{X.lineWidth=7;X.strokeStyle='#ffd94a';X.beginPath();X.arc(0,0,r,0,7);X.stroke()}
  // иконка цели в центре (маленькая, полупрозрачная — сам предмет виден сквозь кольцо)
- const IC=IM['u_ic_'+t.kind];if(okI(IC)&&t.kind!=='goal'&&t.kind!=='shape'){const w=r*.62,by=Math.sin(T*3)*2;X.globalAlpha=a*.9;X.shadowColor='rgba(40,20,0,.5)';X.shadowBlur=6;X.shadowOffsetY=2;X.drawImage(IC,r*.62-w/2,-r*.62-w/2+by,w,w);X.shadowBlur=0;X.shadowOffsetY=0}
+ const IC=IM['u_ic_'+t.kind];if(okI(IC)&&t.kind!=='shape'&&ease>.9){/* медальон с иконкой цели сбоку кольца */const br=Math.max(r*.4,15/S),bx=r*.8,by=-r*.8+Math.sin(T*3)*2;X.globalAlpha=a;X.shadowColor='rgba(40,20,0,.45)';X.shadowBlur=8;X.shadowOffsetY=3;const bg=X.createRadialGradient(bx-br*.3,by-br*.3,0,bx,by,br);bg.addColorStop(0,'#fffaf0');bg.addColorStop(1,'#f3dcaa');X.fillStyle=bg;X.beginPath();X.arc(bx,by,br,0,7);X.fill();X.shadowBlur=0;X.shadowOffsetY=0;X.lineWidth=Math.max(3,2/S);X.strokeStyle=rgba(c,1);X.stroke();X.lineWidth=1.5;X.strokeStyle='#7a4a10';X.beginPath();X.arc(bx,by,br+X.lineWidth*1.5,0,7);X.stroke();const w=br*1.55;X.drawImage(IC,bx-w/2,by-w/2,w,w)}
  // искры поднимаются от кольца
  X.globalCompositeOperation='lighter';if(Math.random()<.5)AIM.sp.push({an:Math.random()*6.283,t0:T,v:30+Math.random()*30});AIM.sp=AIM.sp.filter(p=>T-p.t0<1.1);
  for(const p of AIM.sp){const u=(T-p.t0)/1.1;glint(Math.cos(p.an)*r*.95+Math.sin(u*6+p.an)*5,Math.sin(p.an)*r*.95-u*p.v*1.4,2.4*(1-u*.5),a*Math.sin(u*Math.PI),c)}
