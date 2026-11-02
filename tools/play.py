@@ -49,14 +49,13 @@ async def main():
           last=time.time();n+=1
           try: await pg.screenshot(path=f'{out}/c{ci}_{n:02d}.png',timeout=90000)
           except Exception as e: print('shot timeout',ci,n,flush=True);shotto=globals().setdefault('SHOTTO',[]);shotto.append((ci,n))
-      ok=st['sc'] in('map','credits');el
+      ok=st['sc'] in('map','credits');el=round(time.time()-t0,1);tw=None
       if st['sc']=='credits':
         for k in range(12):
           await pg.wait_for_timeout(3000)
           if await pg.evaluate('scene')!='credits':break
           await pg.screenshot(path=f'{out}/cr_{k:02d}.png')
         crok=await pg.evaluate('scene');print('credits->',crok,flush=True)
-=round(time.time()-t0,1);tw=None
       info=json.loads(await pg.evaluate('JSON.stringify({m:G.mistakes||0,bt:G.botTimeouts||0,done:SV.done,vl:VLOG,acts:ACTLOG})'))
       vl=info['vl'];cut=[] if 'fast' in FLAGS else [(v['k'],round((v['t1']-v['t0'])/1000,2),v['dur']) for v in vl if 't1' in v and v['dur'] and (v['t1']-v['t0'])/1000<v['dur']-0.15]
       noend=[v['k'] for v in vl[:-1] if 't1' not in v]
