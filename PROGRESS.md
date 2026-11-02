@@ -255,3 +255,5 @@
 - FULL 915x412 (после фикса баннера): PASS — пролог→сад→7 глав→титры→карта, 0 ошибок консоли, сейв done=8/8, медаль. Кадры сохранены в out/frames915/.
 
 - 18:11 трейлер: tools/trailer.py → /workspace/dania_trailer.mp4 (48.5с, h264+aac, голос pr1/pr2/c5_hk/b_six/f_1/cr1 + тихий фон), кадры проверены. final_overview.png пересобран (c6_34), 20 кадров, тёмных нет. voicetest идёт: out/voicetest.log; далее ch_667x375/ch_932x430 (out/regress_all.log).
+
+- 18:33 voicetest: TOTAL FAIL — задержки OK (макс 0.43с, медиана 0.011), overlaps 0; task_cuts в c0(a_pad,c1_ray,c1_fog) c2(c3_wide,c3_t2) c3(c4_bad,c4_long) c7(u_move,gd_jump): у записи нет ended, а следующая похвала drop=busy, т.е. реплику не перебили — вероятно, ended не пишется (смена сцены/onended). Разобрать. Цепочка регрессии продолжается (ch_667x375: 7,0,1,2 ok), 8059 остаётся запущенным до её конца.
