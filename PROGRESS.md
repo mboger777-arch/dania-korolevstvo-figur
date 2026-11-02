@@ -184,3 +184,9 @@
 - A-pose реф: refs/v2/dania_apose.jpg (+ refs/v2/3d/pre.png — вырезка TRELLIS preprocess).
 - Spaces: JeffreyXiang/TRELLIS CONFIG_ERROR; microsoft/TRELLIS.2, trellis-community/TRELLIS, VAST-AI/TripoSG → «exceeded ZeroGPU quota, 0s left» (аноним); stabilityai/stable-fast-3d → AppError; SPAR3D BUILD_ERROR.
 - Нужен HF-токен (read) → tools/trellis2.py (TRELLIS.2, MIT) готов к запуску.
+
+### A5–A6 (2026-11-02) 3D-Даня из TRELLIS.2
+- TRELLIS.2 (microsoft, MIT) Space через HF-токен (env, не в репо) → refs/v2/3d/dania_raw.glb (98k).
+- Blender 4.2.3 portable headless: tools/rig_dania.py — децимация до 24k, текстура 1024 (webp), 19 костей, свои веса по расстоянию (bone heat не сошёлся), клипы idle/walk/run/jump_crouch/jump_air/jump_land/kick/chalk/cheer → proto/dania.glb (2.2 МБ).
+- proto/hero.html: GLTFLoader (proto/lib, r160), веса клипов по состоянию; камера dist 2.6, look=y+.66 быстрее, коллизия камеры, препятствия; трава 2200 мелких пучков разных оттенков; кнопки с иконками и safe-area.
+- Лист: sheets/v2_dania3d_compare.png (tools/sheet3d.py); видео /workspace/dania_3d.mp4 (tools/protovid3d.py); fps swiftshader 915×412: ~53 стоя, ~21–23 бег.
