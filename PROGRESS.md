@@ -179,3 +179,8 @@
 - A3: sheets/v2_dania_compare.png, /workspace/dania_proto.mp4 (450 кадров, 15 с, tools/protovid.py), кадры tools/protoshot.py → shots/proto/.
 - fps headless swiftshader 915x412 DPR1: 55 стоя, ~21 при беге (CPU-рендер; на телефоне не мерили).
 - Слабо: лицо упрощённое (сферы), волосы конусами, нет skinning (суставы видны), поза в прыжке/ура обрезает голову (камера), позы видны со спины; трава-конусы низкополигональные.
+
+### A4 (2026-11-01) image-to-3D: блокер
+- A-pose реф: refs/v2/dania_apose.jpg (+ refs/v2/3d/pre.png — вырезка TRELLIS preprocess).
+- Spaces: JeffreyXiang/TRELLIS CONFIG_ERROR; microsoft/TRELLIS.2, trellis-community/TRELLIS, VAST-AI/TripoSG → «exceeded ZeroGPU quota, 0s left» (аноним); stabilityai/stable-fast-3d → AppError; SPAR3D BUILD_ERROR.
+- Нужен HF-токен (read) → tools/trellis2.py (TRELLIS.2, MIT) готов к запуску.
