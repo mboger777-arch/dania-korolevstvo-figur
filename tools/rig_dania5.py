@@ -34,6 +34,12 @@ rgb=rgb*np.array([1.01,1.0,.98],dtype=np.float32);rgb=np.clip(rgb,0,1)
 px[...,:3]=rgb;img.pixels.foreach_set(px.ravel());img.update();bpy.data.images.remove(bl)
 def texat(uv):
     x=min(w-1,max(0,int(uv[0]*w)));y=min(h-1,max(0,int(uv[1]*h)));return px[y,x,:3]
+# ---------- v6: softer hair = laplacian smoothing of hair-coloured verts on the head (keeps volume, removes facets/spikes)
+bm=bmesh.new();bm.from_mesh(me.data)
+_ym=statistics.median([v.co.y for v in bm.verts if .80<v.co.z<.92 and abs(v.co.x)<.12])
+hv=[v for v in bm.verts if v.co.z>.86 and not ((v.co.x/.15)**2+((v.co.z-.86)/.115)**2<1 and v.co.y<_ym+.04)]
+for i in range(12): bmesh.ops.smooth_vert(bm,verts=hv,factor=.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+bm.normal_update();bm.to_mesh(me.data);bm.free();print('HAIR verts smoothed',len(hv))
 # ---------- joints (front-image units) -> blender
 V=[v.co for v in me.data.vertices]
 def depth(p):
@@ -47,7 +53,7 @@ uvl0=me.data.uv_layers.active.data
 def in_erase(c):
     for sx in (-1,1):
         if ((c.x-sx*.053)/.032)**2+((c.z-.869)/.03)**2<1: return True
-        if .012<sx*c.x<.095 and .895<c.z<.935: return True
+        if .004<sx*c.x<.12 and .89<c.z<.99: return True
     return abs(c.x)<.05 and .78<c.z<.815
 def in_face(c): return (c.x/.12)**2+((c.z-.85)/.11)**2<1
 M=np.zeros((h,w),bool);VA=np.zeros((h,w),bool)
@@ -96,11 +102,19 @@ def regmed(sel):
     return T
 HO=regmed(lambda c:abs(c.x)<.09 and .48<c.z<.58)
 rgb=px[...,:3];hom=np.median(rgb[HO],axis=0);print('HOODIE',hom)
-SK_T=np.array([.95,.62,.40],np.float32);HO_T=np.array([.85,.38,.10],np.float32)
+SK_T=np.array([.93,.68,.52],np.float32);HO_T=np.array([.85,.38,.10],np.float32)
 def near(m,sc): return np.exp(-((rgb-m)**2).sum(-1)/sc)[...,None]
 ws=near(skm,.012);wh=near(hom,.02)*(1-ws)
 rgb=rgb+ws*(SK_T-skm)*.85+wh*(HO_T-hom)*.8
 px[...,:3]=np.clip(rgb,0,1)
+# v6: hair texture: kill light speckles (tips baked as near-white spots) -> soft warm chestnut like the key art
+HR=regmed(lambda c:c.z>.86 and not ((c.x/.15)**2+((c.z-.86)/.115)**2<1))
+HR&=~(FR|Md)
+hm=np.median(px[HR,:3],axis=0);hb=box(box(px[...,:3]*HR[...,None],6),6)/np.maximum(box(box(HR.astype(np.float32),6),6),1e-3)[...,None]
+hh=px[...,:3].copy();hl=lum(hh);cap=float(lum(hm[None,None])[0,0])*1.35
+hh=np.where((hl>cap)[...,None],hb,hh);hh=hh*.55+hb*.45
+HAIR_T=np.array([.50,.29,.15],np.float32);hh=hh+(HAIR_T-hm)*.6
+px[HR,:3]=np.clip(hh[HR],0,1);print('HAIR px',int(HR.sum()),'median',hm)
 FM=FR|Md;fm0=np.median(px[FM,:3],axis=0)
 FX=np.zeros((h,w),bool)
 for p in me.data.polygons:

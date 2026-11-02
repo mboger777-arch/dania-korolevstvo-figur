@@ -83,7 +83,7 @@ const grad2=(()=>{const v=[132,146,166,196,224,242,252,255];const d=new Uint8Arr
 function rimify(m,str=.2){m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
  float rimF=pow(1.0-clamp(dot(normalize(normal),normalize(vViewPosition)),0.0,1.0),2.6);totalEmissiveRadiance+=vec3(1.0,.86,.62)*rimF*${str.toFixed(2)};`)};return m}
 // ===== FACE: painted decal on the face patch (eyes, lids, brows, mouth, blush) — emotions + blink
-const FC=document.createElement('canvas');FC.width=FC.height=512;const fx=FC.getContext('2d');const FT=new THREE.CanvasTexture(FC);FT.colorSpace=THREE.SRGBColorSpace;FT.anisotropy=4;FT.flipY=false;
+const FC=document.createElement('canvas');FC.width=FC.height=512;const fx0=FC.getContext('2d');const FC2=document.createElement('canvas');FC2.width=FC2.height=512;const fx=FC2.getContext('2d');const FSAT=+(new URLSearchParams(location.search).get('s')||.66);const FT=new THREE.CanvasTexture(FC);FT.colorSpace=THREE.SRGBColorSpace;FT.anisotropy=4;FT.flipY=false;
 let SKIN='rgb(236,178,148)',SKINE=[SKIN,SKIN],SKINM=SKIN;const FACE={emo:'smile',blink:0,look:[0,0],key:''};
 const EYE=[[150,238],[364,238]];
 // v5 face: projected from the key-art-matched A-pose painting (tools/face5.py) => base (eyes, nose, blush, freckles) + brow layer + mouth layer
@@ -116,7 +116,8 @@ function drawFace(){const {emo,blink,look}=FACE;const k=emo+blink.toFixed(2)+FRE
  else if(emo==='focus'){x.strokeStyle=ML;x.lineWidth=7;x.beginPath();x.moveTo(206,MY+12);x.quadraticCurveTo(250,MY+22,296,MY+6);x.stroke();x.fillStyle='#e0685a';x.beginPath();x.ellipse(296,MY+18,13,10,.4,0,7);x.fill()}
  else if(emo==='determined'){x.strokeStyle=ML;x.lineWidth=7;x.beginPath();x.moveTo(196,MY+2);x.quadraticCurveTo(256,MY+30,316,MY);x.stroke()}
  else x.drawImage(FI.mouth,0,0);
- FT.needsUpdate=true}
+ fx0.clearRect(0,0,512,512);fx0.filter=`saturate(${FSAT})`;fx0.drawImage(FC2,0,0);fx0.filter='none';FT.needsUpdate=true}
+const CHARC=new THREE.Color("#"+(new URLSearchParams(location.search).get("c")||"e6ecf8")); // v6: keeps skin out of red-channel clipping (less orange, closer to key art)
 // chest triangle decal (crisp gold-cream, like the key art)
 const CC=document.createElement('canvas');CC.width=CC.height=256;{const x=CC.getContext('2d');const cx=118,cy=128;x.lineJoin='round';
  x.fillStyle='rgba(0,0,0,0)';x.beginPath();x.moveTo(cx,cy-60);x.lineTo(cx+58,cy+44);x.lineTo(cx-58,cy+44);x.closePath();x.fillStyle='#ffd98a';x.fill();x.lineWidth=12;x.strokeStyle='#c98a2a';x.stroke();
@@ -125,10 +126,10 @@ const CT=new THREE.CanvasTexture(CC);CT.colorSpace=THREE.SRGBColorSpace;CT.flipY
 new GLTFLoader().load('dania.glb',g=>{const m=g.scene;hero.add(m);
  m.traverse(o=>{if(o.isBone)B[o.name.replace(/[._]/g,'')]=o;if(o.isMesh){o.frustumCulled=false;const nm=o.material.name;
   if(nm==='face'){
-   o.material=rimify(new THREE.MeshToonMaterial({map:FT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:FT,emissiveIntensity:.07,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8,depthWrite:false}));o.renderOrder=2;B.face=o;return}
+   o.material=rimify(new THREE.MeshToonMaterial({map:FT,color:CHARC,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:FT,emissiveIntensity:.07,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8,depthWrite:false}));o.renderOrder=2;B.face=o;return}
   if(nm==='chest'){o.material=new THREE.MeshToonMaterial({map:CT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:CT,emissiveIntensity:.28,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,depthWrite:false});o.renderOrder=2;return}
   o.castShadow=true;o.receiveShadow=true;const map=o.material.map;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
-  o.material=rimify(new THREE.MeshToonMaterial({map,gradientMap:grad2,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.07}),.24)}});
+  o.material=rimify(new THREE.MeshToonMaterial({map,color:CHARC,gradientMap:grad2,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.07}),.24)}});
  drawFace();for(const n of['hood','laceL','laceR'])if(B[n])B[n].userData.q0=B[n].quaternion.clone();
  S.add(wand);
  MIX=new THREE.AnimationMixer(m);for(const c of g.animations){const a=MIX.clipAction(c);a.play();a.setEffectiveWeight(0);ACT[c.name]=a;a.userData={w:0}}
@@ -165,7 +166,7 @@ const CAM={yaw:Math.PI*.78,dist:2.6,h:1.35,look:new THREE.Vector3(),pos:new THRE
 const OBST=[[-6,-6,1.55],[5,-7,.4],[8,-2,.3],[-9,2,.36],[3,8,.3],[-4,9,.42],[10,5,.3],[2.5,-3,.15],[-3,-1.5,.15],[1,3.2,.15],[4,2,.65]];const RC=new THREE.Raycaster();const COLL=[];ground.traverse(o=>{if(o.isMesh&&o.material!==OUT&&!o.isInstancedMesh&&!(o.parent===ground&&/Cylinder|Ring/.test(o.geometry.type)))COLL.push(o)});
 const lerp=(a,b,t)=>a+(b-a)*t,damp=(a,b,l,dt)=>lerp(a,b,1-Math.exp(-l*dt)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function angDamp(a,b,l,dt){let d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*(1-Math.exp(-l*dt))}
-const STRIDE={walk:.605,run:.894};const MOVE={walk:1.3,run:3.4,acc:10,dec:14,turn:12,g:-22,jv:6.2,holdG:.42,holdMax:.22,coyote:.12,buf:.15};
+const _Q=new URLSearchParams(location.search);const STRIDE={walk:+(_Q.get("sw")||1.6),run:+(_Q.get("sr")||1.6)};const MOVE={walk:1.3,run:3.4,acc:10,dec:14,turn:12,g:-22,jv:6.2,holdG:.42,holdMax:.22,coyote:.12,buf:.15};
 function startJump(){H.vy=MOVE.jv;H.air=true;H.jumpHold=MOVE.holdMax;H.state='jump';H.t=0;H.coyote=0;dust(H.pos,6)}
 function update(dt){
  // input → camera-relative
