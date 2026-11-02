@@ -67,7 +67,16 @@ LEVELS[3]={cast:{queen:true},build(){groundPlane(TEX.stone,0xe8d8c0);hills(0x9bc
   TASK.help=async()=>{for(const s of L.shapes)if(!s.passed&&(s.kind==='sq'||s.kind==='rect'))burst(V3(s.b.position.x,1.6,s.b.position.z),0xffe066,30,3);await say('c4_t3b')};
   botTask(async()=>{const e0=TASK.err;for(let i=0;i<4&&TASK.err===e0;i++){await bKick(L,t2,L.hG.x);await bWait(1.2)}await bWait(.5);
    for(let k=0;k<12&&nRect<2;k++){const s=L.shapes.find(s=>!s.passed&&(s.kind==='sq'||s.kind==='rect'));if(!s)break;await bKick(L,s,L.hG.x);await bWait(1.2)}});
-  await until(()=>nRect>=2&&saidSq);await until(()=>!TALK);GOAL='';await good('c4_k3')}};
+  await until(()=>nRect>=2&&saidSq);await until(()=>!TALK);GOAL='';await good('c4_k3');
+  // --- 4. финал: «почти-треугольник» с кривой стороной (жест — держать) ---
+  const mkT=(x,z,k)=>{const sh=new THREE.Shape();if(k==='bent'){sh.moveTo(-.9,0);sh.lineTo(.9,0);sh.quadraticCurveTo(.9,1.2,0,1.6);sh.lineTo(-.9,0)}else if(k==='narrow'){sh.moveTo(-.4,0);sh.lineTo(.4,0);sh.lineTo(0,2)}else{sh.moveTo(-.9,1.6);sh.lineTo(.9,1.6);sh.lineTo(0,0)}
+   const c=k==='bent'?0xc070ff:0xf2683c;const m=mesh(new THREE.ShapeGeometry(sh,24),M(c,{em:c,ei:.4}),x,.25,z+.9);m.material.side=THREE.DoubleSide;m.rotation.y=Math.PI;const hs=holdSpot(x,z,0xffd23a,{r:.7,quiet:1});return{m,hs,k}};
+  const trs=[mkT(-4.5,4.5,'narrow'),mkT(0,4.5,'bent'),mkT(4.5,4.5,'up')];
+  await cutscene(async()=>{heroAt(0,0,0);shot(0,3.2,-1.5,0,1,5.4,2);await say('c4_f1')});
+  newTask('Найди фальшивый треугольник','hold');TASK.help=async()=>{await say('c4_f1')};
+  botTask(async()=>{await trs[0].hs.bot();await bWait(2.5);await trs[1].hs.bot()});
+  for(const q of trs)if(q.k!=='bent')q.hs.p.then(()=>{mistake('c4_fbad');q.hs.g.visible=false;burst(V3(q.m.position.x,1.2,q.m.position.z),0xffe066,24)});
+  await trs[1].hs.p;SFX.whoosh();{const m=trs[1].m;let t=0;TICK.push(dt=>{if(t>1)return;t+=dt;m.scale.setScalar(Math.max(.01,1-t));m.rotation.z+=dt*8})}burst(V3(0,1,5.4),0xc070ff,50,5);clearGesture();GOAL='';await good('c4_fk')}};
 // бот: встать за фигурой на линии «фигура → дырка» и пнуть
 async function bKick(L,s,hx){if(s.passed)return;const p=s.b.position;let dx=hx-p.x,dz=13.6-p.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
  const nd=Math.abs(dx)*(SHW[s.kind]+.5)+Math.abs(dz)*.95;const far=[p.x-dx*(nd+1.4),p.z-dz*(nd+1.4)];
