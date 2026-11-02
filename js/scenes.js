@@ -12,10 +12,10 @@ SC.title={hud:false,enter(){buildVillage();spawnHeroes({queen:true,kriv:true});p
   DANIA.anim='idle';shot(0,1.5,-5.2,-.2,1.15,0,2);CAMS.snap=true;CAMS.pos.set(0,1.5,-5.2);this.t=0},
  step3D(dt){this.t+=dt;CAMS.sp.set(Math.sin(this.t*.15)*.8-.2,1.5,-5.2);if(Math.random()<.004)DANIA.cheerT=T;if(Math.random()<.004)KRUG.cheerT=T},
  draw(){const v=vis();const cx=v.x0+v.w/2;X.save();const k=1+Math.sin(T*2)*.015;X.translate(cx,safeT()+92);X.scale(k,k);txt('Даня и',0,-46,64,'#fff6dc',{f:FONT,st:'#4a1f8a',lw:12,id:'t1'});txt('Королевство Фигур',0,30,92,'#ffd84a',{f:FONT,st:'#4a1f8a',lw:16,id:'t2'});X.restore();
-  labelBtn('play',cx,safeB()-70,300,100,'Играть',()=>{ac();SFX.magic();if(!SV.intro)go('intro');else go('map')},{pulse:1,size:54});
+  labelBtn('play',cx,safeB()-70,300,100,'Играть',()=>{ac();SFX.magic();if(!SV.pro)go('prologue');else if(!SV.intro)go('intro');else go('map')},{pulse:1,size:54});
   if(SV.medal)txt('★ Мастер фигур ★',cx,safeB()-150,34,'#ffe08a',{f:FONT,st:'#4a1f8a',lw:7,id:'mst'})}};
 // ---- интро ----
-SC.intro={get cut(){return CUT},skip(){SV.intro=1;save();go('map')},hud:false,enter(){buildVillage();spawnHeroes({queen:true,kriv:true});const vh=house(-2.5,5,1,0,0,false);
+SC.intro={get cut(){return CUT},skip(){SV.intro=1;save();if(typeof GARDEN!=='undefined'&&!SV.done[GARDEN])go('ch',GARDEN);else go('map')},hud:false,enter(){buildVillage();spawnHeroes({queen:true,kriv:true});const vh=house(-2.5,5,1,0,0,false);
   place(DANIA,0,0,Math.PI);place(KRUG,-1.3,.3,Math.PI);place(QUEEN,9,2,0);QUEEN.root.visible=false;place(KRIV,-7,14,0);KRIV.root.visible=false;KRUG.mode='idle';
   run(async()=>{await cutscene(async()=>{shot(0,7,-12,0,2,8,1.5);CAMS.snap=true;CAMS.pos.set(0,9,-16);await say('i1');
    KRIV.root.visible=true;KRIV.F.mood='angry';shot(-1,3,-4,-3,1.6,6,2);for(let i=0;i<40;i++){KRIV.root.position.z=lerp(14,7.6,ease(i/40));KRIV.root.position.x=lerp(-7,-3.6,ease(i/40));KRIV.root.position.y=0;await wait(.025)}faceTo(KRIV,-2.5,5);
@@ -23,7 +23,7 @@ SC.intro={get cut(){return CUT},skip(){SV.intro=1;save();go('map')},hud:false,en
    faceTo(KRIV,0,0);shot(-2.2,1.9,4.2,-3.6,1.7,7.6,3);await say('i3');
    QUEEN.root.visible=true;place(QUEEN,1.6,1.8,Math.PI);burst(V3(1.6,1.5,1.8),0xffe080,40);SFX.magic();KRIV.root.visible=false;burst(V3(-3.6,1.5,7.6),0xa060ff,30);
    shot(.6,1.6,-3.6,.6,1.3,1,3);faceTo(DANIA,1.6,1.8);await say('i4');burst(V3(0,1.2,0),0xffe066,30);SFX.ding();
-   faceTo(DANIA,0,-5);DANIA.cheerT=T;await say('i5');KRUG.cheerT=T;await say('i6')});SV.intro=1;save();go('map')})},
+   faceTo(DANIA,0,-5);DANIA.cheerT=T;await say('i5');KRUG.cheerT=T;await say('i6')});SV.intro=1;save();if(typeof GARDEN!=='undefined'&&!SV.done[GARDEN])go('ch',GARDEN);else go('map')})},
  draw(){}};
 // ---- карта ----
 const CHAP=[{t:'Долина Точек',p:[694,356]},{t:'Ломаная гора',p:[250,190]},{t:'Кузница углов',p:[1050,215]},{t:'Город Отверстий',p:[275,470]},{t:'Пчелиные соты',p:[962,560]},{t:'Гонка колёс',p:[1075,394]},{t:'Замок Кривули',p:[775,100]}];
@@ -46,7 +46,7 @@ function drawMedal(x,y,r){if(okI(IM.u_medal)){const h=r*3.1,w=h*479/512;X.save()
 // ---- обёртка главы ----
 // LEVELS объявлен в world.js
 let LVDRAW=null;
-SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();INPMODE='play';CAMS.snap=true;
+SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();if(typeof chLight==='function'&&!L.ownLight)chLight(i);INPMODE='play';CAMS.snap=true;
   run(async()=>{await L.play();await chapterWin(i)})},
  draw(){if(LVDRAW)LVDRAW();drawAngCard();if(this.win){const u=T-this.win;const v=vis();X.fillStyle=`rgba(40,20,90,${Math.min(.35,u)})`;X.fillRect(v.x0,v.y0,v.w,v.h);const k=ease(u*2);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.5);X.scale(k,k);rays(0,-10,330,'#fff3b0',.4);for(let j=0;j<3;j++){const uj=u-.25-j*.22,kj=uj<0?0:uj<.35?ease(uj/.35)*1.25-Math.max(0,uj-.25)*2.5:1;if(kj>0){X.save();X.translate((j-1)*140,j==1?-40:0);X.scale(kj,kj);X.rotate(Math.sin(T*2+j)*.06);starG(0,0,j==1?84:64);X.restore()}}ribbon('Глава пройдена!',0,110,460,'#d23a6a',44);X.restore()}}};
 async function chapterWin(i){SFX.star();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;burst(V3(HERO.x,HERO.y+2,HERO.z),0xffe066,50,6);SC.ch.win=T;GOAL='';clearGesture();await say('g_win');await wait(1.2);SC.ch.win=0;SV.done[i]=1;save();go('map')}
@@ -59,4 +59,4 @@ function good(k){SFX.ok();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;return k
 // счёт вслух с подсветкой: items — массив {x,y,z} или функций подсветки
 async function countAloud(items,onEach){for(let i=0;i<items.length;i++){const it=items[i];if(onEach)onEach(i,it);bigNum(i+1);SFX.ding();burst(it.clone?it.clone():V3(it.x,it.y,it.z),0xffe066,14,2.5,.3);await say('n'+(i+1))}}
 // ---- запуск ----
-function startGame(){document.getElementById('ld').remove();rs();requestAnimationFrame(loop);const ch=QS.get('ch');if(ch!=null)go('ch',+ch);else if(QS.has('map'))go('map');else if(QS.has('intro'))go('intro');else go('title');if(G.test&&typeof botInit==='function')botInit()}
+function startGame(){document.getElementById('ld').remove();rs();requestAnimationFrame(loop);const ch=QS.get('ch');if(QS.has('pro'))go('prologue',{ret:'map'});else if(ch!=null)go('ch',+ch);else if(QS.has('map'))go('map');else if(QS.has('intro'))go('intro');else go('title');if(G.test&&typeof botInit==='function')botInit()}

@@ -20,9 +20,13 @@ function makeHero(n){const cf=HCFG[n];const root=new THREE.Group(),body=new THRE
  ch.update=function(dt,spd){heroUpdate(this,dt,spd||0)};
  CHARS.push(ch);SCENE.add(root);ch.shadow=blobShadow();ch.shadow.scale.setScalar(cf.sh);heroUpdate(ch,0,0);return ch}
 function makeDania(){return makeHero('dania')}
-function makeKrug(){const c=makeHero('krug');c.mode='follow';return c}
-function makeQueen(){return makeHero('queen')}
-function makeKriv(){return makeHero('kriv')}
+// v6.2 точка подключения новых героев: HERO_NEW[n]=()=>char (3D-модель с тем же интерфейсом root/update/anim/F/h/mat).
+// Включается только флагом ?heroset=v2 (или HEROSET='v2') — по умолчанию игра на старых героях, пока лист героев не одобрен.
+const HERO_NEW={};let HEROSET=(typeof QS!=='undefined'&&QS.get('heroset'))||'v1';
+function heroMk(n,old){return HEROSET==='v2'&&HERO_NEW[n]?HERO_NEW[n]():old()}
+function makeKrug(){const c=heroMk('krug',()=>makeHero('krug'));c.mode='follow';return c}
+function makeQueen(){return heroMk('queen',()=>makeHero('queen'))}
+function makeKriv(){return heroMk('kriv',()=>makeHero('kriv'))}
 function setFrame(c,name,mir){const A=HMETA[c.n],f=A.f[name]||A.f.st_f;const x=f[0],y=f[1],w=f[2],h=f[3],ax=f[4],hu=f[5];
  c.mat.userData.u.uRect.value.set(x/A.w,1-(y+h)/A.h,w/A.w,h/A.h);const W=w/h*hu;c.spr.scale.set(mir?-W:W,hu,1);c.spr.position.x=(w/2-ax)/w*W*(mir?-1:1);c.fr=name;c.mir=!!mir}
 const _hp=new THREE.Vector3();const angW=a=>Math.atan2(Math.sin(a),Math.cos(a));

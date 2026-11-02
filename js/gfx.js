@@ -94,3 +94,14 @@ function gfxProps(ok,x0,x1,z0,z1,lowQ){const B=BOUNDS||[-14,14,-6,30];
  const pm=new THREE.InstancedMesh(pg,wood,posts.length),cm=new THREE.InstancedMesh(cap,wood,posts.length);posts.forEach(([x,z],k)=>{_gm.makeTranslation(x,baseAt(x,z),z);pm.setMatrixAt(k,_gm);cm.setMatrixAt(k,_gm)});
  const rg=roundBoxGeo(1,.07,.05),rl=new THREE.InstancedMesh(rg,wood,rails.length*2);rails.forEach(([ax,az,bx,bz],k)=>{const L=Math.hypot(bx-ax,bz-az);_ge.set(0,-Math.atan2(bz-az,bx-ax),0);_gq.setFromEuler(_ge);for(const h of [0,1]){_gs.set(L,.07,.05);_gm.compose(_gp.set((ax+bx)/2,baseAt(ax,az)+.35+h*.32,(az+bz)/2),_gq,_gs);rl.setMatrixAt(k*2+h,_gm)}});
  for(const o of [pm,cm,rl]){o.userData.decor=1;o.frustumCulled=false;WORLD.add(o)}}
+// v6.2 свет и цвет по главам (CONCEPT_v2 B): солнце, небо, туман, экспозиция. Применяется в SC.ch.enter после build().
+const CHLIGHT=[
+ {sun:0xfff0d0,si:2.8,sky:[0x6cc0ff,0xe6f6ff],fog:0xe4f4ff,hemi:[0xeaf6ff,0x8cc068],ex:1.05},// Долина Точек — утро
+ {sun:0xffd9b0,si:2.6,sky:[0x7aa6e8,0xf4e2ff],fog:0xeee4ff,hemi:[0xeee8ff,0x9a9a8a],ex:1.0},// Ломаная гора — прохладный горный
+ {sun:0xffc890,si:3.0,sky:[0xff9a6a,0xffe2b8],fog:0xffe4c4,hemi:[0xfff0dc,0xa07a50],ex:1.02},// Кузница углов — тёплый закат
+ {sun:0xfff4e0,si:2.8,sky:[0x58b0ff,0xdff0ff],fog:0xdff0ff,hemi:[0xe8f4ff,0x90b070],ex:1.05},// Город — ясный полдень
+ {sun:0xffe08a,si:2.9,sky:[0xffc850,0xfff4c8],fog:0xfff0c0,hemi:[0xfff6d8,0xb0a050],ex:1.04},// Соты — медовый
+ {sun:0xffe8c8,si:2.7,sky:[0x4aa0f0,0xd8f0ff],fog:0xd8eeff,hemi:[0xe0f0ff,0x88a868],ex:1.06},// Гонка колёс
+ {sun:0xd8c8ff,si:2.4,sky:[0x6a58c8,0xd8c8ff],fog:0xcfc2f0,hemi:[0xe0d8ff,0x6a6090],ex:1.0}];// Замок Кривули — сумеречный
+function chLight(i){const L=CHLIGHT[i];if(!L)return;SUN.color.set(L.sun);SUN.intensity=L.si;HEMI.color.set(L.hemi[0]);HEMI.groundColor.set(L.hemi[1]);SCENE.fog.color.set(L.fog);
+ SKY.material.uniforms.a.value.set(L.sky[0]);SKY.material.uniforms.b.value.set(L.sky[1]);R3.toneMappingExposure=L.ex}

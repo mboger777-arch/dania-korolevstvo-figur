@@ -31,7 +31,7 @@ TEX.yarn=cvTex(128,128,(x,w,h)=>{x.fillStyle='#8a3fd1';x.fillRect(0,0,w,h);x.str
 let WORLD=new THREE.Group();SCENE.add(WORLD);
 let BLOCKS=[],CYLS=[],NOGO=[],BASEF=null,BOUNDS=null,SURF=[];
 function clearWorld(){SCENE.remove(WORLD);WORLD.traverse(o=>{if(o.geometry&&!Object.values(GEO).includes(o.geometry))o.geometry.dispose()});WORLD=new THREE.Group();SCENE.add(WORLD);
- BLOCKS=[];CYLS=[];NOGO=[];SURF=[];BASEF=null;BOUNDS=null;FX.length=0;SYNC.length=0;CHARS.slice().forEach(removeChar);TICK.length=0;physReset();SCENE.fog.near=60;SCENE.fog.far=190;SCENE.fog.color.set(0xdff3ff);SKY.material.uniforms.a.value.set(0x5fb4ff);SKY.material.uniforms.b.value.set(0xdff3ff)}
+ BLOCKS=[];CYLS=[];NOGO=[];SURF=[];BASEF=null;BOUNDS=null;FX.length=0;SYNC.length=0;CHARS.slice().forEach(removeChar);TICK.length=0;physReset();SCENE.fog.near=60;SCENE.fog.far=190;SCENE.fog.color.set(0xdff3ff);SKY.material.uniforms.a.value.set(0x5fb4ff);SKY.material.uniforms.b.value.set(0xdff3ff);SUN.color.set(0xfff0d6);SUN.intensity=2.8;HEMI.color.set(0xe8f4ff);HEMI.groundColor.set(0x88b060);R3.toneMappingExposure=1.05}
 const TICK=[];// функции обновления уровня (dt)
 // препятствие-коробка (повёрнутая): верх y1 — можно встать сверху
 function block(cx,cz,hx,hz,y1,ang,o){o=o||{};const b={cx,cz,hx,hz,y0:o.y0||0,y1,ang:ang||0,on:true,tag:o.tag};BLOCKS.push(b);return b}
