@@ -42,12 +42,19 @@ LEVELS[6]={cast:{queen:true,kriv:true},build(){groundPlane(TEX.grass,0xc8e888);h
   const glow=()=>{for(const o of loops){o.lp.material.emissive.set(o.done?0x000000:o.n===order?0xffc000:0x2a0050);o.lp.material.emissiveIntensity=o.n===order?.6+Math.sin(T*8)*.35:.5}};
   TASK.help=async()=>{const o=loops[order];if(o)burst(V3(o.m.x,2,o.m.z),0xffe066,40,4);await say('b_ord')};
   const tk2=dt=>{glow();for(const o of loops){if(o.done)continue;const inn=hd(o.m.x,o.m.z)<1.0;if(inn&&!o.inside){if(o.n===order){o.done=true;order++;bigNum(order);SFX.ding();burst(o.m,0xffe066,26,3);
-     const [a,b]=ends()[o.n];WORLD.remove(edges[o.n]);edges[o.n]=segMesh(V3(a.x,.16,a.z),V3(b.x,.16,b.z),.12,0xa060f0);const lp=o.lp,t0=T;TICK.push(()=>{const k=clamp(1-(T-t0)*2.5,0,1);lp.scale.setScalar(k);lp.visible=k>0});run(()=>sayNext('n'+order))}
+     const [a,b]=ends()[o.n];WORLD.remove(edges[o.n]);edges[o.n]=wavyTube(a,b,.32,0xa060f0);const lp=o.lp,t0=T;TICK.push(()=>{const k=clamp(1-(T-t0)*2.5,0,1);lp.scale.setScalar(k);lp.visible=k>0});run(()=>sayNext('n'+order))}
      else mistake('b_ord')}o.inside=inn}};
   TICK.push(tk2);
   botTask(async()=>{await bPath([[6.5,6],[6.5,15.75]]);await bGo(2.17,15.75,.5);await bWait(.8);await bGo(4,17.5,.6);
    for(let i=0;i<6;i++){const o=loops[i];await bGo(o.m.x,o.m.z,.5);await bWait(.25)}});
   await until(()=>order>=6);TICK.splice(TICK.indexOf(tk2),1);GOAL='';await until(()=>!TALK);await good('b_k2');
+  // ---- фаза 3: выпрями стороны — держи палец на середине каждой ----
+  await say('b_s1');newTask('Выпрями кривые стороны: держи палец','hold');
+  const sps=ends().map(([a,b],i)=>{const h=holdSpot((a.x+b.x)/2,(a.z+b.z)/2,0xffd23a,{r:.7,quiet:1});h.i=i;return h});let nS=0;
+  for(const h of sps)h.p.then(()=>{const [a,b]=ends()[h.i];WORLD.remove(edges[h.i]);edges[h.i]=segMesh(V3(a.x,.16,a.z),V3(b.x,.16,b.z),.12,0xa060f0);h.g.visible=false;h.dot.visible=false;nS++;bigNum(nS);clearGesture();run(()=>sayNext('n'+nS))});
+  TASK.help=async()=>{for(const h of sps)if(!h.lit)burst(V3(h.g.position.x,1.2,h.g.position.z),0xffe066,20,3);await say('b_s1')};
+  botTask(async()=>{for(const h of sps)if(!h.lit)await h.bot()});
+  await until(()=>nS>=6);GOAL='';await until(()=>!TALK);await good('b_sk');
   // ---- фаза 3: замкни ломаную — неси конец к началу ----
   const mk=mesh(GEO.sph,M(0xffe066,{em:0xffb000,ei:.9}),V[0].x,.4,V[0].z,null,.42);TICK.push(()=>{mk.scale.setScalar(.42*(1+Math.sin(T*6)*.25))});
   await say('b_t3');newTask('Неси конец к светлой точке','hold');
