@@ -14,7 +14,7 @@ for f in sorted(glob.glob(f'{OUT}/vlog_*.json')):
   for i,v in enumerate(pl):
     ready=max(v.get('tr',v['t0']),v.get('pe',0));st=v.get('tp')
     if st is None:
-      if v.get('dur'):cuts.append(v['k']+':noplay')
+      if v.get('dur') and i<len(pl)-1:cuts.append(v['k']+':noplay')  # последняя запись могла только начаться при снимке лога
       continue
     d=(st-ready)/1000;lat.append(d)
     if d>.5:late.append((v['k'],round(d,2)))
