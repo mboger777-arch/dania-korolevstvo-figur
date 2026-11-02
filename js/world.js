@@ -134,7 +134,7 @@ function camYawNow(){return Math.atan2(CAMS.tgt.x-CAMS.pos.x,CAMS.tgt.z-CAMS.pos
 // направление джойстика в мире (относительно камеры) или null
 function joyWorld(){const cy=camYawNow();const fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);const mx=fx*INP.jy+rx*INP.jx,mz=fz*INP.jy+rz*INP.jx;const m=Math.hypot(mx,mz);return m>.3?{x:mx/m,z:mz/m,a:Math.atan2(mx,mz),m}:null}
 // ---- контроллер героя: настройки (см. PROGRESS.md «Физика движения») ----
-const MOVE={acc:16,dec:22,turnDec:30,airK:.35,turn:13,dead:.12,jumpV:7.6,g:24,gFall:38,maxFall:18,coyote:.1,buffer:.12,step:.5,stepLerp:18,runPerM:2.1};
+const MOVE={acc:16,dec:22,turnDec:30,airK:.35,turn:13,dead:.12,jumpV:7.6,g:24,gFall:38,maxFall:18,coyote:.12,buffer:.15,step:.5,stepLerp:18,runPerM:2.1};
 function heroStep(dt){const h=HERO;const m=h.model;if(!m)return;let jumped=false;
  // fixed timestep для героя: шаги по 1/120 с, рендер получает последнее состояние (без дрожи при скачущем fps)
  h.acc=(h.acc||0)+dt;const H=1/120;let n=0;while(h.acc>=H&&n<12){heroTick(H);h.acc-=H;n++}if(n>=12)h.acc=0;
@@ -146,7 +146,7 @@ function heroStep(dt){const h=HERO;const m=h.model;if(!m)return;let jumped=false
  if(h.mode==='walk'&&!h.lock&&takeSwipe()){m.kickT=T;SFX.kick();h.kickT=T}}
 function heroTick(dt){const h=HERO;
  if(h.gr)h.coy=MOVE.coyote;else h.coy=Math.max(0,(h.coy||0)-dt);
- if(INP.tapQ&&T-INP.tapQ<MOVE.buffer+.02&&h.mode==='walk'&&!h.lock){if(h.coy>0&&h.vy<=0){INP.tapQ=0;h.vy=MOVE.jumpV;h.gr=false;h.coy=0;h.jumpQ=1;h.jT=T;if(KEYS.Space||!INP.jumpCut||T-INP.jumpCut>.3)INP.jumpCut=0;SFX.jump()}}
+ if(INP.tapQ&&T-INP.tapQ<MOVE.buffer+.02&&h.mode==='walk'&&!h.lock){if(h.coy>0&&h.vy<=0){INP.tapQ=0;h.vy=MOVE.jumpV;h.gr=false;h.coy=0;h.jumpQ=1;h.jT=T;if(KEYS.Space||INP.jumpHeld||!INP.jumpCut||T-INP.jumpCut>.3)INP.jumpCut=0;SFX.jump()}}
  else if(INP.tapQ&&T-INP.tapQ>=MOVE.buffer+.02&&h.mode==='walk')INP.tapQ=0;
  if(h.mode==='walk'&&!h.lock){const cy=camYawNow();const fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);let mx=fx*INP.jy+rx*INP.jx,mz=fz*INP.jy+rz*INP.jx;let mag=Math.hypot(mx,mz);
   const a=mag<MOVE.dead?0:Math.min(1,(mag-MOVE.dead)/(1-MOVE.dead));// мёртвая зона + аналоговая скорость (шаг/бег)

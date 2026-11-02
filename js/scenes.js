@@ -55,7 +55,7 @@ function newTask(goal,g){GOAL=goal;TASK.err=0;TASK.help=null;if(g)needGesture(g)
 // ошибка: просто сказать, что не так; после 2-й — помощь (счёт вслух с подсветкой)
 function mistake(k){TASK.err++;SFX.bad();if(DANIA)DANIA.F.mood='sad';setTimeout(()=>{if(DANIA)DANIA.F.mood='happy'},1600);G.mistakes=(G.mistakes||0)+1;
  run(async()=>{await sayNext(k);if(TASK.err>=2&&TASK.help&&!TASK.busy){TASK.busy=true;try{await TASK.help()}finally{TASK.busy=false}}})}
-function good(k){SFX.ok();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;return k?say(k):Promise.resolve()}
+function good(k){SFX.ok();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;return k?say(k,{p:1}):Promise.resolve()}
 // счёт вслух с подсветкой: items — массив {x,y,z} или функций подсветки
 async function countAloud(items,onEach){for(let i=0;i<items.length;i++){const it=items[i];if(onEach)onEach(i,it);bigNum(i+1);SFX.ding();burst(it.clone?it.clone():V3(it.x,it.y,it.z),0xffe066,14,2.5,.3);await say('n'+(i+1))}}
 // ---- запуск ----

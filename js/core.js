@@ -71,13 +71,23 @@ async function run(fn){try{await fn()}catch(e){if(e!==STALE)console.error(e)}}
 let TALK=null;const SQ=[];const NAMES={dania:'Даня',krug:'Кругляш',queen:'Королева Циркуль',kriv:'Кривуля',narr:''};
 const SPKC={dania:'#ff8a1e',krug:'#f5b400',queen:'#9a6bd8',kriv:'#7a3bb0',narr:'#3a6fd0'};
 let VLOG=[];// для теста голоса
-function say(k){return new Promise((res,rej)=>{if(!LINES[k]){console.warn('no line',k);res();return}SQ.push({k,res,rej,g:GEN});pump()})}
+// v6 голос: приоритеты (как у Таси) — 3 задание/подсказка после ошибки > 2 история > 1 похвала/реплики активностей.
+// Похвала ждёт не дольше VMAXAGE и не звучит, если ждёт что-то важнее; новое задание/история мягко обрывает идущую похвалу.
+// Выброшенные реплики РАЗРЕШАЮТ свой промис (сценарии не ломаются). «Повтори» — последнее задание/история главы.
+const VMAXAGE={1:1.5,2:60,3:12};let VREP=null;
+function vpri(k,o){if(o&&o.p)return o.p;const l=LINES[k];if(l&&l.p)return l.p;return 2}
+function say(k,o){return new Promise((res,rej)=>{if(!LINES[k]){console.warn('no line',k);res();return}const p=vpri(k,o);
+ if(p===1&&(SQ.some(q=>q.p>1)||(TALK&&TALK.p>1))){VLOG.push({k,drop:'busy'});res();return}
+ if(SQ.some(q=>q.k===k)||(TALK&&TALK.k===k&&p===1)){res();return}
+ SQ.push({k,res,rej,g:GEN,p,t0:T});SQ.sort((a,b)=>b.p-a.p);
+ if(TALK&&TALK.p===1&&p>1&&!G.fast){VLOG.push({k:TALK.k,cut:'interrupt'});finishTalk();return}pump()})}
+function vRepeat(){if(!VREP||TALK&&TALK.k===VREP)return;SFX.click();const k=VREP;run(()=>say(k,{p:3}))}
 // подсказка после ошибки: убирает ещё не начатые реплики и звучит сразу после текущей
-function sayNext(k){while(SQ.length)SQ.shift().res();return say(k)}
+function sayNext(k){while(SQ.length)SQ.shift().res();return say(k,{p:3})}
 async function sayAll(...ks){for(const k of ks)await say(k)}
-function pump(){if(TALK||!SQ.length)return;const q=SQ.shift();if(q.g!==GEN){q.rej(STALE);pump();return}startTalk(q)}
+function pump(){if(TALK||!SQ.length)return;const q=SQ.shift();if(q.g!==GEN){q.rej(STALE);pump();return}if(T-q.t0>(VMAXAGE[q.p]||60)){VLOG.push({k:q.k,drop:'stale'});q.res();pump();return}if(q.p>1&&scene==='ch')VREP=q.k;startTalk(q)}
 function startTalk(q){const l=LINES[q.k],v=typeof VOICE!=='undefined'&&VOICE[q.k];const est=v?v[1]:Math.max(1.6,l.t.length*.065);
- const t={k:q.k,who:l.who,text:l.t,t0:T,q,a:null,end:0,playing:false};TALK=t;VLOG.push({k:q.k,t0:performance.now(),dur:v?v[1]:0});
+ const t={k:q.k,who:l.who,text:l.t,t0:T,q,p:q.p||2,a:null,end:0,playing:false};TALK=t;VLOG.push({k:q.k,t0:performance.now(),dur:v?v[1]:0});
  if(G.fast){t.end=T+.25;return}
  if(v&&!G.mute){const a=new Audio('assets/voice/'+v[0]);t.a=a;a.onended=()=>{if(TALK===t)t.end=T+.25};a.onerror=()=>{if(TALK===t)t.end=T+est};
   a.onplaying=()=>{t.playing=true};const p=a.play();if(p&&p.catch)p.catch(()=>{if(TALK===t&&!t.playing)t.end=T+est+.3});t.end=T+est+6}
@@ -143,7 +153,7 @@ function hitBtn(id,x,y,w,h,fn,o){o=o||{};UI.push({id,x,y,w:Math.max(w,64/S),h:Ma
 function roundBtn(id,x,y,d,icon,fn,o){o=o||{};hitBtn(id,x,y,d,d,fn,o);const k=1+(o.pulse?Math.sin(T*5)*.05:0);X.save();X.translate(x,y);X.scale(k,k);
  const r=d/2,g=X.createRadialGradient(0,-r*.35,r*.1,0,0,r);g.addColorStop(0,o.c1||'#ffd86b');g.addColorStop(1,o.c2||'#f08a1c');X.shadowColor=o.pulse?'rgba(255,230,120,.9)':'rgba(20,10,50,.35)';X.shadowBlur=o.pulse?18+8*Math.sin(T*5):8;X.shadowOffsetY=o.pulse?0:3;X.beginPath();X.arc(0,0,r+d*.06,0,7);X.fillStyle='#c8862a';X.fill();X.shadowColor='transparent';X.fillStyle=g;X.beginPath();X.arc(0,0,r,0,7);X.fill();X.lineWidth=d*.05;X.strokeStyle='#fff8e6';X.stroke();X.fillStyle='rgba(255,255,255,.35)';X.beginPath();X.ellipse(0,-r*.45,r*.62,r*.3,0,0,7);X.fill();
  X.strokeStyle='#5a2a08';X.fillStyle='#5a2a08';X.lineWidth=d*.09;X.lineCap='round';X.lineJoin='round';ICON[icon]&&ICON[icon](r*.55);X.restore()}
-const ICON={home(s){X.beginPath();X.moveTo(-s,0);X.lineTo(0,-s);X.lineTo(s,0);X.moveTo(-s*.7,-s*.2);X.lineTo(-s*.7,s*.9);X.lineTo(s*.7,s*.9);X.lineTo(s*.7,-s*.2);X.stroke()},
+const ICON={rep(s){X.beginPath();X.arc(0,0,s*.85,-2.6,2.2);X.stroke();X.beginPath();X.moveTo(-s*1.15,-s*.95);X.lineTo(-s*.55,-s*.35);X.lineTo(-s*1.25,-s*.2);X.stroke()},home(s){X.beginPath();X.moveTo(-s,0);X.lineTo(0,-s);X.lineTo(s,0);X.moveTo(-s*.7,-s*.2);X.lineTo(-s*.7,s*.9);X.lineTo(s*.7,s*.9);X.lineTo(s*.7,-s*.2);X.stroke()},
  snd(s){X.beginPath();X.moveTo(-s,-s*.35);X.lineTo(-s*.45,-s*.35);X.lineTo(s*.1,-s*.85);X.lineTo(s*.1,s*.85);X.lineTo(-s*.45,s*.35);X.lineTo(-s,s*.35);X.closePath();X.fill();
   if(!G.mute){X.beginPath();X.arc(s*.2,0,s*.55,-.8,.8);X.stroke()}else{X.beginPath();X.moveTo(s*.4,-s*.4);X.lineTo(s,s*.4);X.moveTo(s,-s*.4);X.lineTo(s*.4,s*.4);X.stroke()}},
  play(s){X.beginPath();X.moveTo(-s*.5,-s*.9);X.lineTo(s*.9,0);X.lineTo(-s*.5,s*.9);X.closePath();X.fill()},
@@ -171,19 +181,20 @@ C.addEventListener('pointerdown',e=>{if(PORTRAIT())return;e.preventDefault();ac(
  if(SCN&&SCN.tap&&INPMODE==='ui'){SCN.tap(x,y);return}
  if(INPMODE==='play'&&typeof aimTap==='function'&&aimTap(x,y))return;
  if(INPMODE!=='play')return;INP.last=T;
+ {const b=padHit(x,y);if(b==='j'&&!PAD.j){PAD.j=e.pointerId;PAD.jT=T;INP.tapQ=T;INP.used.tap=1;INP.jumpHeld=true;return}if(b==='a'&&!RT){RT={id:e.pointerId,x0:x,y0:y,t0:T,moved:false,holding:false,btn:1};PAD.a=e.pointerId;return}}
  const mid=vis().x0+vis().w*.45;
  if(x<mid&&!JOY){JOY={id:e.pointerId,x0:x,y0:y,x,y}}
  else if(!RT){RT={id:e.pointerId,x0:x,y0:y,t0:T,moved:false,holding:false}}},{passive:false});
 C.addEventListener('pointermove',e=>{const[x,y]=toD(e);PX=x;PY=y;if(typeof ACTPTR!=='undefined')ACTPTR.move(x,y,e.pointerId);if(JOY&&JOY.id===e.pointerId){JOY.x=x;JOY.y=y;INP.last=T}
- if(RT&&RT.id===e.pointerId){const dx=x-RT.x0,dy=y-RT.y0;if(!RT.holding&&!RT.moved&&Math.hypot(dx,dy)>46&&T-RT.t0<.45){RT.moved=true;INP.swipeQ=T;INP.swipeDir=Math.atan2(dx,-dy);INP.used.swipe=1;INP.last=T}}});
-const _up=e=>{if(typeof ACTPTR!=='undefined')ACTPTR.up(e.pointerId);if(JOY&&JOY.id===e.pointerId)JOY=null;if(RT&&RT.id===e.pointerId){if(!RT.moved&&!RT.holding&&T-RT.t0<.3){INP.tapQ=T;INP.used.tap=1}RT=null}};
+ if(RT&&RT.id===e.pointerId&&!RT.btn){const dx=x-RT.x0,dy=y-RT.y0;if(!RT.holding&&!RT.moved&&Math.hypot(dx,dy)>46&&T-RT.t0<.45){RT.moved=true;INP.swipeQ=T;INP.swipeDir=Math.atan2(dx,-dy);INP.used.swipe=1;INP.last=T}}});
+const _up=e=>{if(typeof ACTPTR!=='undefined')ACTPTR.up(e.pointerId);if(JOY&&JOY.id===e.pointerId)JOY=null;if(PAD.j===e.pointerId){PAD.j=null;INP.jumpHeld=false;INP.jumpCut=T}if(PAD.a===e.pointerId)PAD.a=null;if(RT&&RT.id===e.pointerId){if(!RT.moved&&!RT.holding&&T-RT.t0<.3){if(RT.btn){padAction()}else{INP.tapQ=T;INP.used.tap=1}}RT=null}};
 C.addEventListener('pointerup',_up);C.addEventListener('pointercancel',_up);
 ['dblclick','contextmenu','gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 const KEYS={};addEventListener('keydown',e=>{if(!KEYS[e.code]){if(e.code==='Space'){INP.tapQ=T;INP.used.tap=1}if(e.code==='KeyF'||e.code==='Enter'){INP.swipeQ=T;INP.used.swipe=1}}KEYS[e.code]=1;INP.last=T});addEventListener('keyup',e=>{KEYS[e.code]=0;if(e.code==='Space')INP.jumpCut=T});
 const BOT={on:false,jx:0,jy:0,hold:false};// автопилот теста пишет сюда
 function stepInput(){let jx=0,jy=0;
- if(JOY){const dx=JOY.x-JOY.x0,dy=JOY.y-JOY.y0,R=90,d=Math.hypot(dx,dy);if(d>R){JOY.x0=JOY.x-dx/d*R;JOY.y0=JOY.y-dy/d*R}const k=Math.min(d,R)/R;if(d>8){jx=dx/d*k;jy=-dy/d*k}}
+ if(JOY){const dx=JOY.x-JOY.x0,dy=JOY.y-JOY.y0,R=90,d=Math.hypot(dx,dy);if(d>R){JOY.x0=JOY.x-dx/d*R;JOY.y0=JOY.y-dy/d*R}const k0=Math.min(d,R)/R,k=k0<.12?0:(k0-.12)/.88;if(k>0){jx=dx/d*k;jy=-dy/d*k}}
  if(KEYS.KeyA||KEYS.ArrowLeft)jx-=1;if(KEYS.KeyD||KEYS.ArrowRight)jx+=1;if(KEYS.KeyW||KEYS.ArrowUp)jy+=1;if(KEYS.KeyS||KEYS.ArrowDown)jy-=1;
  if(BOT.on){jx=BOT.jx;jy=BOT.jy}
  const m=Math.hypot(jx,jy);if(m>1){jx/=m;jy/=m}INP.jx=jx;INP.jy=jy;if(m>.1){INP.used.move=1;INP.last=T}
@@ -197,13 +208,31 @@ const HINT={g:null,shownT:-99,t0:0};
 function needGesture(g){HINT.g=g;HINT.t0=T;HINT.shownT=T;INP.last=T}
 function clearGesture(){HINT.g=null}
 // джойстик: под пальцем — круг и ручка; без пальца — бледная подсказка слева внизу
-function drawJoy(){if(INPMODE!=='play'||!(SCN&&SCN.world))return;X.save();
+// ---- v6: кнопки справа — «Прыжок» (держи — выше) и «Действие» (тап — пинок/выстрел с помощью прицела, держи — жезл) ----
+const PAD={j:null,a:null,jT:-9};
+function padPos(){const R=safeR(),B=safeB();return{j:[R-78,B-80,74],a:[R-232,B-64,60]}}
+function padOn(){return INPMODE==='play'&&SCN&&SCN.world&&!(typeof CUT!=='undefined'&&CUT)&&!QS.has('nopad')}
+function padHit(x,y){if(!padOn())return null;const P=padPos();for(const k of['j','a']){const [bx,by,r]=P[k];if(Math.hypot(x-bx,y-by)<r+18)return k}return null}
+// «Действие»: если рядом живая цель — стреляем по ней (помощь прицела), иначе обычный пинок
+function padAction(){INP.last=T;if(typeof aimLive==='function'&&aimLive()&&AIM.t.fire){const t=AIM.t;if(t.fire()!==false){AIM.tapT=T;const s=toScreen(t.x,t.y,t.z);AIM.tx=s.x;AIM.ty=s.y;if(typeof aimBurst==='function')aimBurst(s.x,s.y,t.kind);return}}INP.swipeQ=T;INP.used.swipe=1}
+function padIcon(k){if(k==='a'&&typeof aimLive==='function'&&aimLive()){const kd=AIM.t.kind;return{goal:'⚽',boss:'✨',beam:'✨',fog:'✨',grab:'✋',shape:'✨'}[kd]||'✨'}return k==='j'?'⤴':'✨'}
+function drawPad(){if(!padOn())return;const P=padPos();X.save();
+ for(const k of['j','a']){const [bx,by,r]=P[k];const dn=k==='j'?PAD.j!=null:PAD.a!=null||(RT&&RT.btn);const hl=k==='a'&&typeof aimLive==='function'&&aimLive()&&AIM.t.fire;const s=dn?.92:1+(hl?Math.sin(T*5)*.04:0);
+  X.save();X.translate(bx,by);X.scale(s,s);X.globalAlpha=.88;
+  X.shadowColor='rgba(20,10,50,.35)';X.shadowBlur=10;X.shadowOffsetY=5;X.beginPath();X.arc(0,0,r,0,7);
+  const g=X.createRadialGradient(-r*.25,-r*.3,r*.1,0,0,r);if(k==='j'){g.addColorStop(0,'#ffe08a');g.addColorStop(1,'#f0901c')}else{g.addColorStop(0,'#a8dcff');g.addColorStop(1,'#2f7fe0')}X.fillStyle=g;X.fill();
+  X.shadowColor='transparent';X.lineWidth=5;X.strokeStyle=hl?'#fff3a0':'rgba(255,255,255,.85)';X.stroke();
+  if(k==='a'&&RT&&RT.btn&&RT.holding){X.lineWidth=8;X.strokeStyle='#ffe066';X.beginPath();X.arc(0,0,r+7,-Math.PI/2,-Math.PI/2+Math.min(1,(T-RT.t0)/1.2)*6.283);X.stroke()}
+  X.globalAlpha=1;X.fillStyle='#fff';X.textAlign='center';X.textBaseline='middle';X.font=`${r*.62|0}px sans-serif`;X.fillText(padIcon(k),0,-r*.18);
+  X.font=`${r*.34|0}px ${FONT}`;X.lineWidth=4;X.strokeStyle=k==='j'?'#7a3a00':'#0f3a7a';X.strokeText(k==='j'?'Прыжок':'Действие',0,r*.42);X.fillText(k==='j'?'Прыжок':'Действие',0,r*.42);X.restore()}
+ X.restore()}
+function drawJoy(){drawPad();if(INPMODE!=='play'||!(SCN&&SCN.world))return;X.save();
  let bx,by,kx,ky,a;if(JOY){bx=JOY.x0;by=JOY.y0;const dx=JOY.x-bx,dy=JOY.y-by,d=Math.hypot(dx,dy),k=Math.min(d,90)/(d||1);kx=bx+dx*k;ky=by+dy*k;a=.55}else{bx=safeL()+110;by=safeB()-100;kx=bx+(BOT.on?INP.jx*60:0);ky=by-(BOT.on?INP.jy*60:0);a=.28}
  X.globalAlpha=a;X.fillStyle='#ffffff';X.beginPath();X.arc(bx,by,92,0,7);X.fill();X.lineWidth=6;X.strokeStyle='#4a1f8a';X.stroke();
  X.globalAlpha=Math.min(1,a+.3);X.fillStyle='#ffd23a';X.beginPath();X.arc(kx,ky,40,0,7);X.fill();X.lineWidth=5;X.strokeStyle='#7a4a00';X.stroke();X.restore()}
 function drawHand(){if(!HINT.g||INPMODE!=='play')return;const idle=T-INP.last;let ph=-1;
  if(T-HINT.shownT<3.2)ph=(T-HINT.shownT);else if(idle>5){ph=(idle-5)%4.5;if(ph>3.2)ph=-1}
- if(ph<0)return;const v=vis();const g=HINT.g;if((g==='kick'||g==='swipe')&&typeof aimLive==='function'&&aimLive()&&AIM.t.fire)return;/* у цели своё кольцо с рукой */const lx=safeL()+190,ly=safeB()-150,rx=safeR()-210,ry=safeB()-170;
+ if(ph<0)return;const v=vis();const g=HINT.g;if((g==='kick'||g==='swipe')&&typeof aimLive==='function'&&aimLive()&&AIM.t.fire)return;/* у цели своё кольцо с рукой */const lx=safeL()+190,ly=safeB()-150;let rx=safeR()-210,ry=safeB()-170;if(padOn()){const P=padPos(),q=g==='tap'?P.j:P.a;rx=q[0];ry=q[1]}
  let hx,hy,press=false,a=Math.min(1,ph*3,(3.2-ph)*3);X.save();X.globalAlpha=a;
  if(g==='move'){const u=ph*2.2;hx=lx+Math.sin(u)*70;hy=ly-Math.abs(Math.cos(u))*60;press=true;ring(lx,ly,95,'rgba(255,255,255,.35)');}
  else if(g==='tap'){hx=rx;hy=ry;press=(ph%1)<.25;if(press)ring(rx,ry,40+((ph%1)*200),'rgba(255,240,120,.8)')}
@@ -246,10 +275,10 @@ function drawGoal(){if(!GOAL||TALK)return;const v=vis();const bw=Math.min(1000,v
 function drawBig(){if(!BIG)return;const u=T-BIG.t0;if(u>1.4){BIG=null;return}const k=u<.2?ease(u/.2)*1.15:1.15-Math.min(.15,(u-.2));const v=vis();X.save();X.globalAlpha=u>1.1?(1.4-u)/.3:1;let cx=v.x0+v.w/2,cy=v.y0+v.h*.42;if(SCN&&SCN.world&&typeof HERO!=='undefined'){const h=toScreen(HERO.x,HERO.y+1,HERO.z);if(h.vis){cx=h.x<v.x0+v.w/2?v.x0+v.w*.7:v.x0+v.w*.3;cy=v.y0+v.h*.46}}X.translate(cx,cy);X.scale(k,k);txt(BIG.n,0,0,180,BIG.col,{f:NUM,st:'#1a0840',lw:26,id:'big'});X.restore()}
 // ---- переход между сценами ----
 const SC={};let scene='',SCN=null,fade=1;
-function go(n,arg){GEN++;stopTalk();GOAL='';BIG=null;HINT.g=null;JOY=null;RT=null;BOT.hold=false;scene=n;SCN=SC[n];fade=1;INPMODE='ui';if(typeof onScene3D==='function')onScene3D(n);SCN.enter&&SCN.enter(arg)}
+function go(n,arg){GEN++;VREP=null;stopTalk();GOAL='';BIG=null;HINT.g=null;JOY=null;RT=null;BOT.hold=false;scene=n;SCN=SC[n];fade=1;INPMODE='ui';if(typeof onScene3D==='function')onScene3D(n);SCN.enter&&SCN.enter(arg)}
 // ---- кнопки «Дальше» / «Пропустить» во время разговоров ----
 function cutButtons(skipFn){if(!TALK)return;const b=safeB();labelBtn('next',safeR()-120,b-48,210,84,'Дальше',()=>skipTalk(),{always:1});if(skipFn)labelBtn('skip',safeR()-120,b-150,210,70,'Пропустить',skipFn,{c1:'#b9a6ff',c2:'#6a4bb8',size:34})}
-function hudButtons(){roundBtn('home',safeL()+46,safeT()+46,84,'home',()=>{if(scene==='map')go('title');else go('map')});roundBtn('snd',safeL()+46,safeT()+140,70,'snd',()=>{G.mute=!G.mute;if(G.mute&&TALK&&TALK.a)TALK.a.muted=true})}
+function hudButtons(){roundBtn('home',safeL()+46,safeT()+46,84,'home',()=>{if(scene==='map')go('title');else go('map')});roundBtn('snd',safeL()+46,safeT()+140,70,'snd',()=>{G.mute=!G.mute;if(G.mute&&TALK&&TALK.a)TALK.a.muted=true});if(scene==='ch'&&VREP&&!(typeof CUT!=='undefined'&&CUT))roundBtn('rep',safeL()+46,safeT()+222,70,'rep',vRepeat,{c1:'#b9e6ff',c2:'#3d8fe0'})}
 // ---- поворот ----
 function drawRotate(){const v=vis();const bg=X.createRadialGradient(v.x0+v.w/2,v.y0+v.h*.4,10,v.x0+v.w/2,v.y0+v.h/2,Math.max(v.w,v.h)*.8);bg.addColorStop(0,'#5a3aa8');bg.addColorStop(1,'#1a0c40');X.fillStyle=bg;X.fillRect(v.x0,v.y0,v.w,v.h);const cx=v.x0+v.w/2,cy=v.y0+v.h/2;
  for(let i=0;i<24;i++){const sx=v.x0+((i*137.5)%v.w),sy=v.y0+((i*71.3)%v.h),a=.3+.3*Math.sin(T*2+i);X.fillStyle=`rgba(255,240,180,${a})`;X.beginPath();X.arc(sx,sy,2+(i%3),0,7);X.fill()}

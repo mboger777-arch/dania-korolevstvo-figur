@@ -19,7 +19,7 @@ let ACTLOG=[];
 const alog=(k,v)=>{ACTLOG.push(k+(v!=null?':'+v:''))};
 // реплики занятий: никогда не обрывают и не перебивают основную речь
 function actFree(){return !TALK&&!SQ.length&&!CUT}
-function asay(k){if(actFree()){run(()=>say(k));return true}return false}
+function asay(k){if(actFree()){run(()=>say(k,{p:1}));return true}return false}
 function aIntro(kind,line,g){if(SV.seen[kind])return;SV.seen[kind]=1;save();ACT.pend.push(line);if(g)aHint(g);alog('intro',kind)}
 function aHint(g){if(HINT.g!==g)ACT.prevG=HINT.g;HINT.g=g;HINT.shownT=T;HINT.t0=T;ACT.hintT=T+4}
 function sticker(id){if(SV.st[id])return;SV.st[id]=1;save();ACT.pop={id,t0:T};ACT.newStk=true;confetti();SFX.star();alog('sticker',id);ACT.pend.push('a_stick')}
