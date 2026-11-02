@@ -18,7 +18,7 @@ for f in sorted(glob.glob(f'{OUT}/vlog_*.json')):
       continue
     d=(st-ready)/1000;lat.append(d)
     if d>.5:late.append((v['k'],round(d,2)))
-    if v.get('p',2)>=2 and v.get('dur') and ('t1' not in v and i<len(pl)-1 or v.get('ended') is False):cuts.append(v['k'])
+    if v.get('p',2)>=2 and v.get('dur') and ('t1' not in v and i<len(pl)-1 or v.get('ended') is False and v.get('how')!='skip'):cuts.append(v['k'])
     if i and 't1' in pl[i-1] and pl[i-1]['t1']>v['t0']+1:over.append(v['k'])
   drops=[v['k'] for v in V if v.get('drop') and v.get('k','')[:1]!='g' and v.get('p',1)>1]
   stale=[v['k'] for v in V if v.get('drop')=='stale']
