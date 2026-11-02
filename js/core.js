@@ -71,6 +71,8 @@ async function run(fn){try{await fn()}catch(e){if(e!==STALE)console.error(e)}}
 // ---- голос: очередь, реплика никогда не обрывается сама; «Дальше» пропускает только текущую ----
 let TALK=null;const SQ=[];const NAMES={dania:'Даня',krug:'Кругляш',queen:'Королева Циркуль',kriv:'Кривуля',narr:''};
 const SPKC={dania:'#ff8a1e',krug:'#f5b400',queen:'#9a6bd8',kriv:'#7a3bb0',narr:'#3a6fd0'};
+const VPC={};function vPre(k){const v=typeof VOICE!=='undefined'&&VOICE[k];if(!v||VPC[k]||G.mute||G.fast)return;try{const a=new Audio('assets/voice/'+v[0]);a.preload='auto';a.load();VPC[k]=a}catch(e){}}
+function vPreCh(n){if(typeof VFIRST!=='undefined')(VFIRST[n]||[]).forEach(vPre)}
 let VLOG=[],VLAST=0,CARRY=null;function vEnd(t,how){const L=t.L;if(!L||L.t1)return;L.t1=performance.now();L.how=how;if(t.a){L.ended=t.a.ended;L.ct=+t.a.currentTime.toFixed(2)}}// для теста голоса
 // v6 голос: приоритеты (как у Таси) — 3 задание/подсказка после ошибки > 2 история > 1 похвала/реплики активностей.
 // Похвала ждёт не дольше VMAXAGE и не звучит, если ждёт что-то важнее; новое задание/история мягко обрывает идущую похвалу.
@@ -90,7 +92,7 @@ function pump(){if(TALK||CARRY||!SQ.length)return;const q=SQ.shift();if(q.g!==GE
 function startTalk(q){const l=LINES[q.k],v=typeof VOICE!=='undefined'&&VOICE[q.k];const est=v?v[1]:Math.max(1.6,l.t.length*.065);
  const t={k:q.k,who:l.who,text:l.t,t0:T,q,p:q.p||2,a:null,end:0,playing:false};TALK=t;const L0={k:q.k,t0:performance.now(),dur:v?v[1]:0,p:q.p||2,tr:q.tr,pe:VLAST,sc:scene};t.L=L0;t.est=est;VLOG.push(L0);
  if(G.fast){t.end=T+.25;return}
- if(v&&!G.mute){const a=new Audio('assets/voice/'+v[0]);t.a=a;a.onended=()=>{if(TALK===t)t.end=T+.25};a.onerror=()=>{if(TALK===t)t.end=T+est};
+ if(v&&!G.mute){const a=VPC[q.k]||new Audio('assets/voice/'+v[0]);delete VPC[q.k];t.a=a;if(typeof VNEXT!=='undefined'&&VNEXT[q.k])vPre(VNEXT[q.k]);if(SQ[0])vPre(SQ[0].k);a.onended=()=>{if(TALK===t)t.end=T+.25};a.onerror=()=>{if(TALK===t)t.end=T+est};
   a.onplaying=()=>{t.playing=true;if(!L0.tp)L0.tp=performance.now()};const p=a.play();if(p&&p.catch)p.catch(()=>{if(TALK===t&&!t.playing)t.end=T+est+.3});t.end=T+est+6}
  else t.end=T+est+.3}
 function stepTalk(){if(TALK&&T>=TALK.end)finishTalk()}

@@ -8,7 +8,7 @@ function buildVillage(){clearWorld();groundPlane();hills();
  [[-9,-4],[9,-5],[-16,4],[16,3],[-3,24],[8,22],[-12,18]].forEach(([x,z])=>tree(x,z,1+Math.random()*.4));flowers(60,-14,14,-6,14);
  cloud(-30,26,60,3);cloud(25,30,70,3.5);cloud(0,34,90,4);cloud(-50,22,30,3);cloud(50,24,30,3)}
 // ---- титул ----
-SC.title={hud:false,enter(){buildVillage();spawnHeroes({queen:true,kriv:true});place(DANIA,1.9,0,Math.PI);place(KRUG,.6,-.2,Math.PI);place(QUEEN,-.9,0,Math.PI);place(KRIV,-2.9,.6,Math.PI);KRIV.F.mood='happy';KRUG.mode='idle';
+SC.title={hud:false,enter(){vPreCh('pre');buildVillage();spawnHeroes({queen:true,kriv:true});place(DANIA,1.9,0,Math.PI);place(KRUG,.6,-.2,Math.PI);place(QUEEN,-.9,0,Math.PI);place(KRIV,-2.9,.6,Math.PI);KRIV.F.mood='happy';KRUG.mode='idle';
   DANIA.anim='idle';shot(0,1.5,-5.2,-.2,1.15,0,2);CAMS.snap=true;CAMS.pos.set(0,1.5,-5.2);this.t=0},
  step3D(dt){this.t+=dt;CAMS.sp.set(Math.sin(this.t*.15)*.8-.2,1.5,-5.2);if(Math.random()<.004)DANIA.cheerT=T;if(Math.random()<.004)KRUG.cheerT=T},
  draw(){const v=vis();const cx=v.x0+v.w/2;X.save();const k=1+Math.sin(T*2)*.015;X.translate(cx,safeT()+92);X.scale(k,k);txt('Даня и',0,-46,64,'#fff6dc',{f:FONT,st:'#4a1f8a',lw:12,id:'t1'});txt('Королевство Фигур',0,30,92,'#ffd84a',{f:FONT,st:'#4a1f8a',lw:16,id:'t2'});X.restore();
@@ -29,7 +29,7 @@ SC.intro={get cut(){return CUT},skip(){SV.intro=1;save();if(typeof GARDEN!=='und
 const CHAP=[{t:'Долина Точек',p:[694,356]},{t:'Ломаная гора',p:[250,190]},{t:'Кузница углов',p:[1050,215]},{t:'Город Отверстий',p:[275,470]},{t:'Пчелиные соты',p:[962,560]},{t:'Гонка колёс',p:[1075,394]},{t:'Замок Кривули',p:[775,100]}];
 function chOpen(i){return i===0||SV.done[i-1]||SV.done[i]}
 function mapXY(p){const v=vis(),s=Math.max(v.w/1280,v.h/720);return[640-640*s+p[0]*s,v.y0+v.h/2-360*s+p[1]*s]}
-SC.map={hud:true,enter(){clearWorld();CHARS.slice().forEach(removeChar);INPMODE='ui';if(!SC.map.said){SC.map.said=1;run(()=>say(SV.done[5]&&!SV.done[6]?'m_boss':'m1'))}else if(SV.done[5]&&!SV.done[6])run(()=>say('m_boss'))},
+SC.map={hud:true,enter(){for(let i=0;i<8;i++)if(!SV.done[i])vPreCh('c'+i);clearWorld();CHARS.slice().forEach(removeChar);INPMODE='ui';if(!SC.map.said){SC.map.said=1;run(()=>say(SV.done[5]&&!SV.done[6]?'m_boss':'m1'))}else if(SV.done[5]&&!SV.done[6])run(()=>say('m_boss'))},
  draw(){const v=vis(),s=Math.max(v.w/1280,v.h/720);if(okI(IM.map))X.drawImage(IM.map,640-640*s,v.y0+v.h/2-360*s,1280*s,720*s);
   // тропинка-пунктир между открытыми местами
   X.setLineDash([14,16]);X.lineWidth=7;X.strokeStyle='rgba(255,255,255,.85)';X.beginPath();CHAP.forEach((c,i)=>{const[x,y]=mapXY(c.p);i?X.lineTo(x,y):X.moveTo(x,y)});X.stroke();X.setLineDash([]);
@@ -46,7 +46,7 @@ function drawMedal(x,y,r){if(okI(IM.u_medal)){const h=r*3.1,w=h*479/512;X.save()
 // ---- обёртка главы ----
 // LEVELS объявлен в world.js
 let LVDRAW=null;
-SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;this.win=0;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();if(QUEEN){QUEEN.home=QUEEN.root.position.clone();QUEEN.homeYaw=QUEEN.root.rotation.y;TICK.push(queenAside)}if(typeof chLight==='function'&&!L.ownLight)chLight(i);INPMODE='play';CAMS.snap=true;
+SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;vPreCh('c'+i);this.win=0;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();if(QUEEN){QUEEN.home=QUEEN.root.position.clone();QUEEN.homeYaw=QUEEN.root.rotation.y;TICK.push(queenAside)}if(typeof chLight==='function'&&!L.ownLight)chLight(i);INPMODE='play';CAMS.snap=true;
   run(async()=>{await L.play();await chapterWin(i)})},
  draw(){if(LVDRAW)LVDRAW();drawAngCard();if(this.win){const u=T-this.win;const v=vis();X.fillStyle=`rgba(40,20,90,${Math.min(.35,u)})`;X.fillRect(v.x0,v.y0,v.w,v.h);const k=ease(u*2);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.5);X.scale(k,k);rays(0,-10,330,'#fff3b0',.4);for(let j=0;j<3;j++){const uj=u-.25-j*.22,kj=uj<0?0:uj<.35?ease(uj/.35)*1.25-Math.max(0,uj-.25)*2.5:1;if(kj>0){X.save();X.translate((j-1)*140,j==1?-40:0);X.scale(kj,kj);X.rotate(Math.sin(T*2+j)*.06);starG(0,0,j==1?84:64);X.restore()}}ribbon('Глава пройдена!',0,110,460,'#d23a6a',44);X.restore()}}};
 async function chapterWin(i){SFX.star();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;burst(V3(HERO.x,HERO.y+2,HERO.z),0xffe066,50,6);SC.ch.win=T;GOAL='';clearGesture();await say('g_win');await wait(1.2);SC.ch.win=0;SV.done[i]=1;save();go(i===6?'credits':'map')}
