@@ -171,3 +171,6 @@
 - Ассеты: tools/aimassets.py (исходники refs/gen/aim_*.jpg). Лист: sheets/r12_aim.png.
 - Тесты b9: aimtest 667/844/932 — все цели ok, errors []. FULL 844x390: 7/7 ok, botTimeouts 0, feetBad 0, cut 0, suspend 0 (ch4 144.7 с), persist done×7+medal.
   FULL 667x375 и 932x430 идут фоном по очереди (/tmp/r12chain.sh → /tmp/full12_<vp>.log, флаг /tmp/r12chain.done).
+
+## v2 Этап A (2026-11-02) — пробный 3D-Даня (одобрено: CONCEPT_v2, без бонус-главы)
+План: A1 key art → refs/v2/dania_keyart.png; A2 proto/hero.html (процедурный 3D-Даня, риг-иерархия костей, анимации, тени, новое управление); A3 sheets/v2_dania_compare.png + /workspace/dania_proto.mp4. Без изменений живой игры, без push.
