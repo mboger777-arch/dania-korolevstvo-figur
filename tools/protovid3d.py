@@ -15,6 +15,8 @@ async def main():
       if js:await pg.evaluate(js)
       for i in range(fr):
         await pg.evaluate('PROTO.step(1)');await pg.screenshot(path=f'{O}/f{n:04d}.png');n+=1
+    for e in ['smile','happy','surprise','focus','determined','delight','blink','smile']:
+      for i in range(22):shutil.copy(f'shots/proto/v3_face_{e}.png',f'{O}/f{n:04d}.png');n+=1
     await b.close()
-  subprocess.run(['ffmpeg','-y','-loglevel','error','-framerate','30','-i',f'{O}/f%04d.png','-c:v','libx264','-pix_fmt','yuv420p','-vf','scale=916:412','/workspace/dania_3d.mp4'],check=True);print('frames',n)
+  subprocess.run(['ffmpeg','-y','-loglevel','error','-framerate','30','-i',f'{O}/f%04d.png','-c:v','libx264','-pix_fmt','yuv420p','-vf','scale=916:412,setsar=1','/workspace/dania_3d_v3.mp4'],check=True);print('frames',n)
 asyncio.run(main())

@@ -69,18 +69,81 @@ const ground=new THREE.Group();S.add(ground);
 const ball=part(new THREE.SphereGeometry(.32,24,16),toon('ball','#ffc93b'),S,[1.8,.32,1.2]);const BV=new THREE.Vector3();
 // ===== DANIA: TRELLIS.2 mesh (MIT) → Blender rig (custom weights) → GLB with clips
 const B={};const hero=new THREE.Group();S.add(hero);let MIX=null,ACT={},READY=false;const wand=new THREE.Group();
-const gold=toon('gold','#a8772a'),star=new THREE.MeshToonMaterial({color:0xfff3a0,emissive:0xffd24a,emissiveIntensity:1.2,gradientMap:grad});
-part(new THREE.CylinderGeometry(.012,.015,.3,8),gold,wand,[0,.12,0]);
-{const st=new THREE.Shape();for(let i=0;i<10;i++){const r=i%2?.03:.065,a=i/10*Math.PI*2+Math.PI/2;i?st.lineTo(Math.cos(a)*r,Math.sin(a)*r):st.moveTo(Math.cos(a)*r,Math.sin(a)*r)}
- const g=new THREE.ExtrudeGeometry(st,{depth:.02,bevelEnabled:true,bevelSize:.008,bevelThickness:.008,bevelSegments:2});g.center();B.star=part(g,star,wand,[0,.3,0],null,.05);B.star.add(new THREE.PointLight(0xffd36a,.3,1))}
-const grad2=(()=>{const d=new Uint8Array([150,150,150,255,205,205,205,255,240,240,240,255,255,255,255,255]);const t=new THREE.DataTexture(d,4,1);t.minFilter=t.magFilter=THREE.NearestFilter;t.needsUpdate=true;return t})();
+// wand: tapered wooden stick + glowing gold star (key art), gripped in the right fist
+const wood=new THREE.MeshToonMaterial({color:0x8a5a2e,gradientMap:grad}),woodTip=new THREE.MeshToonMaterial({color:0xe0b25a,gradientMap:grad});
+const star=new THREE.MeshToonMaterial({color:0xffe27a,emissive:0xffc93a,emissiveIntensity:1.1,gradientMap:grad});
+{const g=new THREE.CylinderGeometry(.0085,.0125,.25,10);g.translate(0,.085,0);part(g,wood,wand,null,null,.08);
+ const k=new THREE.CylinderGeometry(.0135,.0135,.022,10);part(k,woodTip,wand,[0,.205,0],null,.06);}
+{const st=new THREE.Shape();for(let i=0;i<10;i++){const r=i%2?.024:.056,a=i/10*Math.PI*2+Math.PI/2;i?st.lineTo(Math.cos(a)*r,Math.sin(a)*r):st.moveTo(Math.cos(a)*r,Math.sin(a)*r)}
+ const g=new THREE.ExtrudeGeometry(st,{depth:.014,bevelEnabled:true,bevelSize:.007,bevelThickness:.008,bevelSegments:2});g.center();B.star=part(g,star,wand,[0,.262,0],null,.06);
+ const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,240,170,1)');gr.addColorStop(.35,'rgba(255,210,90,.55)');gr.addColorStop(1,'rgba(255,190,60,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));sp.scale.setScalar(.22);B.glow=sp;B.star.add(sp);B.star.add(new THREE.PointLight(0xffd36a,.35,1.2))}
+const grad2=(()=>{const d=new Uint8Array([168,168,168,255,212,212,212,255,240,240,240,255,255,255,255,255]);const t=new THREE.DataTexture(d,4,1);t.minFilter=t.magFilter=THREE.NearestFilter;t.needsUpdate=true;return t})();
+// soft cartoon rim light on the hero (fresnel → emissive)
+function rimify(m,str=.2){m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+ float rimF=pow(1.0-clamp(dot(normalize(normal),normalize(vViewPosition)),0.0,1.0),2.6);totalEmissiveRadiance+=vec3(1.0,.86,.62)*rimF*${str.toFixed(2)};`)};return m}
+// ===== FACE: painted decal on the face patch (eyes, lids, brows, mouth, blush) — emotions + blink
+const FC=document.createElement('canvas');FC.width=FC.height=512;const fx=FC.getContext('2d');const FT=new THREE.CanvasTexture(FC);FT.colorSpace=THREE.SRGBColorSpace;FT.anisotropy=4;FT.flipY=false;
+let SKIN='rgb(236,178,148)',SKINE=[SKIN,SKIN],SKINM=SKIN;const FACE={emo:'smile',blink:0,look:[0,0],key:''};
+const EYE=[[128,250],[384,250]];
+function drawFace(){const {emo,blink,look}=FACE;const k=emo+blink.toFixed(2)+look.map(v=>v.toFixed(2)).join();if(k===FACE.key)return;FACE.key=k;const x=fx;x.clearRect(0,0,512,512);
+ // cover the baked eyes / mouth with skin
+ for(const [i,[cx,cy]] of EYE.entries()){const K=SKINE[i];const g=x.createRadialGradient(cx,cy,40,cx,cy,84);g.addColorStop(0,K);g.addColorStop(.78,K);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.beginPath();x.ellipse(cx,cy,84,84,0,0,7);x.fill()}
+ {const g=x.createRadialGradient(256,420,10,256,420,92);g.addColorStop(0,SKINM);g.addColorStop(.7,SKINM);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.save();x.translate(256,420);x.scale(1,.42);x.translate(-256,-420);x.beginPath();x.arc(256,420,92,0,7);x.fill();x.restore()}
+ // blush
+ for(const cx of [92,420]){const g=x.createRadialGradient(cx,340,0,cx,340,48);g.addColorStop(0,`rgba(240,110,100,${emo==='delight'||emo==='happy'?.5:.36})`);g.addColorStop(1,'rgba(240,110,100,0)');x.fillStyle=g;x.fillRect(cx-50,290,100,100)}
+ const lw='#3a2012';
+ // brows
+ const BR={smile:[0,0],happy:[-6,-4],surprise:[-22,0],focus:[8,14],determined:[6,16],delight:[-12,-6]}[emo]||[0,0];
+ x.lineCap='round';x.strokeStyle='#4a2814';x.lineWidth=17;
+ for(const [s,cx] of [[-1,128],[1,384]]){x.beginPath();const y0=150+BR[0];x.moveTo(cx+s*-62,y0+14-(s<0?0:0)+(BR[1]*-.0));x.quadraticCurveTo(cx,y0-14,cx+s*58,y0+10+BR[1]*-1+BR[1]);x.stroke()}
+ // eyes
+ for(const [i,[cx,cy]] of EYE.entries()){const s=i?1:-1;
+  if(emo==='delight'){x.strokeStyle=lw;x.lineWidth=15;x.beginPath();x.moveTo(cx-48,cy+14);x.quadraticCurveTo(cx,cy-46,cx+48,cy+14);x.stroke();continue}
+  const ry=emo==='surprise'?72:64,rx=emo==='surprise'?56:54;let open=1-blink;if(emo==='focus')open*=.62;if(emo==='happy')open*=.82;
+  x.save();x.beginPath();x.ellipse(cx,cy,rx,ry,0,0,7);x.clip();
+  x.fillStyle='#fffaf4';x.fillRect(cx-rx,cy-ry,rx*2,ry*2);
+  const ix=cx+look[0]*16,iy=cy+6+look[1]*14,ir=emo==='surprise'?34:44;
+  let g=x.createRadialGradient(ix,iy+10,4,ix,iy,ir);g.addColorStop(0,'#c98a4a');g.addColorStop(.55,'#8a4f22');g.addColorStop(1,'#3e1f0c');x.fillStyle=g;x.beginPath();x.arc(ix,iy,ir,0,7);x.fill();
+  x.fillStyle='#1c0d05';x.beginPath();x.arc(ix,iy+2,ir*.45,0,7);x.fill();
+  x.fillStyle='#fff';x.beginPath();x.ellipse(ix-ir*.38,iy-ir*.42,ir*.3,ir*.24,-.5,0,7);x.fill();x.beginPath();x.arc(ix+ir*.4,iy+ir*.35,ir*.12,0,7);x.fill();
+  // upper lid (skin) for blink/half-closed
+  const lidY=cy-ry+ry*2*(1-open);x.fillStyle=SKINE[i];x.fillRect(cx-rx-2,cy-ry-2,rx*2+4,lidY-(cy-ry)+2);
+  x.restore();
+  // lash line
+  x.strokeStyle=lw;x.lineWidth=open<.15?13:11;x.beginPath();
+  if(open<.15){x.moveTo(cx-rx,cy+8);x.quadraticCurveTo(cx,cy+24,cx+rx,cy+8)}else{const ly=cy-ry+ry*2*(1-open);x.ellipse(cx,cy,rx,ry,0,Math.PI*1.08,Math.PI*1.92);if(open<.99){x.moveTo(cx-rx*.95,ly);x.lineTo(cx+rx*.95,ly)}}
+  x.stroke();if(open>.15){x.lineWidth=9;x.beginPath();x.moveTo(cx+s*rx*.86,cy-ry*.5);x.lineTo(cx+s*(rx+14),cy-ry*.78);x.stroke()}
+ }
+ // mouth
+ x.lineWidth=9;x.strokeStyle='#7a2e1e';x.fillStyle='#8c2f22';
+ const M=(f)=>{x.beginPath();f();x.fill();x.stroke()};
+ if(emo==='smile'){x.beginPath();x.moveTo(206,410);x.quadraticCurveTo(256,452,306,410);x.stroke()}
+ else if(emo==='happy'||emo==='delight'){const w=emo==='delight'?66:54,d=emo==='delight'?78:58;M(()=>{x.moveTo(256-w,404);x.quadraticCurveTo(256,404+d*1.5,256+w,404);x.quadraticCurveTo(256,412,256-w,404)});
+  x.fillStyle='#fff';x.beginPath();x.moveTo(256-w*.8,407);x.quadraticCurveTo(256,418,256+w*.8,407);x.lineTo(256+w*.7,418);x.quadraticCurveTo(256,426,256-w*.7,418);x.fill();
+  x.fillStyle='#e8735f';x.beginPath();x.ellipse(256,404+d*.6,w*.45,d*.16,0,0,7);x.fill()}
+ else if(emo==='surprise'){x.fillStyle='#8c2f22';x.beginPath();x.ellipse(256,425,24,30,0,0,7);x.fill();x.stroke()}
+ else if(emo==='focus'){x.beginPath();x.moveTo(220,418);x.quadraticCurveTo(250,428,286,412);x.stroke();x.fillStyle='#e8735f';x.beginPath();x.ellipse(286,424,16,13,.4,0,7);x.fill()}
+ else if(emo==='determined'){M(()=>{x.moveTo(206,412);x.quadraticCurveTo(256,440,306,408);x.quadraticCurveTo(256,420,206,412)});}
+ FT.needsUpdate=true}
+// chest triangle decal (crisp gold-cream, like the key art)
+const CC=document.createElement('canvas');CC.width=CC.height=256;{const x=CC.getContext('2d');const cx=118,cy=128;x.lineJoin='round';
+ x.fillStyle='rgba(0,0,0,0)';x.beginPath();x.moveTo(cx,cy-60);x.lineTo(cx+58,cy+44);x.lineTo(cx-58,cy+44);x.closePath();x.fillStyle='#ffd98a';x.fill();x.lineWidth=12;x.strokeStyle='#c98a2a';x.stroke();
+ x.beginPath();x.moveTo(cx,cy-30);x.lineTo(cx+30,cy+28);x.lineTo(cx-30,cy+28);x.closePath();x.fillStyle='#e8a33f';x.fill()}
+const CT=new THREE.CanvasTexture(CC);CT.colorSpace=THREE.SRGBColorSpace;CT.flipY=false;
 new GLTFLoader().load('dania.glb',g=>{const m=g.scene;hero.add(m);
- m.traverse(o=>{if(o.isBone)B[o.name.replace(/[._]/g,'')]=o;if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const map=o.material.map;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
-  o.material=new THREE.MeshToonMaterial({map,gradientMap:grad2,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.22});o.frustumCulled=false}});
- B.handR.add(wand);wand.position.set(0,.04,0);wand.rotation.set(-1.4,0,0);
+ m.traverse(o=>{if(o.isBone)B[o.name.replace(/[._]/g,'')]=o;if(o.isMesh){o.frustumCulled=false;const nm=o.material.name;
+  if(nm==='face'){const sk=o.material.userData.skin;const cs=a=>a?`rgb(${a.map(v=>Math.round(v*255)).join()})`:SKIN;SKINE=[cs(o.material.userData.skinR),cs(o.material.userData.skinL)];SKINM=cs(o.material.userData.skinM);
+   o.material=rimify(new THREE.MeshToonMaterial({map:FT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:FT,emissiveIntensity:.16,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,depthWrite:false}));o.renderOrder=2;B.face=o;return}
+  if(nm==='chest'){o.material=new THREE.MeshToonMaterial({map:CT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:CT,emissiveIntensity:.28,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,depthWrite:false});o.renderOrder=2;return}
+  o.castShadow=true;o.receiveShadow=true;const map=o.material.map;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
+  o.material=rimify(new THREE.MeshToonMaterial({map,gradientMap:grad2,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.16}))}});
+ drawFace();for(const n of['hood','laceL','laceR'])if(B[n])B[n].userData.q0=B[n].quaternion.clone();
+ B.handR.add(wand);wand.position.set(WANDP.x,WANDP.y,WANDP.z);wand.rotation.set(WANDR.x,WANDR.y,WANDR.z);
  MIX=new THREE.AnimationMixer(m);for(const c of g.animations){const a=MIX.clipAction(c);a.play();a.setEffectiveWeight(0);ACT[c.name]=a;a.userData={w:0}}
- for(const n of['kick','jump_crouch','jump_air','jump_land'])ACT[n].setLoop(THREE.LoopOnce).clampWhenFinished=true;
+ for(const n of['kick','jump_crouch','jump_air','jump_land','cheer'])ACT[n].setLoop(THREE.LoopOnce).clampWhenFinished=true;
  READY=true;window.PROTO_READY=1});
+const WANDP=new THREE.Vector3(0,.035,0),WANDR=new THREE.Euler(-1.4,0,0);
 const tip=new THREE.Vector3();
 // shadow blob for contact
 const cs=new THREE.Mesh(new THREE.CircleGeometry(.32,24),new THREE.MeshBasicMaterial({color:0x2a3a10,transparent:true,opacity:.28,depthWrite:false}));cs.rotation.x=-Math.PI/2;cs.position.y=.015;S.add(cs);
@@ -106,7 +169,7 @@ const CAM={yaw:Math.PI*.78,dist:2.6,h:1.35,look:new THREE.Vector3(),pos:new THRE
 const OBST=[[-6,-6,1.55],[5,-7,.4],[8,-2,.3],[-9,2,.36],[3,8,.3],[-4,9,.42],[10,5,.3],[2.5,-3,.15],[-3,-1.5,.15],[1,3.2,.15],[4,2,.65]];const RC=new THREE.Raycaster();const COLL=[];ground.traverse(o=>{if(o.isMesh&&o.material!==OUT&&!o.isInstancedMesh&&!(o.parent===ground&&/Cylinder|Ring/.test(o.geometry.type)))COLL.push(o)});
 const lerp=(a,b,t)=>a+(b-a)*t,damp=(a,b,l,dt)=>lerp(a,b,1-Math.exp(-l*dt)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function angDamp(a,b,l,dt){let d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*(1-Math.exp(-l*dt))}
-const MOVE={walk:2.2,run:4.6,acc:10,dec:14,turn:12,g:-22,jv:6.2,holdG:.42,holdMax:.22,coyote:.12,buf:.15};
+const STRIDE={walk:.585,run:1.1};const MOVE={walk:1.3,run:3.4,acc:10,dec:14,turn:12,g:-22,jv:6.2,holdG:.42,holdMax:.22,coyote:.12,buf:.15};
 function startJump(){H.vy=MOVE.jv;H.air=true;H.jumpHold=MOVE.holdMax;H.state='jump';H.t=0;H.coyote=0;dust(H.pos,6)}
 function update(dt){
  // input → camera-relative
@@ -163,28 +226,42 @@ function at(n,t){const a=ACT[n];a.time=Math.min(t,a.getClip().duration-.001);a.p
 function animate(dt,sp){T+=dt;if(!READY){hero.position.copy(H.pos);return}const s=H.state;const tg={};
  for(const n in ACT)ACT[n].paused=false;
  if(s==='idle')tg.idle=1;
- if(s==='run'){const k=clamp((sp-MOVE.walk*.6)/(MOVE.run-MOVE.walk),0,1);tg.walk=1-k;tg.run=k;
-  H.phase+=dt*(sp/MOVE.walk);const cyc=(H.phase*.55)%1;ACT.walk.time=cyc*ACT.walk.getClip().duration;ACT.run.time=cyc*ACT.run.getClip().duration;ACT.walk.paused=ACT.run.paused=true;
+ if(s==='run'){const k=clamp((sp-MOVE.walk*.8)/(MOVE.run-MOVE.walk*.8),0,1);tg.walk=1-k;tg.run=k;
+  H.phase+=dt*sp/lerp(STRIDE.walk,STRIDE.run,k);const cyc=H.phase%1;ACT.walk.time=cyc*ACT.walk.getClip().duration;ACT.run.time=cyc*ACT.run.getClip().duration;ACT.walk.paused=ACT.run.paused=true;
   if(sp<.3)tg.idle=1}
  if(s==='crouch'){tg.jump_crouch=1;at('jump_crouch',H.t*1.6)}
  if(s==='jump'){tg.jump_air=1;at('jump_air',clamp(1-H.vy/MOVE.jv,0,1.4)*.25)}
- if(s==='land'){tg.jump_land=1;at('jump_land',H.t/H.land*.3)}
- if(s==='kick'){tg.kick=1;at('kick',(.55-H.kick)/.55*.6)}
- if(s==='draw')tg.chalk=1;
- if(s==='cheer')tg.cheer=1;
+ if(s==='land'){tg.jump_land=1;at('jump_land',H.t/H.land*.4)}
+ if(s==='kick'){tg.kick=1;at('kick',(.55-H.kick)/.55*.75)}
+ if(s==='draw'){tg.chalk=1;at('chalk',clamp(1.8-H.draw-.1,0,1.59))}
+ if(s==='cheer'){tg.cheer=1;at('cheer',(1.3-H.cheer)/1.3*1.5)}
  setW(dt,tg,s==='kick'||s==='crouch'?30:s==='land'?24:12);MIX.update(dt);
- if(s==='draw'){const t=1.8-H.draw;hero.updateMatrixWorld(true);B.star.getWorldPosition(tip);const pts=H.drawPts;if(t>.3&&t<1.6&&(!pts.length||pts[pts.length-1].distanceTo(tip)>.03)){pts.push(tip.clone());spark(tip,0xfff0a0,1,.6);
-   if(pts.length>1){const a2=pts[pts.length-2];const L=a2.distanceTo(tip);const m=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,L,6),trMat.clone());m.position.copy(a2).lerp(tip,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),tip.clone().sub(a2).normalize());S.add(m);TR.push({m,t:0})}}
-  if(t>=1.6&&!H.drawDone){H.drawDone=1;spark(tip,0xffe27a,24,2.5)}if(t<.05)H.drawDone=0}
+ // chalk: clean glowing triangle in the air, revealed in sync with the stroke, then bursts into sparks
+ if(s==='draw'){const t=1.8-H.draw;if(t<.05||!H.tri){H.tri=[];const f=new THREE.Vector3(Math.sin(H.yaw),0,Math.cos(H.yaw)),r=new THREE.Vector3(Math.cos(H.yaw),0,-Math.sin(H.yaw));
+   const c=H.pos.clone().addScaledVector(f,.5).addScaledVector(r,-.1);c.y+=.78;H.triP=[c.clone().add(new THREE.Vector3(0,.2,0)),c.clone().addScaledVector(r,.2).add(new THREE.Vector3(0,-.14,0)),c.clone().addScaledVector(r,-.2).add(new THREE.Vector3(0,-.14,0))];H.triN=0;H.drawDone=0}
+  const u=clamp((t-.1)/1.6*3,0,3);const P3=H.triP;
+  while(H.triN<Math.floor(u*8)){const i=H.triN;const s0=Math.floor(i/8),f0=(i%8)/8,f1=(i%8+1)/8;const A=P3[s0].clone().lerp(P3[(s0+1)%3],f0),Bp=P3[s0].clone().lerp(P3[(s0+1)%3],f1);
+   const L=A.distanceTo(Bp);const m=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,L+.012,6),trMat.clone());m.position.copy(A).lerp(Bp,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),Bp.clone().sub(A).normalize());S.add(m);TR.push({m,t:0});H.tri.push(m);spark(Bp,0xfff0a0,1,.5);H.triN++}
+  if(u>=3&&!H.drawDone){H.drawDone=1;const c=P3[0].clone().add(P3[1]).add(P3[2]).multiplyScalar(1/3);spark(c,0xffe27a,26,2.2);for(const o of TR)o.t=Math.max(o.t,3.05)}}
+ else H.tri=null;
+ // face: emotion per state + blink + gaze
+ {let e='smile';if(s==='run')e=H.run>2.2?'happy':'smile';if(s==='crouch'||s==='kick')e='determined';if(s==='jump')e=H.vy>1?'happy':'surprise';if(s==='draw')e='focus';if(s==='cheer')e='delight';if(s==='land')e='happy';
+  if(window.FORCE_EMO){e=window.FORCE_EMO==='blink'?'smile':window.FORCE_EMO;if(window.FORCE_EMO==='blink'){H.blink=.08;H.nb=9}}FACE.emo=e;H.nb-=dt;if(H.nb<0){H.blink=.16;H.nb=1.8+Math.random()*2.6}let bl=0;if(H.blink>0){H.blink-=dt;bl=Math.sin((1-H.blink/.16)*Math.PI)}FACE.blink=Math.round(bl*4)/4;
+  FACE.look=s==='draw'?[.45,.6]:[0,0];drawFace()}
+ // secondary motion: hood + drawstrings lag behind the body (damped springs)
+ {const tgt=clamp(H.run/MOVE.run,0,1)*.35+(H.air?-H.vy*.04:0)+(s==='land'?.25:0),tl=-tgt*1.3;
+  const SPR=H.spr||(H.spr={h:0,hv:0,l:0,lv:0});SPR.hv+=(60*(tgt-SPR.h)-7*SPR.hv)*dt;SPR.h+=SPR.hv*dt;SPR.lv+=(90*(tl-SPR.l)-6*SPR.lv)*dt;SPR.l+=SPR.lv*dt;
+  const sw=Math.sin(H.phase*Math.PI*2)*.15*clamp(H.run/MOVE.run,0,1);
+  if(window.NOSPR){}else{if(B.hood){B.hood.quaternion.copy(B.hood.userData.q0);B.hood.rotateX(SPR.h)}for(const [b,k] of [[B.laceL,1],[B.laceR,-1]])if(b){b.quaternion.copy(b.userData.q0);b.rotateX(SPR.l);b.rotateZ(sw*k+.04*Math.sin(T*1.7+k))}}}
  hero.position.copy(H.pos);hero.rotation.y=H.yaw;cs.position.set(H.pos.x,.015,H.pos.z);const ch=1/(1+H.pos.y*1.5);cs.scale.setScalar(ch);cs.material.opacity=.32*ch;
- B.star.rotation.z+=dt*2}
+ B.star.rotation.y=Math.sin(T*1.6)*.35;B.glow.material.opacity=.75+.25*Math.sin(T*5)}
 // ===== loop
 function resize(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w/h>1.8?40:46;cam.updateProjectionMatrix()}addEventListener('resize',resize);resize();
 let last=performance.now(),fc=0,ft=0,FPS=0;
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!window.MANUAL){update(dt);R.render(S,cam)}fc++;ft+=dt;if(ft>1){FPS=fc/ft;fc=0;ft=0;document.getElementById('fps').textContent=FPS.toFixed(0)+' fps'}requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 // test hooks
-window.PROTO={step(n,dt=1/30){for(let i=0;i<n;i++)update(dt);R.render(S,cam)},H,IN,CAM,B,get fps(){return FPS},act(){IN.act=true},jump(hold){IN.jumpDown=true;IN.jump=!!hold;if(hold)setTimeout(()=>IN.jump=false,hold)},cheer(){IN.cheer=true},
+window.PROTO={cam,render(){R.render(S,cam)},step(n,dt=1/30){for(let i=0;i<n;i++)update(dt);R.render(S,cam)},H,IN,CAM,B,get fps(){return FPS},act(){IN.act=true},jump(hold){IN.jumpDown=true;IN.jump=!!hold;if(hold)setTimeout(()=>IN.jump=false,hold)},cheer(){IN.cheer=true},
  ballNear(){ball.position.set(H.pos.x+Math.sin(H.yaw)*.9,.32,H.pos.z+Math.cos(H.yaw)*.9);BV.set(0,0,0)},ballFar(){ball.position.set(6,.32,6);BV.set(0,0,0)},
  setCam(yaw,dist,h){CAM.yaw=yaw;if(dist)CAM.dist=dist},hideUI(v){for(const id of['bJ','bA','bC','hint','fps'])document.getElementById(id).style.display=v?'none':''}};
 </script></body></html>
