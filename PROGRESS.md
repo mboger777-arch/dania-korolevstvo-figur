@@ -261,3 +261,5 @@
 - 18:35 ГОЛОС: причина — go()→stopTalk() ставил на паузу текущую реплику p>=2 при смене сцены/главы (реальный обрыв, напр. u_move, gd_jump в конце главы); плюс finishTalk искал запись по VLOG[last], а после drop:busy там чужая запись → не писались t1/ended. Фикс: CARRY — реплика доигрывает, очередь ждёт; vEnd пишет t1/ended/ct/how в свою запись. Перегон: out/voicetest2.log (сервер 8060).
 
 - 19:05 voicetest2: task_cuts 0 во всех журналах (все p>=2 ended=true); TOTAL FAIL только из-за одной задержки c1_s 0.598с (c0, первая реплика главы; шёл параллельный прогон 932). ch_667x375 PASS, ch_932x430 PASS, smoke PASS (out/smoke2.log), regress PASS (out/regress2.log). Серверы 8059/8060 остановлены.
+
+- 19:06 предзагрузка VFIRST/VNEXT (js/vpre.js). smoke: out/smoke3.log. voicetest один: out/voicetest3.log (8059).
