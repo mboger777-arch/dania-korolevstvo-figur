@@ -84,6 +84,12 @@ makeDania=function(){if(!D3.ok)return _md();const root=new THREE.Group(),body=ne
 const _rc=removeChar;removeChar=function(ch){_rc(ch);if(ch&&ch.d3&&D3.wand)SCENE.remove(D3.wand)};
 const d3damp=(a,b,l,dt)=>a+(b-a)*(1-Math.exp(-l*dt));
 function d3at(n,t){const a=D3.ACT[n];if(!a)return;a.time=Math.min(Math.max(0,t),a.getClip().duration-.001)}
+function d3footTab(c){const A=D3.ACT,v=new THREE.Vector3(),N=64,o={n:N};const w0={};for(const k in A)w0[k]=A[k].getEffectiveWeight();
+ for(const cl of ['walk','run']){for(const k in A)A[k].setEffectiveWeight(k===cl?1:0);const P=[];
+  for(let i=0;i<N;i++){A[cl].time=i/N*A[cl].getClip().duration;D3.MIX.update(0);c.body.updateMatrixWorld(true);const q=[];for(const b of [D3.B.footL,D3.B.footR]){b.getWorldPosition(v);c.body.worldToLocal(v);q.push([v.y,v.z])}P.push(q)}
+  const r=[];for(let i=0;i<N;i++){const a=P[(i+N-1)%N],b=P[(i+1)%N],dl=b[0][1]-a[0][1],dr=b[1][1]-a[1][1];r.push(Math.max(0,-Math.min(dl,dr))*N/2)/* опорная = та, что едет назад относительно тела */}
+  const m=r.reduce((x,y)=>x+y,0)/N;o[cl]=r.map(x=>Math.min(m*1.8,Math.max(x,m*.6)))}
+ for(const k in A)A[k].setEffectiveWeight(w0[k]);D3.FT=o}
 function d3update(c,dt,sp){if(!D3.MIX)return;c.F.step(dt);d3shadowRecv();const A=D3.ACT;
  const cut=typeof CUT!=='undefined'&&CUT,tk=typeof talking==='function'&&talking('dania'),sit=c.anim==='sit',air=c.anim==='air',oops=c.F.mood==='sad';
  const ca=Math.atan2(CAM.position.x-c.root.position.x,CAM.position.z-c.root.position.z),ry=c.root.rotation.y;
@@ -96,7 +102,9 @@ function d3update(c,dt,sp){if(!D3.MIX)return;c.F.step(dt);d3shadowRecv();const A
  if(sit)st='sit';else if(air)st='jump';else if(T-c.landT<.22)st='land';else if(kick)st='kick';else if(cheer)st='cheer';else if(c.hold)st='draw';else if(c.anim==='run'&&c.run>.3)st='run';
  const tg={};for(const n in A)A[n].paused=true;
  if(st==='idle'){tg.idle=1;A.idle.paused=false}
- if(st==='run'){const k=Math.min(1,Math.max(0,(c.run-wk*.8)/(rn-wk*.8)));tg.walk=1-k;tg.run=k;c.ph+=dt*c.run/(1.7+.7*k)/* v6.1: длина шага клипа (измерено по опорной стопе: walk 1.7, run 2.4 ед./цикл) */;const cy=c.ph%1;A.walk.time=cy*A.walk.getClip().duration;A.run.time=cy*A.run.getClip().duration}
+ if(st==='run'){if(!D3.FT)d3footTab(c);const k=Math.min(1,Math.max(0,(c.run-wk*.8)/(rn-wk*.8))),wi=k>0?0:Math.max(0,1-c.run/(wk*.75));tg.walk=(1-k)*(1-wi);tg.run=k;tg.idle=wi;if(wi>0)A.idle.paused=false;
+  /* v6.3: фазовая подгонка — скорость фазы = скорость хода / мгновенная скорость опорной стопы в клипе (таблица), на малой скорости смешиваем покой и шаг */
+  const N=D3.FT.n,cy0=((c.ph%1)+1)%1,i=Math.floor(cy0*N)%N,sw=D3.FT.walk[i],sr=D3.FT.run[i],sv=Math.max(.25,((1-k)*sw+k*sr)*(1-wi));c.ph+=dt*c.run/(window.D3LOVR!=null?D3LOVR:sv);const cy=((c.ph%1)+1)%1;A.walk.time=cy*A.walk.getClip().duration;A.run.time=cy*A.run.getClip().duration}
  if(st==='jump'){tg.jump_air=1;d3at('jump_air',Math.min(1.4,Math.max(0,1-(typeof HERO!=='undefined'?HERO.vy:0)/7.6))*.25)}
  if(st==='land'){tg.jump_land=1;d3at('jump_land',(T-c.landT)/.22*.4)}
  if(st==='kick'){tg.kick=1;d3at('kick',(T-c.kickT)/.55*.75)}
@@ -104,6 +112,13 @@ function d3update(c,dt,sp){if(!D3.MIX)return;c.F.step(dt);d3shadowRecv();const A
  if(st==='draw'){tg.chalk=1;d3at('chalk',.55+Math.sin(T*3)*.08)}
  if(st==='sit'){tg.jump_crouch=1;d3at('jump_crouch',.12)}
  const L=st==='kick'?30:st==='land'?24:12;for(const n in A){const a=A[n];a.userData.w=dt?d3damp(a.userData.w,tg[n]||0,L,dt):(tg[n]||0);a.setEffectiveWeight(a.userData.w)}D3.MIX.update(0);
+ /* v6.3: фиксация опорной стопы — смещаем тело так, чтобы стопа, едущая назад, стояла на месте; смещение мягко возвращается (≤6% скорости) */
+ {const o=c.foff||(c.foff={x:0,z:0,p:null});c.body.position.set(0,0,0);c.root.updateMatrixWorld(true);const B=D3.B,fp=[0,1].map(j=>{const b=j?B.footR:B.footL;b.getWorldPosition(_d3a);return [_d3a.x,_d3a.z]});
+  const lock=st==='run'&&dt>0&&dt<.1,co=Math.cos(ry),si=Math.sin(ry);
+  if(lock&&o.p){const d=[0,1].map(j=>[fp[j][0]+o.x-o.p[j][0],fp[j][1]+o.z-o.p[j][1]]),hx=Math.sin(ry),hz=Math.cos(ry),f=(d[0][0]*hx+d[0][1]*hz)<(d[1][0]*hx+d[1][1]*hz)?0:1;o.x-=d[f][0];o.z-=d[f][1]}
+  const n=Math.hypot(o.x,o.z),rl=(lock?.06*Math.max(sp,1):1.2)*dt,mx=.22;if(n>0){const k=Math.max(0,Math.min(n-rl,mx))/n;o.x*=k;o.z*=k}
+  if(!lock)o.p=null;else o.p=fp.map(q=>[q[0]+o.x,q[1]+o.z]);
+  c.body.position.set(o.x*co-o.z*si,0,o.x*si+o.z*co)}
  // лицо
  let e='smile';if(st==='run')e=c.run>2.2*S?'happy':'smile';if(st==='kick')e='determined';if(st==='jump')e='happy';if(st==='draw')e='focus';if(st==='cheer')e='delight';if(st==='land')e='happy';if(oops)e='sad';
  if(tk&&!cheer)e=(Math.sin(T*13)>0)?'talk':'smile';D3F.emo=e;D3F.blink=c.F.bl>0?Math.round(Math.sin((1-c.F.bl/.16)*Math.PI)*4)/4:0;d3face();

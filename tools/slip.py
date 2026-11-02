@@ -9,11 +9,11 @@ async def main():
     pg=await (await b.new_context(viewport={'width':320,'height':200})).new_page()
     await pg.goto('http://127.0.0.1:8059/index.html?mute&ch=0&nopad');await pg.wait_for_function('typeof scene!=="undefined"&&scene==="ch"&&DANIA&&D3.ok',timeout=90000)
     await pg.evaluate("cancelAnimationFrame&&0;window.SCN=null;DANIA.update=()=>{};0")
-    for sp in (2.0,3.0,4.5,6.0):
+    for sp in (0.8,1.5,2.0,3.0,4.0,4.5,5.0,6.0,7.0):
       d=await pg.evaluate(JS,sp);res=[]
-      for k in (0,1):
-        lo=min(r[k][0] for r in d);sl=[abs(d[i+1][k][1]-d[i][k][1])*60 for i in range(len(d)-1) if d[i][k][0]<lo+.015]
-        sl.sort();res.append(round(sl[len(sl)//2],2) if sl else None)
-      print('speed',sp,'stance slip L/R',res,'ratio',[round(x/sp,2) for x in res if x is not None])
+      # v6.3: опорная стопа = та, что медленнее движется вперёд (у кости лодыжки высота не годится)
+      vz=[min(d[i+1][k][1]-d[i][k][1] for k in (0,1))*60 for i in range(len(d)-1)];sl=sorted(abs(x) for x in vz if x<sp*.9)  # кадры полёта (обе стопы вперёд) не считаем
+      res=[round(sl[len(sl)//2],2),round(sl[int(len(sl)*.8)],2)]
+      print('speed',sp,'stance slip med/p80',res,'ratio',[round(x/sp,2) for x in res if x is not None])
     await b.close()
 asyncio.run(main())
