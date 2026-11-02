@@ -19,6 +19,7 @@ for v in me.data.vertices: v.co=Vector((v.co.x*s,v.co.y*s,(v.co.z-z0)*s))
 bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.mesh.remove_doubles(threshold=0.0005);bpy.ops.object.mode_set(mode='OBJECT')
 n=len(me.data.polygons);m=me.modifiers.new('d','DECIMATE');m.ratio=min(1,TRI/n);bpy.ops.object.modifier_apply(modifier='d')
 print('TRIS',len(me.data.polygons))
+for p in me.data.polygons: p.use_smooth=True
 def sst(a,b,x): t=min(1,max(0,(x-a)/(b-a)));return t*t*(3-2*t)
 # ---------- texture: 1024, soft delight (divide out low-frequency luminance), warmer + more saturated
 img=max(bpy.data.images,key=lambda i:i.size[0]*i.size[1])
@@ -99,7 +100,15 @@ SK_T=np.array([.95,.70,.55],np.float32);HO_T=np.array([.90,.42,.16],np.float32)
 def near(m,sc): return np.exp(-((rgb-m)**2).sum(-1)/sc)[...,None]
 ws=near(skm,.012);wh=near(hom,.02)*(1-ws)
 rgb=rgb+ws*(SK_T-skm)*.85+wh*(HO_T-hom)*.8
-px[...,:3]=np.clip(rgb,0,1);img.pixels.foreach_set(px.ravel());img.update()
+px[...,:3]=np.clip(rgb,0,1)
+FM=FR|Md;fm0=np.median(px[FM,:3],axis=0)
+FX=np.zeros((h,w),bool)
+for p in me.data.polygons:
+    c=p.center
+    if (c.x/.135)**2+((c.z-.89)/.11)**2<1 and p.normal.y<.3 and c.z<.975: rast(p,FX)
+FX&=(np.abs(px[...,:3]-fm0).sum(-1)<.3)
+FM|=FX;px[FM,:3]=px[FM,:3]*.22+fm0*.78
+img.pixels.foreach_set(px.ravel());img.update()
 def make_patch(name,sel,uvf):
     d=me.data.copy();ob=bpy.data.objects.new(name,d);bpy.context.scene.collection.objects.link(ob)
     bm=bmesh.new();bm.from_mesh(d);bm.normal_update()

@@ -95,16 +95,16 @@ function drawFace(){const {emo,blink,look}=FACE;const k=emo+blink.toFixed(2)+loo
  // brows: thick tapered arcs like key art
  const BR={smile:[0,0],happy:[-6,0],surprise:[-24,0],focus:[10,12],determined:[8,18],delight:[-14,0]}[emo]||[0,0];
  x.fillStyle='#5a3018';
- for(const [s,cx] of [[-1,130],[1,382]]){const y0=106+BR[0];x.beginPath();
+ for(const [s,cx] of [[-1,130],[1,382]]){const y0=98+BR[0];x.beginPath();
   const inX=cx-s*58,outX=cx+s*66,inY=y0+18+BR[1],outY=y0+16;
   x.moveTo(inX,inY);x.quadraticCurveTo(cx-s*10,y0-20,outX,outY);x.quadraticCurveTo(cx-s*6,y0-2,inX,inY+12);x.closePath();x.fill()}
  // eyes
  for(const [i,[cx,cy]] of EYE.entries()){const s=i?1:-1;
   if(emo==='delight'){x.strokeStyle='#2e170a';x.lineWidth=13;x.lineCap='round';x.beginPath();x.moveTo(cx-52,cy+12);x.quadraticCurveTo(cx,cy-40,cx+52,cy+12);x.stroke();continue}
-  const rx=66,ry=emo==='surprise'?62:54;let open=1-blink;if(emo==='focus')open*=.6;if(emo==='determined')open*=.78;
+  const rx=72,ry=emo==='surprise'?68:60;let open=1-blink;if(emo==='focus')open*=.6;if(emo==='determined')open*=.78;
   x.save();x.beginPath();x.ellipse(cx,cy,rx,ry,0,0,7);x.clip();
   let g=x.createLinearGradient(0,cy-ry,0,cy+ry);g.addColorStop(0,'#d9c6b8');g.addColorStop(.35,'#f4ebe3');g.addColorStop(1,'#efe2d6');x.fillStyle=g;x.fillRect(cx-rx,cy-ry,rx*2,ry*2);
-  const ir=emo==='surprise'?38:44,ix=cx+look[0]*16+s*4,iy=cy+4+look[1]*12;
+  const ir=emo==='surprise'?42:49,ix=cx+look[0]*16+s*4,iy=cy+4+look[1]*12;
   g=x.createRadialGradient(ix,iy+14,4,ix,iy,ir);g.addColorStop(0,'#c0803f');g.addColorStop(.6,'#7a4419');g.addColorStop(1,'#3a1d0a');x.fillStyle=g;x.beginPath();x.arc(ix,iy,ir,0,7);x.fill();
   x.fillStyle='#160a04';x.beginPath();x.arc(ix,iy+1,ir*.5,0,7);x.fill();
   // upper-lid shadow on eyeball

@@ -198,3 +198,10 @@
 - Одежда: сглаженные веса, кости hood/lace с пружинами (фикс: сброс к rest-кватерниону каждый кадр), чёткий треугольник-декаль.
 - Свет: delight текстуры, rim-fresnel, меньше насыщенности.
 - Артефакты: sheets/v3_dania3d_compare.png, /workspace/dania_3d_v3.mp4. fps (swiftshader 915×412) ≈21.
+
+## v4 (Nov 2) — 3D Dania charm pass
+- Baked face erased in the texture (inpaint), skin/hoodie recoloured to key art, smooth shading, cheek/nose area flattened.
+- New canvas face: big brown eyes without light rings, lash line, brows, kind smile, 6 emotions + blink.
+- Wand in world space from the fist, star visible in every pose; 8-step soft toon gradient.
+- Sheet: sheets/v4_dania3d_compare.png (tools/sheet4.py + sheet4_compose.py). Video: /workspace/dania_3d_v4.mp4 (live close-ups, closer chase cam).
+- Weak spots: no jaw bone, finger flap on the fist, wand horizontal in draw, hair faceting.
