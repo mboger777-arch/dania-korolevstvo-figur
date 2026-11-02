@@ -37,6 +37,13 @@ function drawAngCard(){if(!ANGCARD)return;const d=ANGCARD.deg,k=angKind(d),K=AK[
 function rainOn(x,y,z,n){for(let i=0;i<(n||6);i++)setTimeout(()=>burst(V3(x+rnd(-1.5,1.5),y,z+rnd(-1.5,1.5)),0x8fd8ff,14,2,.25),i*160)}
 function cloudPuff(x,y,z,s,col){const g=new THREE.Group();g.position.set(x,y,z);for(let i=0;i<7;i++)mesh(GEO.sphL,M(col||0xe8eef6,{op:.92}),rnd(-1.4,1.4)*s,rnd(-.4,.6)*s,rnd(-.6,.6)*s,g,rnd(.8,1.3)*s);WORLD.add(g);return g}
 async function heroWalkTo(x,z,yaw){HERO.lock=true;await until(()=>{const d=hd(x,z);if(d<.3)return true;const a=angTo(x,z);HERO.yaw=a;const sp=Math.min(5,d*4);HERO.x+=Math.sin(a)*sp*DT;HERO.z+=Math.cos(a)*sp*DT;HERO.sp=sp;if(DANIA)DANIA.anim='run';return false});if(yaw!=null)HERO.yaw=yaw;HERO.lock=false}
+// v6.3: «зажги точку» — встань на кружок и держи палец; возвращает промис, бот подходит и держит
+function holdSpot(x,z,col,o){o=o||{};const g=pad3D(x,z,col||0x9a9ab8,o.r||.8);g.children[0].material.emissiveIntensity=.08;const dot=mesh(GEO.sphL,M(0xd8d8e8,{em:0x404050,ei:.3}),x,groundAt(x,z)+.35,z,null,.14);let k=0,done=false;
+ const st={g,dot,lit:false};st.p=new Promise(res=>{const f=dt=>{if(done)return;const on=hd(x,z)<1&&!HERO.lock&&!CUT;if(on&&!o.quiet)aimSet({kind:'beam',x,y:groundAt(x,z)+.4,z,r:34,ready:INP.hold});
+  if(on&&INP.hold){k+=dt;dot.scale.setScalar(.14+k*.25)}else k=Math.max(0,k-dt*2);
+  if(k>.6){done=true;st.lit=true;dot.material.color.set(0xffffff);dot.material.emissive.set(col||0xffe066);dot.material.emissiveIntensity=1;dot.scale.setScalar(.22);g.children[0].material.emissiveIntensity=.7;SFX.chalk();burst(V3(x,1,z),col||0xffe066,36,4);res(st)}};TICK.push(f)});
+ st.bot=async()=>{await bGo(x,z,.45);bHold(true);await bUntil(()=>st.lit,6);bHold(false);await bWait(.2)};return st}
+const GOODS=['g_good','g_good2','g_good3'];let GOODI=0;function goodVar(){return GOODS[(GOODI++)%GOODS.length]}
 function botTask(fn){TASK.bot=fn;TASK.botN=(TASK.botN||0)+1}
 
 // ===================== Глава 1: Долина Точек =====================
@@ -50,16 +57,24 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
  for(const [x,z] of [[-1.5,9.8],[1.4,9.8],[-1.2,14.2],[2,14.2]])mesh(GEO.box,0x8a6a40,x,.3,z,null,[.25,.6,.25]);
  this.pL=pad3D(0,22,0x7fd0ff,.95);const lh=new THREE.Group();lh.position.set(-2.4,0,22);for(let i=0;i<4;i++)mesh(GEO.cyl,i%2?0xffffff:0xf2683c,0,.5+i,0,lh,[.6-i*.06,1,.6-i*.06]);mesh(GEO.sph,M(0xfff0a0,{em:0xffd000,ei:1}),0,4.4,0,lh,.4);mesh(GEO.cone,0xf2683c,0,5,0,lh,[.5,.5,.5]);WORLD.add(lh);cylBlock(-2.4,22,.7,5);
  this.clouds=[[-8,30],[0,34],[8,30]].map(([x,z])=>{const c=cloudPuff(x,2.2,z,1.5,0xd8dde8);c.hp=.8;c.alive=true;return c});
- this.rails=new THREE.Group();this.rails.position.z=40;for(const s of [-.6,.6])mesh(GEO.box,0x9aa0b0,0,.12,s,this.rails,[600,.12,.12]);for(let x=-300;x<=300;x+=1.4)mesh(GEO.box,0x8a5a30,x,.05,0,this.rails,[.35,.08,1.8]);WORLD.add(this.rails);this.rails.visible=false;
+ /* v6.3: рельсы-«отрезок» с концами; стираем концы — уходят в бесконечность (прямая) */
+ this.rails=new THREE.Group();this.rails.position.z=40;this.halfs=[-1,1].map(sg=>{const h=new THREE.Group();for(const s of [-.6,.6])mesh(GEO.box,0x9aa0b0,sg*150,.12,s,h,[300,.12,.12]);h.userData.len=6.5;h.scale.x=6.5/300;this.rails.add(h);return h});
+ this.sleep=[];for(let x=-300;x<=300;x+=1.4)this.sleep.push(mesh(GEO.box,0x8a5a30,x,.05,0,this.rails,[.35,.08,1.8]));
+ this.ends=[-1,1].map(sg=>{const m=mesh(GEO.sphL,M(0xff5a7a,{em:0xff2050,ei:.7}),sg*6.6,.35,0,this.rails,.28);return m});WORLD.add(this.rails);this.rails.visible=false;
+ TICK.push(()=>{if(!this.rails.visible)return;const [l,r]=this.halfs.map(h=>h.userData.len);for(const m of this.sleep)m.visible=m.position.x>=-l-.1&&m.position.x<=r+.1});
  this.train=new THREE.Group();this.train.position.set(0,0,40);[0xf2683c,0x3d7be0,0xf5c242,0x5cbf6a].forEach((c,i)=>{mesh(GEO.box,c,-i*2.4,.9,0,this.train,[2.1,1.2,1.4]);for(const w of [-.6,.6])for(const s of [-.7,.7]){const wh=mesh(GEO.cyl,0x333344,-i*2.4+w,.35,s,this.train,[.32,.12,.32]);wh.rotation.x=Math.PI/2}});mesh(GEO.cyl,0x333344,.6,1.9,0,this.train,[.22,.6,.22]);WORLD.add(this.train);this.train.visible=false;
  TICK.push(dt=>{if(this.train.visible){this.train.position.x+=dt*9;if(this.train.position.x>60)this.train.position.x=-60}});
+ this.dots=[[-3,2.5],[3,4.5]];
  heroAt(0,0,0);QUEEN.root.visible=false;place(QUEEN,3,37,Math.PI)},
  async play(){const L=this,A=L.A,B=L.B;
   await cutscene(async()=>{shot(5,4,1,1,1,12);await say('c1_s')});
   // --- отрезок-мост ---
-  newTask('Встань на точку А','move');const mk=marker(A.x,A.z);run(()=>say('u_move'));
-  botTask(async()=>{await bGo(A.x,A.z,.4)});
-  await until(()=>hd(A.x,A.z)<1);mk.visible=false;
+  // --- 1. знакомство: зажги три точки (третья — точка А у моста) ---
+  newTask('Зажги три точки','hold');run(()=>say('c1_d1'));L.pA.visible=false;
+  const sp=[...L.dots,[A.x,A.z]].map(([x,z])=>holdSpot(x,z,0xffd23a));let mk=marker(sp[0].g.position.x,sp[0].g.position.z);
+  botTask(async()=>{for(const q of sp)if(!q.lit)await q.bot()});
+  for(let j=0;j<3;j++){const q=sp.find(q=>!q.lit);if(q){mk.position.set(q.g.position.x,0,q.g.position.z);mk.visible=true}await until(()=>sp.filter(q=>q.lit).length>j);bigNum(j+1);if(j<2)run(()=>sayNext('c1_d2'))}
+  mk.visible=false;clearGesture();GOAL='';await good('c1_dk');L.pA.visible=true;
   newTask('Держи палец, целься в Б','hold');run(()=>sayNext('c1_t1'));
   const dAB=Math.hypot(B.x-A.x,B.z-A.z);const st={len:0,wait:false,done:false,saidB:false,wide:.17};
   const beam=segMesh(V3(0,0,0),V3(0,1,0),.08,0xffffff,{mat:M(0xffffff,{em:0xffffaa,ei:1})});const glow=segMesh(V3(0,0,0),V3(0,1,0),.2,0xfff080,{op:.35});beam.visible=glow.visible=false;
@@ -97,9 +112,14 @@ LEVELS[0]={cast:{queen:true},build(){groundPlane();hills();treeRing(0,20,20,26,3
     }
    if(INP.hold&&!onL()&&!HERO.lock&&T-INP.holdT>.35&&!rs.off&&HERO.z>14.5){rs.off=true;mistake('c1_off')}if(!INP.hold)rs.off=false});
   await until(()=>rs.done);rb.visible=rg.visible=false;HERO.mode='walk';followCam();clearGesture();GOAL='';L.fog=false;await good('c1_k2');
-  // --- прямая-рельсы ---
-  await cutscene(async()=>{L.rails.visible=true;L.train.visible=true;L.train.position.x=-30;QUEEN.root.visible=true;burst(V3(3,1.5,37),0xffe080,30);heroAt(1,34,0);shot(-1,3.2,31,3,1.6,37,2.5);await say('c1_t3');
-   shot(8,1.5,38,-60,.6,40,1.2);await wait(1.5);shot(-8,1.5,38,60,.6,40,1.2);await say('c1_k3');await wait(.5)})}};
+  // --- 4. финал: прямая-рельсы — сотри оба конца ---
+  await cutscene(async()=>{L.rails.visible=true;QUEEN.root.visible=true;place(QUEEN,3,36.5,Math.PI);burst(V3(3,1.5,36.5),0xffe080,30);heroAt(0,32,0);shot(0,4.2,29,0,.6,40,2.5);await say('c1_e1')});
+  newTask('Сотри концы у рельсов','hold');const es=[-1,1].map(sg=>holdSpot(sg*6.6,38.3,0xff5a7a,{r:.75}));
+  botTask(async()=>{for(const q of es)if(!q.lit)await q.bot()});
+  const grow=j=>{const h=L.halfs[j],e=L.ends[j];e.visible=false;burst(V3((j?1:-1)*6.6,.6,40),0xff5a7a,40,5);SFX.whoosh();TICK.push(dt=>{h.userData.len=Math.min(300,h.userData.len+dt*(8+h.userData.len*2));h.scale.x=h.userData.len/300})};
+  const lit=[false,false];await until(()=>{for(let j=0;j<2;j++)if(es[j].lit&&!lit[j]){lit[j]=true;grow(j);es[j].g.visible=false;if(!(lit[0]&&lit[1]))run(()=>sayNext('c1_e2'))}return lit[0]&&lit[1]});
+  clearGesture();GOAL='';await wait(.6);
+  await cutscene(async()=>{L.train.visible=true;L.train.position.x=-30;shot(8,1.5,38,-60,.6,40,1.2);await wait(1.5);shot(-8,1.5,38,60,.6,40,1.2);await say('c1_k3');await say('c1_t3');await wait(.3)})}};
 
 // ===================== Глава 2: Ломаная гора (санки) =====================
 const SLOPE=z=>z<0?0:z<88?-.25*z:z<96?-22-(.25*8*((z-88)/8)-.25*8*((z-88)/8)**2/2):-23;
