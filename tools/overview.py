@@ -1,7 +1,7 @@
 # Лист-обзор финала: python3 tools/overview.py [пары "группа:файл"]
 import sys,glob,re,os
 from PIL import Image,ImageDraw,ImageFont,ImageStat
-D='shots/915x412'
+D=__import__('os').environ.get('FR','shots/915x412')
 def srt(g):return sorted(g,key=lambda f:[int(x) if x.isdigit() else x for x in re.split(r'(\d+)',f)])
 G=[('Пролог','a_prologue'),('Вступление','a_intro'),('Сад','c7_'),('1 Долина Точек','c0_'),('2 Ломаная гора','c1_'),('3 Кузница углов','c2_'),('4 Город фигур','c3_'),('5 Соты','c4_'),('6 Гонка колёс','c5_'),('7 Кривуля','c6_'),('Титры','cr_')]
 pick=dict(a.split('=') for a in sys.argv[1:])
