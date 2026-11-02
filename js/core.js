@@ -71,7 +71,7 @@ async function run(fn){try{await fn()}catch(e){if(e!==STALE)console.error(e)}}
 // ---- голос: очередь, реплика никогда не обрывается сама; «Дальше» пропускает только текущую ----
 let TALK=null;const SQ=[];const NAMES={dania:'Даня',krug:'Кругляш',queen:'Королева Циркуль',kriv:'Кривуля',narr:''};
 const SPKC={dania:'#ff8a1e',krug:'#f5b400',queen:'#9a6bd8',kriv:'#7a3bb0',narr:'#3a6fd0'};
-let VLOG=[];// для теста голоса
+let VLOG=[],VLAST=0;// для теста голоса
 // v6 голос: приоритеты (как у Таси) — 3 задание/подсказка после ошибки > 2 история > 1 похвала/реплики активностей.
 // Похвала ждёт не дольше VMAXAGE и не звучит, если ждёт что-то важнее; новое задание/история мягко обрывает идущую похвалу.
 // Выброшенные реплики РАЗРЕШАЮТ свой промис (сценарии не ломаются). «Повтори» — последнее задание/история главы.
@@ -80,7 +80,7 @@ function vpri(k,o){if(o&&o.p)return o.p;const l=LINES[k];if(l&&l.p)return l.p;re
 function say(k,o){return new Promise((res,rej)=>{if(!LINES[k]){console.warn('no line',k);res();return}const p=vpri(k,o);
  if(p===1&&(SQ.some(q=>q.p>1)||(TALK&&TALK.p>1))){VLOG.push({k,drop:'busy'});res();return}
  if(SQ.some(q=>q.k===k)||(TALK&&TALK.k===k&&p===1)){res();return}
- SQ.push({k,res,rej,g:GEN,p,t0:T});SQ.sort((a,b)=>b.p-a.p);
+ SQ.push({k,res,rej,g:GEN,p,t0:T,tr:performance.now()});SQ.sort((a,b)=>b.p-a.p);
  if(TALK&&TALK.p===1&&p>1&&!G.fast){VLOG.push({k:TALK.k,cut:'interrupt'});finishTalk();return}pump()})}
 function vRepeat(){if(!VREP||TALK&&TALK.k===VREP)return;SFX.click();const k=VREP;run(()=>say(k,{p:3}))}
 // подсказка после ошибки: убирает ещё не начатые реплики и звучит сразу после текущей
@@ -88,13 +88,13 @@ function sayNext(k){while(SQ.length)SQ.shift().res();return say(k,{p:3})}
 async function sayAll(...ks){for(const k of ks)await say(k)}
 function pump(){if(TALK||!SQ.length)return;const q=SQ.shift();if(q.g!==GEN){q.rej(STALE);pump();return}if(T-q.t0>(VMAXAGE[q.p]||60)){VLOG.push({k:q.k,drop:'stale'});q.res();pump();return}if(q.p>1&&scene==='ch')VREP=q.k;startTalk(q)}
 function startTalk(q){const l=LINES[q.k],v=typeof VOICE!=='undefined'&&VOICE[q.k];const est=v?v[1]:Math.max(1.6,l.t.length*.065);
- const t={k:q.k,who:l.who,text:l.t,t0:T,q,p:q.p||2,a:null,end:0,playing:false};TALK=t;VLOG.push({k:q.k,t0:performance.now(),dur:v?v[1]:0});
+ const t={k:q.k,who:l.who,text:l.t,t0:T,q,p:q.p||2,a:null,end:0,playing:false};TALK=t;const L0={k:q.k,t0:performance.now(),dur:v?v[1]:0,p:q.p||2,tr:q.tr,pe:VLAST,sc:scene};VLOG.push(L0);
  if(G.fast){t.end=T+.25;return}
  if(v&&!G.mute){const a=new Audio('assets/voice/'+v[0]);t.a=a;a.onended=()=>{if(TALK===t)t.end=T+.25};a.onerror=()=>{if(TALK===t)t.end=T+est};
-  a.onplaying=()=>{t.playing=true};const p=a.play();if(p&&p.catch)p.catch(()=>{if(TALK===t&&!t.playing)t.end=T+est+.3});t.end=T+est+6}
+  a.onplaying=()=>{t.playing=true;if(!L0.tp)L0.tp=performance.now()};const p=a.play();if(p&&p.catch)p.catch(()=>{if(TALK===t&&!t.playing)t.end=T+est+.3});t.end=T+est+6}
  else t.end=T+est+.3}
 function stepTalk(){if(TALK&&T>=TALK.end)finishTalk()}
-function finishTalk(){const t=TALK;if(!t)return;TALK=null;if(t.a){try{t.a.pause()}catch(e){}}const L=VLOG[VLOG.length-1];if(L&&L.k===t.k)L.t1=performance.now();if(t.q.g===GEN)t.q.res();else t.q.rej(STALE);pump()}
+function finishTalk(){const t=TALK;if(!t)return;TALK=null;if(t.a){try{t.a.pause()}catch(e){}}const L=VLOG[VLOG.length-1];if(L&&L.k===t.k){L.t1=performance.now();if(t.a)L.ended=t.a.ended}VLAST=performance.now();if(t.q.g===GEN)t.q.res();else t.q.rej(STALE);pump()}
 function skipTalk(){if(TALK){SFX.click();finishTalk()}}
 function stopTalk(){while(SQ.length){const q=SQ.shift();q.rej(STALE)}if(TALK){const t=TALK;TALK=null;if(t.a){try{t.a.pause()}catch(e){}}t.q.rej(STALE)}}
 const talking=w=>!!(TALK&&TALK.who===w);

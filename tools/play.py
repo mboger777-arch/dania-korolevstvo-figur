@@ -23,8 +23,11 @@ async def main():
       while True:
         await pg.wait_for_timeout(1500);sc=await pg.evaluate('scene')
         if sc in('ch','map'):break
-        k+=1;await pg.screenshot(path=f'{out}/a_{sc}{k:03d}.png')
+        k+=1
+        try: await pg.screenshot(path=f'{out}/a_{sc}{k:03d}.png',timeout=60000)
+        except Exception: print('pre shot timeout',flush=True)
         if time.time()-t0>300:raise SystemExit('prologue/intro stuck '+sc)
+      json.dump(await pg.evaluate('VLOG'),open(f'{out}/vlog_pre.json','w'))
       print('pre->',sc,round(time.time()-t0),flush=True)
       CH=([GI] if sc=='ch' else [])+list(range(7)) if (GI:=await pg.evaluate('typeof GARDEN!=="undefined"?GARDEN:-1'))>=0 else list(range(7))
     else:
@@ -58,7 +61,7 @@ async def main():
           await pg.screenshot(path=f'{out}/cr_{k:02d}.png')
         crok=await pg.evaluate('scene');print('credits->',crok,flush=True)
       info=json.loads(await pg.evaluate('JSON.stringify({m:G.mistakes||0,bt:G.botTimeouts||0,done:SV.done,vl:VLOG,acts:ACTLOG})'))
-      vl=info['vl'];cut=[] if 'fast' in FLAGS else [(v['k'],round((v['t1']-v['t0'])/1000,2),v['dur']) for v in vl if 't1' in v and v['dur'] and (v['t1']-v['t0'])/1000<v['dur']-0.15]
+      vl=info['vl'];json.dump(vl,open(f'{out}/vlog_c{ci}.json','w'));cut=[] if 'fast' in FLAGS else [(v['k'],round((v['t1']-v['t0'])/1000,2),v['dur']) for v in vl if 't1' in v and v['dur'] and (v['t1']-v['t0'])/1000<v['dur']-0.15]
       noend=[v['k'] for v in vl[:-1] if 't1' not in v]
       r={'ch':ci,'ok':ok,'sec':el,'mistakes':info['m'],'botTimeouts':info['bt'],'feetBad':len(bad),'feetEx':bad[:5],'maxAir':maxair,'lines':len(vl),'cut':cut,'noend':noend,'fpsMin':round(min(fps),1) if fps else 0,'fpsAvg':round(sum(fps)/len(fps),1) if fps else 0,'acts':info.get('acts',[]),'last':st,'suspend':round(susp)}
       rep['chapters'].append(r);print(json.dumps(r,ensure_ascii=False),flush=True)
