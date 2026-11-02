@@ -257,3 +257,5 @@
 - 18:11 трейлер: tools/trailer.py → /workspace/dania_trailer.mp4 (48.5с, h264+aac, голос pr1/pr2/c5_hk/b_six/f_1/cr1 + тихий фон), кадры проверены. final_overview.png пересобран (c6_34), 20 кадров, тёмных нет. voicetest идёт: out/voicetest.log; далее ch_667x375/ch_932x430 (out/regress_all.log).
 
 - 18:33 voicetest: TOTAL FAIL — задержки OK (макс 0.43с, медиана 0.011), overlaps 0; task_cuts в c0(a_pad,c1_ray,c1_fog) c2(c3_wide,c3_t2) c3(c4_bad,c4_long) c7(u_move,gd_jump): у записи нет ended, а следующая похвала drop=busy, т.е. реплику не перебили — вероятно, ended не пишется (смена сцены/onended). Разобрать. Цепочка регрессии продолжается (ch_667x375: 7,0,1,2 ok), 8059 остаётся запущенным до её конца.
+
+- 18:35 ГОЛОС: причина — go()→stopTalk() ставил на паузу текущую реплику p>=2 при смене сцены/главы (реальный обрыв, напр. u_move, gd_jump в конце главы); плюс finishTalk искал запись по VLOG[last], а после drop:busy там чужая запись → не писались t1/ended. Фикс: CARRY — реплика доигрывает, очередь ждёт; vEnd пишет t1/ended/ct/how в свою запись. Перегон: out/voicetest2.log (сервер 8060).
