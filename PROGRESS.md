@@ -259,3 +259,5 @@
 - 18:33 voicetest: TOTAL FAIL — задержки OK (макс 0.43с, медиана 0.011), overlaps 0; task_cuts в c0(a_pad,c1_ray,c1_fog) c2(c3_wide,c3_t2) c3(c4_bad,c4_long) c7(u_move,gd_jump): у записи нет ended, а следующая похвала drop=busy, т.е. реплику не перебили — вероятно, ended не пишется (смена сцены/onended). Разобрать. Цепочка регрессии продолжается (ch_667x375: 7,0,1,2 ok), 8059 остаётся запущенным до её конца.
 
 - 18:35 ГОЛОС: причина — go()→stopTalk() ставил на паузу текущую реплику p>=2 при смене сцены/главы (реальный обрыв, напр. u_move, gd_jump в конце главы); плюс finishTalk искал запись по VLOG[last], а после drop:busy там чужая запись → не писались t1/ended. Фикс: CARRY — реплика доигрывает, очередь ждёт; vEnd пишет t1/ended/ct/how в свою запись. Перегон: out/voicetest2.log (сервер 8060).
+
+- 19:05 voicetest2: task_cuts 0 во всех журналах (все p>=2 ended=true); TOTAL FAIL только из-за одной задержки c1_s 0.598с (c0, первая реплика главы; шёл параллельный прогон 932). ch_667x375 PASS, ch_932x430 PASS, smoke PASS (out/smoke2.log), regress PASS (out/regress2.log). Серверы 8059/8060 остановлены.
