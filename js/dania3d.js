@@ -31,7 +31,21 @@ function d3face(){const emo=D3F.emo,blink=D3F.blink,k=emo+blink.toFixed(2)+D3F.n
  else if(emo==='determined'){x.strokeStyle=ML;x.lineWidth=7;x.beginPath();x.moveTo(196,MY+2);x.quadraticCurveTo(256,MY+30,316,MY);x.stroke()}
  else if(emo==='sad'){x.strokeStyle=ML;x.lineWidth=7;x.beginPath();x.moveTo(210,MY+24);x.quadraticCurveTo(256,MY-4,302,MY+24);x.stroke()}
  else x.drawImage(I.mouth,0,0);
- const y=D3F.c.getContext('2d');y.clearRect(0,0,512,512);y.filter='saturate(.66)';y.drawImage(D3F.c2,0,0);y.filter='none';D3F.T.needsUpdate=true}
+ const y=D3F.c.getContext('2d');y.clearRect(0,0,512,512);y.filter='saturate(.66)';y.drawImage(D3F.c2,0,0);y.filter='none';y.globalCompositeOperation='destination-in';y.drawImage(D3MASK,0,0);y.globalCompositeOperation='source-over';D3F.T.needsUpdate=true}
+// v6.1: мягкий край декали (без «наклейки» на лбу и щеках)
+const D3MASK=(()=>{const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.translate(256,270);x.scale(1,1.08);const g=x.createRadialGradient(0,0,150,0,0,250);g.addColorStop(0,'#000');g.addColorStop(.7,'rgba(0,0,0,.9)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(-300,-300,600,600);x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='destination-in';const v=x.createLinearGradient(0,30,0,120);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'#000');x.fillStyle=v;x.fillRect(0,0,512,512);return c})();
+// v6.1: треугольник на груди (как на арте) — канвас на патче chest
+function d3chest(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.translate(128,128);x.lineJoin='round';
+ x.beginPath();x.moveTo(0,-58);x.lineTo(60,46);x.lineTo(-60,46);x.closePath();x.fillStyle='#ffd34a';x.fill();x.lineWidth=14;x.strokeStyle='#fff4d6';x.stroke();
+ x.beginPath();x.moveTo(0,-26);x.lineTo(30,28);x.lineTo(-30,28);x.closePath();x.fillStyle='#ffb02e';x.fill();
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+// v6.1: крапинки на волосах — светлые ненасыщенные пятна выше плеч перекрашиваем в каштан (по объектной высоте, до скиннинга)
+function d3hair(m,bb){const y0=bb.min.y+(bb.max.y-bb.min.y)*.70;const cb=m.onBeforeCompile;m.onBeforeCompile=sh=>{cb(sh);
+ sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute float hy;\nvarying float vHy;').replace('#include <begin_vertex>','#include <begin_vertex>\nvHy=hy;');
+ sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vHy;').replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+ if(vHy>${y0.toFixed(4)})totalEmissiveRadiance=min(totalEmissiveRadiance,vec3(.008,.0033,.0012));`).replace('#include <map_fragment>',`#include <map_fragment>
+ if(vHy>${y0.toFixed(4)}){vec3 c=diffuseColor.rgb;float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));float sat=(mx-mn)/max(mx,.001);
+  diffuseColor.rgb=min(c,vec3(.11,.045,.016)*(.6+.4*mx/max(mx,.11)));}`)};return m}
 // --- палочка со звездой
 function d3wand(){const w=new THREE.Group(),G=D3G;const OUT=new THREE.MeshBasicMaterial({color:0x3a2416,side:THREE.BackSide});
  const P=(geo,mat,pos,ol)=>{const m=new THREE.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=true;w.add(m);const o=new THREE.Mesh(geo,OUT);o.scale.setScalar(1+ol);m.add(o);return m};
@@ -44,10 +58,12 @@ D3.ready=D3.off?Promise.resolve():Promise.all([d3img('base'),d3img('brows'),d3im
  new GLTFLoader().load('assets/3d/dania.glb?v='+window.V,g=>{const m=g.scene,CH=new THREE.Color('#e6ecf8');
   m.traverse(o=>{if(o.isBone)D3.B[o.name.replace(/[._]/g,'')]=o;if(!o.isMesh)return;o.frustumCulled=false;const nm=o.material.name;
    if(nm==='face'){o.material=d3rim(new THREE.MeshToonMaterial({map:D3F.T,color:CH,gradientMap:D3G,transparent:true,emissive:0xffffff,emissiveMap:D3F.T,emissiveIntensity:.07,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8,depthWrite:false}),.2);o.renderOrder=2;return}
-   if(nm==='chest'){o.visible=false;return}
+   if(nm==='chest'){o.visible=false;return;const t=d3chest();o.material=d3rim(new THREE.MeshToonMaterial({map:t,color:CH,gradientMap:D3G,transparent:true,emissive:0xffffff,emissiveMap:t,emissiveIntensity:.1,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8,depthWrite:false}),.2);o.renderOrder=2;return}
    o.castShadow=true;o.receiveShadow=true;const map=o.material.map;if(map){map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4}
-   o.material=d3rim(new THREE.MeshToonMaterial({map,color:CH,gradientMap:D3G,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.07}),.24)});
-  for(const n of['hood','laceL','laceR'])if(D3.B[n])D3.B[n].userData.q0=D3.B[n].quaternion.clone();
+   o.geometry.computeBoundingBox();{const P=o.geometry.attributes.position,a=new Float32Array(P.count);for(let i=0;i<P.count;i++)a[i]=P.getY(i)>1.0||P.getZ(i)<-.01?P.getY(i):0;o.geometry.setAttribute('hy',new THREE.BufferAttribute(a,1))}o.material=d3hair(d3rim(new THREE.MeshToonMaterial({map,color:CH,gradientMap:D3G,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.07}),.24),o.geometry.boundingBox)});
+  {const cb=D3.B.chest1||D3.B.chest;if(cb){m.updateMatrixWorld(true);const t=d3chest();const pl=new THREE.Mesh(new THREE.PlaneGeometry(.15,.15),new THREE.MeshToonMaterial({map:t,transparent:true,gradientMap:D3G,emissive:0xffffff,emissiveMap:t,emissiveIntensity:.15,polygonOffset:true,polygonOffsetFactor:-6,depthWrite:false}));pl.renderOrder=2;
+  const wp=new THREE.Vector3(0,.60,.13);m.localToWorld(wp);cb.worldToLocal(wp);pl.position.copy(wp);const q=new THREE.Quaternion();cb.getWorldQuaternion(q);pl.quaternion.copy(q.invert());pl.rotateX(-.12);pl.scale.setScalar(1/cb.getWorldScale(new THREE.Vector3()).x);cb.add(pl);D3.tri=pl}}
+ for(const n of['hood','laceL','laceR'])if(D3.B[n])D3.B[n].userData.q0=D3.B[n].quaternion.clone();
   m.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(m,true);D3.sc=1.9/(bb.max.y-bb.min.y);m.scale.setScalar(D3.sc);
   D3.MIX=new THREE.AnimationMixer(m);for(const c of g.animations){const a=D3.MIX.clipAction(c);a.play();a.setEffectiveWeight(0);a.userData={w:0};D3.ACT[c.name]=a}
   for(const n of['kick','jump_crouch','jump_air','jump_land','cheer'])if(D3.ACT[n]){D3.ACT[n].setLoop(THREE.LoopOnce);D3.ACT[n].clampWhenFinished=true}
@@ -80,7 +96,7 @@ function d3update(c,dt,sp){if(!D3.MIX)return;c.F.step(dt);d3shadowRecv();const A
  if(sit)st='sit';else if(air)st='jump';else if(T-c.landT<.22)st='land';else if(kick)st='kick';else if(cheer)st='cheer';else if(c.hold)st='draw';else if(c.anim==='run'&&c.run>.3)st='run';
  const tg={};for(const n in A)A[n].paused=true;
  if(st==='idle'){tg.idle=1;A.idle.paused=false}
- if(st==='run'){const k=Math.min(1,Math.max(0,(c.run-wk*.8)/(rn-wk*.8)));tg.walk=1-k;tg.run=k;c.ph+=dt*c.run/(1.6*S);const cy=c.ph%1;A.walk.time=cy*A.walk.getClip().duration;A.run.time=cy*A.run.getClip().duration}
+ if(st==='run'){const k=Math.min(1,Math.max(0,(c.run-wk*.8)/(rn-wk*.8)));tg.walk=1-k;tg.run=k;c.ph+=dt*c.run/(1.7+.7*k)/* v6.1: длина шага клипа (измерено по опорной стопе: walk 1.7, run 2.4 ед./цикл) */;const cy=c.ph%1;A.walk.time=cy*A.walk.getClip().duration;A.run.time=cy*A.run.getClip().duration}
  if(st==='jump'){tg.jump_air=1;d3at('jump_air',Math.min(1.4,Math.max(0,1-(typeof HERO!=='undefined'?HERO.vy:0)/7.6))*.25)}
  if(st==='land'){tg.jump_land=1;d3at('jump_land',(T-c.landT)/.22*.4)}
  if(st==='kick'){tg.kick=1;d3at('kick',(T-c.kickT)/.55*.75)}
