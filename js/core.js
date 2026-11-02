@@ -73,6 +73,8 @@ let TALK=null;const SQ=[];const NAMES={dania:'Даня',krug:'Кругляш',qu
 const SPKC={dania:'#ff8a1e',krug:'#f5b400',queen:'#9a6bd8',kriv:'#7a3bb0',narr:'#3a6fd0'};
 const VPC={};function vPre(k){const v=typeof VOICE!=='undefined'&&VOICE[k];if(!v||VPC[k]||G.mute||G.fast)return;try{const a=new Audio('assets/voice/'+v[0]);a.preload='auto';a.load();VPC[k]=a}catch(e){}}
 function vPreCh(n){if(typeof VFIRST!=='undefined')(VFIRST[n]||[]).forEach(vPre)}
+let VHOLD=0;// реплики главы ждут постройки мира и первого кадра
+function vHoldFrames(){VHOLD++;const g=GEN;let d=0;const rel=()=>{if(d)return;d=1;VHOLD=Math.max(0,VHOLD-1);if(!VHOLD){const n=performance.now();SQ.forEach(q=>{if(q.g===g)q.tr=n});pump()}};requestAnimationFrame(()=>requestAnimationFrame(rel));setTimeout(rel,1500)}
 let VLOG=[],VLAST=0,CARRY=null;function vEnd(t,how){const L=t.L;if(!L||L.t1)return;L.t1=performance.now();L.how=how;if(t.a){L.ended=t.a.ended;L.ct=+t.a.currentTime.toFixed(2)}}// для теста голоса
 // v6 голос: приоритеты (как у Таси) — 3 задание/подсказка после ошибки > 2 история > 1 похвала/реплики активностей.
 // Похвала ждёт не дольше VMAXAGE и не звучит, если ждёт что-то важнее; новое задание/история мягко обрывает идущую похвалу.
@@ -88,7 +90,7 @@ function vRepeat(){if(!VREP||TALK&&TALK.k===VREP)return;SFX.click();const k=VREP
 // подсказка после ошибки: убирает ещё не начатые реплики и звучит сразу после текущей
 function sayNext(k){while(SQ.length)SQ.shift().res();return say(k,{p:3})}
 async function sayAll(...ks){for(const k of ks)await say(k)}
-function pump(){if(TALK||CARRY||!SQ.length)return;const q=SQ.shift();if(q.g!==GEN){q.rej(STALE);pump();return}if(T-q.t0>(VMAXAGE[q.p]||60)){VLOG.push({k:q.k,drop:'stale'});q.res();pump();return}if(q.p>1&&scene==='ch')VREP=q.k;startTalk(q)}
+function pump(){if(TALK||CARRY||VHOLD||!SQ.length)return;const q=SQ.shift();if(q.g!==GEN){q.rej(STALE);pump();return}if(T-q.t0>(VMAXAGE[q.p]||60)){VLOG.push({k:q.k,drop:'stale'});q.res();pump();return}if(q.p>1&&scene==='ch')VREP=q.k;startTalk(q)}
 function startTalk(q){const l=LINES[q.k],v=typeof VOICE!=='undefined'&&VOICE[q.k];const est=v?v[1]:Math.max(1.6,l.t.length*.065);
  const t={k:q.k,who:l.who,text:l.t,t0:T,q,p:q.p||2,a:null,end:0,playing:false};TALK=t;const L0={k:q.k,t0:performance.now(),dur:v?v[1]:0,p:q.p||2,tr:q.tr,pe:VLAST,sc:scene};t.L=L0;t.est=est;VLOG.push(L0);
  if(G.fast){t.end=T+.25;return}
