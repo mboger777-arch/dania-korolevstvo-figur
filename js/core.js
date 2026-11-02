@@ -252,7 +252,7 @@ function avatar(who,cx,cy,R,col){const n=who==='narr'?null:who,X2=X;X2.save();X2
   X2.save();X2.beginPath();X2.arc(cx,cy,R-2,0,7);X2.clip();X2.drawImage(im,sx,sy,sq,sq,cx-R,cy-R*(n==='krug'?1:.92),R*2,R*2);X2.restore()}
  else{X2.translate(cx,cy);const s=R/40;X2.scale(s,s);X2.fillStyle='#fff8e6';X2.strokeStyle='#6a4bb8';X2.lineWidth=3;rr(-26,-18,24,36,4);X2.fill();X2.stroke();rr(2,-18,24,36,4);X2.fill();X2.stroke();X2.fillStyle='#ffc93a';for(let i=0;i<3;i++){const a=T*2+i*2.1;X2.beginPath();X2.arc(Math.cos(a)*30,Math.sin(a)*30-6,3,0,7);X2.fill()}}
  X2.restore();X2.beginPath();X2.arc(cx,cy,R,0,7);X2.lineWidth=4;X2.strokeStyle=col;X2.stroke()}
-function drawTalk(){if(!TALK)return;const v=vis();const nm=NAMES[TALK.who];const col=SPKC[TALK.who]||'#6a4bb8';const AV=150;const mx=Math.min(1120,v.w-240);let bw=Math.min(1000,mx),bh=nm?170:158;
+function drawTalk(){if(!TALK||(typeof RBOOK!=='undefined'&&RBOOK))return;const v=vis();const nm=NAMES[TALK.who];const col=SPKC[TALK.who]||'#6a4bb8';const AV=150;const mx=Math.min(1120,v.w-240);let bw=Math.min(1000,mx),bh=nm?170:158;
  for(let k=0;k<10;k++){const f=fitText(TALK.text,bw-60-AV,bh-(nm?58:30),46,BODY,38);if(f.L.length*f.lh<=bh-(nm?58:30)&&f.L.every(l=>X.measureText(l).width<=bw-60-AV))break;if(bw<mx)bw=Math.min(mx,bw+60);else bh+=20}
  const bx=clamp(640,safeL()+130+bw/2,safeR()-bw/2),top=safeT()+14;const x0=bx-bw/2;X.save();popAt(TALK,bx,top+bh/2);
  panel(x0,top,bw,bh,{st:col,lw:6});

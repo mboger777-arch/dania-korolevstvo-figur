@@ -46,7 +46,7 @@ function drawMedal(x,y,r){if(okI(IM.u_medal)){const h=r*3.1,w=h*479/512;X.save()
 // ---- обёртка главы ----
 // LEVELS объявлен в world.js
 let LVDRAW=null;
-SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();if(typeof chLight==='function'&&!L.ownLight)chLight(i);INPMODE='play';CAMS.snap=true;
+SC.ch={world:true,get cut(){return CUT},enter(i){this.i=i;LVDRAW=null;TASK.err=0;TASK.bot=null;TASK.help=null;TASK.botN=(TASK.botN||0)+1;ANGCARD=null;CAMS.dist=5.0;CAMS.h=2.4;HERO.mode='walk';HERO.lock=false;const L=LEVELS[i];clearWorld();spawnHeroes(L.cast||{});L.build();if(QUEEN){QUEEN.home=QUEEN.root.position.clone();QUEEN.homeYaw=QUEEN.root.rotation.y;TICK.push(queenAside)}if(typeof chLight==='function'&&!L.ownLight)chLight(i);INPMODE='play';CAMS.snap=true;
   run(async()=>{await L.play();await chapterWin(i)})},
  draw(){if(LVDRAW)LVDRAW();drawAngCard();if(this.win){const u=T-this.win;const v=vis();X.fillStyle=`rgba(40,20,90,${Math.min(.35,u)})`;X.fillRect(v.x0,v.y0,v.w,v.h);const k=ease(u*2);X.save();X.translate(v.x0+v.w/2,v.y0+v.h*.5);X.scale(k,k);rays(0,-10,330,'#fff3b0',.4);for(let j=0;j<3;j++){const uj=u-.25-j*.22,kj=uj<0?0:uj<.35?ease(uj/.35)*1.25-Math.max(0,uj-.25)*2.5:1;if(kj>0){X.save();X.translate((j-1)*140,j==1?-40:0);X.scale(kj,kj);X.rotate(Math.sin(T*2+j)*.06);starG(0,0,j==1?84:64);X.restore()}}ribbon('Глава пройдена!',0,110,460,'#d23a6a',44);X.restore()}}};
 async function chapterWin(i){SFX.star();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;burst(V3(HERO.x,HERO.y+2,HERO.z),0xffe066,50,6);SC.ch.win=T;GOAL='';clearGesture();await say('g_win');await wait(1.2);SC.ch.win=0;SV.done[i]=1;save();go('map')}
@@ -60,3 +60,9 @@ function good(k){SFX.ok();if(DANIA)DANIA.cheerT=T;if(KRUG)KRUG.cheerT=T;return k
 async function countAloud(items,onEach){for(let i=0;i<items.length;i++){const it=items[i];if(onEach)onEach(i,it);bigNum(i+1);SFX.ding();burst(it.clone?it.clone():V3(it.x,it.y,it.z),0xffe066,14,2.5,.3);await say('n'+(i+1))}}
 // ---- запуск ----
 function startGame(){document.getElementById('ld').remove();rs();requestAnimationFrame(loop);const ch=QS.get('ch');if(QS.has('pro'))go('prologue',{ret:'map'});else if(ch!=null)go('ch',+ch);else if(QS.has('map'))go('map');else if(QS.has('intro'))go('intro');else go('title');if(G.test&&typeof botInit==='function')botInit()}
+
+// v6.3: Королева не загораживает вид — вне катсцены, если стоит между камерой и Даней или вплотную, «пуф» и уходит на своё место (или в сторону)
+function queenAside(){const q=QUEEN;if(!q||CUT||!q.root.visible||!q.root.parent||T<(q.asideT||0))return;const p=q.root.position,cx=CAM.position.x,cz=CAM.position.z,hx=HERO.x-cx,hz=HERO.z-cz,L2=hx*hx+hz*hz||1;
+ const t=((p.x-cx)*hx+(p.z-cz)*hz)/L2,px=cx+hx*t-p.x,pz=cz+hz*t-p.z,blk=(t>-.05&&t<1.05&&Math.hypot(px,pz)<1.1)||Math.hypot(p.x-HERO.x,p.z-HERO.z)<1.2;if(!blk)return;
+ q.asideT=T+1.5;burst(V3(p.x,1.5,p.z),0xffe080,24);let h=q.home;const ht=h?((h.x-cx)*hx+(h.z-cz)*hz)/L2:0,hb=h&&ht>-.05&&ht<1.05&&Math.hypot(cx+hx*ht-h.x,cz+hz*ht-h.z)<1.6;
+ if(!h||hb||Math.hypot(h.x-HERO.x,h.z-HERO.z)<2){const n=Math.sqrt(L2);h={x:HERO.x+hz/n*3,z:HERO.z-hx/n*3+hz/n*1.5}}place(q,h.x,h.z);faceTo(q,HERO.x,HERO.z);burst(V3(h.x,1.5,h.z),0xffe080,24)}
