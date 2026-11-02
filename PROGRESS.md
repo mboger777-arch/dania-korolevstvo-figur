@@ -263,3 +263,5 @@
 - 19:05 voicetest2: task_cuts 0 во всех журналах (все p>=2 ended=true); TOTAL FAIL только из-за одной задержки c1_s 0.598с (c0, первая реплика главы; шёл параллельный прогон 932). ch_667x375 PASS, ch_932x430 PASS, smoke PASS (out/smoke2.log), regress PASS (out/regress2.log). Серверы 8059/8060 остановлены.
 
 - 19:06 предзагрузка VFIRST/VNEXT (js/vpre.js). smoke: out/smoke3.log. voicetest один: out/voicetest3.log (8059).
+
+- 19:11 voicetest3 ещё идёт (сад, c0 ok; на c1). Часы бокса почти стояли во время ожидания — похоже на приостановку бокса. Сервер 8059 оставлен для voicetest.
