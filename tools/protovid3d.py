@@ -26,5 +26,5 @@ async def main():
         await pg.evaluate("PROTO.step(1)");await pg.evaluate(CAM,{'d':.95,'cy':.98,'ly':.92,'fov':30,'ang':-.35+.25*__import__('math').sin(n*.02)} if False else {'d':.95,'cy':.98,'ly':.92,'fov':30,'ang':-.35});await pg.screenshot(path=f'{O}/f{n:04d}.png');n+=1
     await pg.evaluate("window.FORCE_EMO=null")
     await b.close()
-  subprocess.run(['ffmpeg','-y','-loglevel','error','-framerate','30','-i',f'{O}/f%04d.png','-c:v','libx264','-pix_fmt','yuv420p','-vf','scale=916:412,setsar=1','/workspace/dania_3d_v4.mp4'],check=True);print('frames',n)
+  subprocess.run(['ffmpeg','-y','-loglevel','error','-framerate','30','-i',f'{O}/f%04d.png','-c:v','libx264','-pix_fmt','yuv420p','-vf','scale=916:412,setsar=1','/workspace/dania_3d_v5.mp4'],check=True);print('frames',n)
 asyncio.run(main())

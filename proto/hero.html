@@ -85,52 +85,37 @@ function rimify(m,str=.2){m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentSh
 // ===== FACE: painted decal on the face patch (eyes, lids, brows, mouth, blush) — emotions + blink
 const FC=document.createElement('canvas');FC.width=FC.height=512;const fx=FC.getContext('2d');const FT=new THREE.CanvasTexture(FC);FT.colorSpace=THREE.SRGBColorSpace;FT.anisotropy=4;FT.flipY=false;
 let SKIN='rgb(236,178,148)',SKINE=[SKIN,SKIN],SKINM=SKIN;const FACE={emo:'smile',blink:0,look:[0,0],key:''};
-const EYE=[[130,240],[382,240]];
-// v4 face: drawn ONLY features (old eyes/brows/mouth erased in base texture). Proportions measured from key art.
-function drawFace(){const {emo,blink,look}=FACE;const k=emo+blink.toFixed(2)+look.map(v=>v.toFixed(2)).join();if(k===FACE.key)return;FACE.key=k;const x=fx;x.clearRect(0,0,512,512);
+const EYE=[[150,238],[364,238]];
+// v5 face: projected from the key-art-matched A-pose painting (tools/face5.py) => base (eyes, nose, blush, freckles) + brow layer + mouth layer
+const FI={};let FREADY=0;for(const n of['base','brows','mouth']){const im=new Image();im.onload=()=>{FREADY++;FACE.key=''};im.src='face_'+n+'.png';FI[n]=im}
+SKIN='rgb(242,158,98)';
+function drawFace(){const {emo,blink,look}=FACE;const k=emo+blink.toFixed(2)+FREADY;if(k===FACE.key)return;FACE.key=k;const x=fx;x.clearRect(0,0,512,512);if(FREADY<3){FT.needsUpdate=true;return}
  const hap=emo==='happy'||emo==='delight';
- // blush + freckles
- for(const cx of [78,434]){const g=x.createRadialGradient(cx,345,0,cx,345,62);g.addColorStop(0,`rgba(235,105,90,${hap?.42:.28})`);g.addColorStop(1,'rgba(235,105,90,0)');x.fillStyle=g;x.fillRect(cx-64,280,128,130);
-  x.fillStyle='rgba(160,80,45,.35)';for(const [dx,dy] of [[-22,-14],[-4,-20],[14,-10],[-12,2],[8,6],[24,-24]]){x.beginPath();x.arc(cx+(cx<256?20:-20)+dx,330+dy,3.2,0,7);x.fill()}}
- // brows: thick tapered arcs like key art
- const BR={smile:[0,0],happy:[-6,0],surprise:[-24,0],focus:[10,12],determined:[8,18],delight:[-14,0]}[emo]||[0,0];
- x.fillStyle='#5a3018';
- for(const [s,cx] of [[-1,130],[1,382]]){const y0=98+BR[0];x.beginPath();
-  const inX=cx-s*58,outX=cx+s*66,inY=y0+18+BR[1],outY=y0+16;
-  x.moveTo(inX,inY);x.quadraticCurveTo(cx-s*10,y0-20,outX,outY);x.quadraticCurveTo(cx-s*6,y0-2,inX,inY+12);x.closePath();x.fill()}
- // eyes
- for(const [i,[cx,cy]] of EYE.entries()){const s=i?1:-1;
-  if(emo==='delight'){x.strokeStyle='#2e170a';x.lineWidth=13;x.lineCap='round';x.beginPath();x.moveTo(cx-52,cy+12);x.quadraticCurveTo(cx,cy-40,cx+52,cy+12);x.stroke();continue}
-  const rx=72,ry=emo==='surprise'?68:60;let open=1-blink;if(emo==='focus')open*=.6;if(emo==='determined')open*=.78;
+ x.drawImage(FI.base,0,0);
+ if(hap){for(const cx of[95,418]){const g=x.createRadialGradient(cx,330,0,cx,330,60);g.addColorStop(0,'rgba(240,95,80,.30)');g.addColorStop(1,'rgba(240,95,80,0)');x.fillStyle=g;x.fillRect(cx-62,268,124,124)}}
+ // eyes: lids over the painted eyes
+ let open=1-blink;if(emo==='focus')open*=.62;if(emo==='determined')open*=.8;
+ for(const [i,[cx,cy]] of EYE.entries()){const s=i?1:-1,rx=60,ry=50;
   x.save();x.beginPath();x.ellipse(cx,cy,rx,ry,0,0,7);x.clip();
-  let g=x.createLinearGradient(0,cy-ry,0,cy+ry);g.addColorStop(0,'#d9c6b8');g.addColorStop(.35,'#f4ebe3');g.addColorStop(1,'#efe2d6');x.fillStyle=g;x.fillRect(cx-rx,cy-ry,rx*2,ry*2);
-  const ir=emo==='surprise'?42:49,ix=cx+look[0]*16+s*4,iy=cy+4+look[1]*12;
-  g=x.createRadialGradient(ix,iy+14,4,ix,iy,ir);g.addColorStop(0,'#c0803f');g.addColorStop(.6,'#7a4419');g.addColorStop(1,'#3a1d0a');x.fillStyle=g;x.beginPath();x.arc(ix,iy,ir,0,7);x.fill();
-  x.fillStyle='#160a04';x.beginPath();x.arc(ix,iy+1,ir*.5,0,7);x.fill();
-  // upper-lid shadow on eyeball
-  g=x.createLinearGradient(0,cy-ry,0,cy-ry*.2);g.addColorStop(0,'rgba(90,40,20,.45)');g.addColorStop(1,'rgba(90,40,20,0)');x.fillStyle=g;x.fillRect(cx-rx,cy-ry,rx*2,ry);
-  x.fillStyle='#fff';x.beginPath();x.ellipse(ix+ir*.3,iy-ir*.38,ir*.24,ir*.2,0,0,7);x.fill();x.globalAlpha=.8;x.beginPath();x.arc(ix-ir*.35,iy+ir*.35,ir*.1,0,7);x.fill();x.globalAlpha=1;
-  // eyelid (skin-coloured, sampled under the decal => use multiply-safe tone)
-  const lidY=cy-ry+ry*2*(1-open);if(open<.999){x.fillStyle=SKIN;x.fillRect(cx-rx-2,cy-ry-2,rx*2+4,lidY-(cy-ry)+2);}
-  x.restore();
-  // lids: thick dark upper lash line, soft lower line
-  x.lineCap='round';x.strokeStyle='#2e170a';
-  if(open<.15){x.lineWidth=11;x.beginPath();x.moveTo(cx-rx*.95,cy+6);x.quadraticCurveTo(cx,cy+22,cx+rx*.95,cy+6);x.stroke()}
-  else{const ly=cy-ry+ry*2*(1-open);x.lineWidth=12;x.beginPath();if(open>.98)x.ellipse(cx,cy,rx,ry,0,Math.PI*1.05,Math.PI*1.95);else{x.moveTo(cx-rx*.98,ly+6);x.quadraticCurveTo(cx,ly-4,cx+rx*.98,ly+6)}x.stroke();
-   x.lineWidth=9;x.beginPath();x.moveTo(cx+s*rx*.92,cy-ry*.35);x.lineTo(cx+s*(rx+12),cy-ry*.6);x.stroke();
-   x.strokeStyle='rgba(110,55,30,.55)';x.lineWidth=4;x.beginPath();x.ellipse(cx,cy,rx*.97,ry*.97,0,Math.PI*.15,Math.PI*.85);x.stroke()}
- }
- // mouth (wide gentle smile, key art)
- x.lineCap='round';x.lineJoin='round';const ML='#6e2616';
- if(emo==='smile'||emo==='determined'&&false){x.strokeStyle=ML;x.lineWidth=9;x.beginPath();x.moveTo(170,398);x.quadraticCurveTo(256,452,342,398);x.stroke();
-  x.lineWidth=6;for(const s of[-1,1]){x.beginPath();x.moveTo(256+s*86,400);x.quadraticCurveTo(256+s*96,392,256+s*98,384);x.stroke()}
-  x.fillStyle='rgba(200,90,70,.25)';x.beginPath();x.ellipse(256,448,34,9,0,0,7);x.fill()}
- else if(hap){const w=emo==='delight'?84:76,d=emo==='delight'?74:52;x.fillStyle='#7c2416';x.beginPath();x.moveTo(256-w,396);x.quadraticCurveTo(256,396+d*1.6,256+w,396);x.quadraticCurveTo(256,408,256-w,396);x.fill();
-  x.save();x.clip();x.fillStyle='#fff8f0';x.fillRect(150,390,212,20);x.fillStyle='#e8705c';x.beginPath();x.ellipse(256,396+d*.95,w*.5,d*.32,0,0,7);x.fill();x.restore();
-  x.strokeStyle=ML;x.lineWidth=6;x.beginPath();x.moveTo(256-w,396);x.quadraticCurveTo(256,396+d*1.6,256+w,396);x.quadraticCurveTo(256,408,256-w,396);x.stroke()}
- else if(emo==='surprise'){x.fillStyle='#7c2416';x.beginPath();x.ellipse(256,420,26,32,0,0,7);x.fill();x.fillStyle='#e8705c';x.beginPath();x.ellipse(256,436,16,10,0,0,7);x.fill()}
- else if(emo==='focus'){x.strokeStyle=ML;x.lineWidth=8;x.beginPath();x.moveTo(206,414);x.quadraticCurveTo(250,424,296,408);x.stroke();x.fillStyle='#e0685a';x.beginPath();x.ellipse(298,420,15,12,.4,0,7);x.fill()}
- else if(emo==='determined'){x.strokeStyle=ML;x.lineWidth=9;x.beginPath();x.moveTo(190,404);x.quadraticCurveTo(256,436,322,402);x.stroke()}
+  if(emo==='delight'){x.fillStyle=SKIN;x.fillRect(cx-rx,cy-ry,rx*2,ry*2);x.restore();x.strokeStyle='#3a1a08';x.lineWidth=11;x.lineCap='round';x.beginPath();x.moveTo(cx-46,cy+10);x.quadraticCurveTo(cx,cy-34,cx+46,cy+10);x.stroke();continue}
+  if(open<.999){const ly=cy-ry+ry*2*(1-open);x.fillStyle=SKIN;x.beginPath();x.moveTo(cx-rx-2,cy-ry-2);x.lineTo(cx+rx+2,cy-ry-2);x.lineTo(cx+rx+2,ly);x.quadraticCurveTo(cx,ly+10,cx-rx-2,ly);x.closePath();x.fill();
+   x.restore();x.strokeStyle='#3a1a08';x.lineWidth=open<.15?9:7;x.lineCap='round';x.beginPath();x.moveTo(cx-rx*.92,ly+(open<.15?-2:4));x.quadraticCurveTo(cx,ly+(open<.15?14:10),cx+rx*.92,ly+(open<.15?-2:4));x.stroke()}
+  else if(emo==='happy'){x.fillStyle=SKIN;x.beginPath();x.moveTo(cx-rx-2,cy+ry+2);x.lineTo(cx-rx-2,cy+ry*.35);x.quadraticCurveTo(cx,cy+ry*.0,cx+rx+2,cy+ry*.35);x.lineTo(cx+rx+2,cy+ry+2);x.fill();x.restore();
+   x.strokeStyle='rgba(120,60,30,.6)';x.lineWidth=4;x.beginPath();x.moveTo(cx-rx*.8,cy+ry*.32);x.quadraticCurveTo(cx,cy+ry*.05,cx+rx*.8,cy+ry*.32);x.stroke()}
+  else x.restore()}
+ // brows: painted layer, per-side lift / tilt
+ const BR={smile:[0,0],happy:[-5,0],surprise:[-18,-.04],focus:[8,.16],determined:[6,.22],delight:[-10,0]}[emo]||[0,0];
+ for(const [s,cx,x0,x1] of [[-1,150,60,256],[1,370,256,460]]){x.save();x.beginPath();x.rect(x0,60,x1-x0,150);x.clip();x.translate(cx,135+BR[0]);x.rotate(-s*BR[1]);x.translate(-cx,-135);x.drawImage(FI.brows,0,0);x.restore()}
+ // mouth
+ x.lineCap='round';x.lineJoin='round';const ML='#7a2c16',MY=372;
+ if(emo==='smile')x.drawImage(FI.mouth,0,0);
+ else if(hap){const w=emo==='delight'?78:70,d=emo==='delight'?70:50;x.fillStyle='#7c2416';x.beginPath();x.moveTo(256-w,MY-4);x.quadraticCurveTo(256,MY-4+d*1.6,256+w,MY-4);x.quadraticCurveTo(256,MY+10,256-w,MY-4);x.fill();
+  x.save();x.clip();x.fillStyle='#fff8f0';x.fillRect(160,MY-12,192,22);x.fillStyle='#e8705c';x.beginPath();x.ellipse(256,MY-4+d*.95,w*.5,d*.32,0,0,7);x.fill();x.restore();
+  x.strokeStyle=ML;x.lineWidth=5;x.beginPath();x.moveTo(256-w,MY-4);x.quadraticCurveTo(256,MY-4+d*1.6,256+w,MY-4);x.quadraticCurveTo(256,MY+10,256-w,MY-4);x.stroke()}
+ else if(emo==='surprise'){x.fillStyle='#7c2416';x.beginPath();x.ellipse(256,MY+14,22,28,0,0,7);x.fill();x.fillStyle='#e8705c';x.beginPath();x.ellipse(256,MY+28,13,8,0,0,7);x.fill()}
+ else if(emo==='focus'){x.strokeStyle=ML;x.lineWidth=7;x.beginPath();x.moveTo(206,MY+12);x.quadraticCurveTo(250,MY+22,296,MY+6);x.stroke();x.fillStyle='#e0685a';x.beginPath();x.ellipse(296,MY+18,13,10,.4,0,7);x.fill()}
+ else if(emo==='determined'){x.strokeStyle=ML;x.lineWidth=7;x.beginPath();x.moveTo(196,MY+2);x.quadraticCurveTo(256,MY+30,316,MY);x.stroke()}
+ else x.drawImage(FI.mouth,0,0);
  FT.needsUpdate=true}
 // chest triangle decal (crisp gold-cream, like the key art)
 const CC=document.createElement('canvas');CC.width=CC.height=256;{const x=CC.getContext('2d');const cx=118,cy=128;x.lineJoin='round';
@@ -139,8 +124,8 @@ const CC=document.createElement('canvas');CC.width=CC.height=256;{const x=CC.get
 const CT=new THREE.CanvasTexture(CC);CT.colorSpace=THREE.SRGBColorSpace;CT.flipY=false;
 new GLTFLoader().load('dania.glb',g=>{const m=g.scene;hero.add(m);
  m.traverse(o=>{if(o.isBone)B[o.name.replace(/[._]/g,'')]=o;if(o.isMesh){o.frustumCulled=false;const nm=o.material.name;
-  if(nm==='face'){const sk=o.material.userData.skinL;if(sk)SKIN=`rgb(${sk.map(v=>Math.round(Math.min(1,v)*255)).join()})`;
-   o.material=rimify(new THREE.MeshToonMaterial({map:FT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:FT,emissiveIntensity:.07,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,depthWrite:false}));o.renderOrder=2;B.face=o;return}
+  if(nm==='face'){
+   o.material=rimify(new THREE.MeshToonMaterial({map:FT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:FT,emissiveIntensity:.07,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8,depthWrite:false}));o.renderOrder=2;B.face=o;return}
   if(nm==='chest'){o.material=new THREE.MeshToonMaterial({map:CT,gradientMap:grad2,transparent:true,emissive:0xffffff,emissiveMap:CT,emissiveIntensity:.28,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,depthWrite:false});o.renderOrder=2;return}
   o.castShadow=true;o.receiveShadow=true;const map=o.material.map;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
   o.material=rimify(new THREE.MeshToonMaterial({map,gradientMap:grad2,emissive:0xffffff,emissiveMap:map,emissiveIntensity:.07}),.24)}});
@@ -180,7 +165,7 @@ const CAM={yaw:Math.PI*.78,dist:2.6,h:1.35,look:new THREE.Vector3(),pos:new THRE
 const OBST=[[-6,-6,1.55],[5,-7,.4],[8,-2,.3],[-9,2,.36],[3,8,.3],[-4,9,.42],[10,5,.3],[2.5,-3,.15],[-3,-1.5,.15],[1,3.2,.15],[4,2,.65]];const RC=new THREE.Raycaster();const COLL=[];ground.traverse(o=>{if(o.isMesh&&o.material!==OUT&&!o.isInstancedMesh&&!(o.parent===ground&&/Cylinder|Ring/.test(o.geometry.type)))COLL.push(o)});
 const lerp=(a,b,t)=>a+(b-a)*t,damp=(a,b,l,dt)=>lerp(a,b,1-Math.exp(-l*dt)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function angDamp(a,b,l,dt){let d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*(1-Math.exp(-l*dt))}
-const STRIDE={walk:.585,run:1.1};const MOVE={walk:1.3,run:3.4,acc:10,dec:14,turn:12,g:-22,jv:6.2,holdG:.42,holdMax:.22,coyote:.12,buf:.15};
+const STRIDE={walk:.605,run:.894};const MOVE={walk:1.3,run:3.4,acc:10,dec:14,turn:12,g:-22,jv:6.2,holdG:.42,holdMax:.22,coyote:.12,buf:.15};
 function startJump(){H.vy=MOVE.jv;H.air=true;H.jumpHold=MOVE.holdMax;H.state='jump';H.t=0;H.coyote=0;dust(H.pos,6)}
 function update(dt){
  // input → camera-relative

@@ -205,3 +205,11 @@
 - Wand in world space from the fist, star visible in every pose; 8-step soft toon gradient.
 - Sheet: sheets/v4_dania3d_compare.png (tools/sheet4.py + sheet4_compose.py). Video: /workspace/dania_3d_v4.mp4 (live close-ups, closer chase cam).
 - Weak spots: no jaw bone, finger flap on the fist, wand horizontal in draw, hair faceting.
+
+## v5 (2026-11-02) — Даня ближе к оригиналу
+- Новый A-pose арт (refs/v5/apose_a..e, выбран e → dania_apose5.jpg; сравнение sheets/v5_apose_variants.png).
+- TRELLIS.2: только seed 1 (квота ZeroGPU исчерпана на 7/42) → refs/v5/3d_s1/dania_raw.glb.
+- tools/rig_dania5.py: риг/анимации/палочка/капюшон/шнурки на новой модели → proto/dania.glb.
+- Лицо: проекция лица с A-pose арта (proto/face_art.png), tools/face5.py → face_base/brows/mouth; hero.html: веки, эмоциональные брови/рты, моргание.
+- Лист: sheets/v5_dania3d_compare.png (tools/sheet5.py + sheet5_compose.py); видео /workspace/dania_3d_v5.mp4.
+- Известное: тон лица в тун-свете оранжевее арта; лёгкое двоение бровей; лицо — декаль, поэтому сбоку теряет сходство.
