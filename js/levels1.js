@@ -188,7 +188,7 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
 
 // ===================== Глава 3: Кузница углов =====================
 LEVELS[2]={cast:{queen:true},build(){SKY.material.uniforms.a.value.set(0xffa860);SKY.material.uniforms.b.value.set(0xffe2b8);SCENE.fog.color.set(0xffe2b8);
- groundPlane(TEX.stone,0xd8c0a0);hills(0xa07858);BOUNDS=[-12,12,-4,46];
+ groundPlane(TEX.stone,0xd8c0a0);hills(0xa07858);BOUNDS=[-12,12,-4,50];
  for(const z of [4,16,28,40])for(const s of [-1,1]){mesh(GEO.box,0x8a6a5a,s*11,1.5,z,null,[1.2,3,1.2]);const f=mesh(GEO.sph,M(0xffa030,{em:0xff6000,ei:1}),s*11,3.4,z,null,.4)}
  mesh(GEO.box,0x6a4a3a,-8,2.5,46,null,[8,5,2]);mesh(GEO.box,0x6a4a3a,8,2.5,46,null,[8,5,2]);
  // станция 1: ворота-книжка, петля H
@@ -204,6 +204,7 @@ LEVELS[2]={cast:{queen:true},build(){SKY.material.uniforms.a.value.set(0xffa860)
  mesh(GEO.box,0x8a6a5a,0,1.1,38,null,[4,2.2,4]);block(0,38,2,2,2.2);mesh(GEO.box,0x9a7a6a,0,2.0,35,null,[4,.4,2]);block(0,35,2,1,2.2,0,{y0:1.85});
  this.d=-1.2;this.ramp=mesh(GEO.box,0xc89a50,0,0,0,null,[1.4,.14,1]);SURF.push((x,z)=>{if(Math.abs(x)>.75)return null;const fz=34-this.d;if(this.d<=.05)return null;if(z<34||z>fz)return null;return 2.2*(fz-z)/(fz-34)});
  this.arc1=arcMesh();this.arc2=arcMesh();this.arc3=arcMesh();this.arc2.visible=this.arc3.visible=false;
+ this.gate=mesh(GEO.box,0x5a5a6a,0,1.5,46,null,[8,3,.4]);this.gate.userData.b=block(0,46,4,.3,3);
  heroAt(0,0,0);place(QUEEN,2.5,5,-.8);this.layout()},
  layout(){const H=this.H,ps=this.ps;this.door.rotation.y=-ps;const tip={x:H.x+Math.cos(ps)*3.2,z:H.z+Math.sin(ps)*3.2};this.tip=tip;const db=this.db;db.cx=H.x+Math.cos(ps)*1.6;db.cz=H.z+Math.sin(ps)*1.6;db.ang=-ps;
   const deg=180-Math.abs(ps)*180/Math.PI;this.deg1=deg;this.arc1.set(V3(H.x,2.5,H.z),V3(-1,0,0),V3(0,0,-1),0,deg*Math.PI/180,1.3);this.arc1.material.color.set(AK[angKind(deg)].h);
@@ -241,4 +242,15 @@ LEVELS[2]={cast:{queen:true},build(){SKY.material.uniforms.a.value.set(0xffa860)
   botTask(async()=>{const e0=TASK.err;await bPath([[5,19.5],[5,31],[1.4,32.5]]);await bGo(1.4,35.6,.5);bHold(true);await bWait(.3);await bGo(1.4,33.5,.25);bHold(false);await bUntil(()=>TASK.err>e0,8);await bWait(2.5);await bGo(1.4,33.2,.5);bHold(true);await bWait(.3);await bGo(1.4,30.6,.25);bHold(false)});
   TICK.push(()=>{if(!s3.done&&HERO.z>26&&!s3.cam){s3.cam=1;shot(9,3.2,31.5,0,1.4,33.5,2.5)}});
   await until(()=>s3.done);g3.on=false;SFX.ok();clearGesture();GOAL='';HERO.lock=true;
-  const fz=34-L.d;KRUG.mode='go';KRUG.tgt={x:0,z:fz-.8};await until(()=>Math.hypot(KRUG.root.position.x,KRUG.root.position.z-fz+.8)<.3,GEN);KRUG.tgt={x:0,z:37};await until(()=>KRUG.root.position.z>36.5);KRUG.cheerT=T;HERO.lock=false;await say('c3_k3');ANGCARD=null}};
+  const fz=34-L.d;KRUG.mode='go';KRUG.tgt={x:0,z:fz-.8};await until(()=>Math.hypot(KRUG.root.position.x,KRUG.root.position.z-fz+.8)<.3,GEN);KRUG.tgt={x:0,z:37};await until(()=>KRUG.root.position.z>36.5);KRUG.cheerT=T;HERO.lock=false;await say('c3_k3');ANGCARD=null;
+  // --- 3. поворот: прямой угол бывает огромным и повёрнутым ---
+  const plates=[[-7,43,90,Math.PI/4,2.8,'r'],[0,43.5,40,-.3,1.4,'a'],[7,43,130,.2,1.6,'o']].map(([x,z,deg,rot,len,k])=>{const g=new THREE.Group();g.position.set(x,.06,z);g.rotation.y=rot;const c=k==='r'?0x3d7be0:k==='a'?0xf2683c:0x5cbf6a;
+   for(const t of [0,deg*Math.PI/180]){const m=mesh(GEO.box,M(c,{em:c,ei:.5}),Math.sin(t)*len/2,.05,Math.cos(t)*len/2,g,[.34,.22,len]);m.rotation.y=t}mesh(GEO.sph,M(0xffffff,{em:0xffffff,ei:.6}),0,.15,0,g,.2);WORLD.add(g);const hs=holdSpot(x,z,0xffd23a,{r:.7,quiet:1});return{g,hs,k}});
+  await cutscene(async()=>{heroAt(0,32.5,0);shot(0,6,34,0,0,43,2);await say('c3_p1')});
+  newTask('Найди прямой угол','hold');TASK.help=async()=>{await say('c3_p1')};
+  botTask(async()=>{await bPath([[3.2,36],[3.2,41]]);await plates[1].hs.bot();await bWait(2.5);await bPath([[-3.2,41.5]]);await plates[0].hs.bot()});
+  for(const q of plates)if(q.k!=='r')q.hs.p.then(()=>{mistake(q.k==='a'?'c3_pbad':'c3_pbad2');SFX.bump();q.g.visible=false;q.hs.g.visible=false});
+  await plates[0].hs.p;SFX.magic();burst(V3(-7,1,43),0x3d7be0,50,5);clearGesture();GOAL='';await good('c3_pk');
+  // --- 4. финал: ворота кузницы поднимаются ---
+  const gate=L.gate;let gt=0;TICK.push(dt=>{if(gt<1){gt=Math.min(1,gt+dt*.6);gate.position.y=1.5+gt*4;if(gt>=1)gate.userData.b.on=false}});SFX.whoosh();
+  newTask('Беги через ворота','move');run(()=>say('c3_f'));const mg=marker(0,49);botTask(async()=>{await bGo(0,49,.7)});await until(()=>hd(0,49)<1.4);mg.visible=false}};
