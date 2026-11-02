@@ -19,20 +19,21 @@ async def main():
     if FULL:
       await pg.goto(BASE+'?'+FLAGS);await pg.wait_for_function('typeof scene!=="undefined"&&scene==="title"',timeout=60000)
       await pg.screenshot(path=f'{out}/a_title.png');await tap('play')
-      await pg.wait_for_function('scene==="intro"',timeout=10000);t0=time.time();k=0
+      t0=time.time();k=0
       while True:
         await pg.wait_for_timeout(1500);sc=await pg.evaluate('scene')
-        if sc!='intro':break
-        k+=1;await pg.screenshot(path=f'{out}/a_intro{k:02d}.png')
-        if time.time()-t0>120:raise SystemExit('intro stuck')
-      await pg.wait_for_function('scene==="map"',timeout=10000);await pg.wait_for_timeout(800);await pg.screenshot(path=f'{out}/a_map0.png')
-      CH=list(range(7))
+        if sc in('ch','map'):break
+        k+=1;await pg.screenshot(path=f'{out}/a_{sc}{k:03d}.png')
+        if time.time()-t0>300:raise SystemExit('prologue/intro stuck '+sc)
+      print('pre->',sc,round(time.time()-t0),flush=True)
+      CH=([GI] if sc=='ch' else [])+list(range(7)) if (GI:=await pg.evaluate('typeof GARDEN!=="undefined"?GARDEN:-1'))>=0 else list(range(7))
     else:
       await pg.goto(BASE+'?'+FLAGS+'&map');await pg.wait_for_function('typeof scene!=="undefined"&&scene==="map"',timeout=60000)
     for ci in CH:
       [os.remove(f) for f in __import__('glob').glob(f'{out}/c{ci}_*.png')]
       await pg.evaluate('G.mistakes=0;G.botTimeouts=0;VLOG=[];ACTLOG=[]')
-      if FULL: await pg.wait_for_function('!TALK',timeout=30000);await tap('ch'+str(ci));await pg.wait_for_function('scene==="ch"',timeout=10000)
+      if FULL and await pg.evaluate('scene')=='ch': pass
+      elif FULL: await pg.wait_for_function('!TALK',timeout=30000);await tap('ch'+str(ci));await pg.wait_for_function('scene==="ch"',timeout=10000)
       else: await pg.evaluate(f'go("ch",{ci})')
       t0=time.time();n=0;last=-99;bad=[];fps=[];maxair=0;susp=0;tw=time.time()
       while time.time()-t0<TMO:
