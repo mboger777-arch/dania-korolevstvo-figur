@@ -41,6 +41,65 @@ def B(x,y): p=Vector((x*s,0,(y+0.5)*s));p.y=depth(p);return p
 # ---------- decal patches (built before head scaling so UVs stay in reference coords)
 FACE=(-.105,.105,.80,1.0)
 ymid=statistics.median([q.y for q in V if .85<q.z<.95])
+# ---------- v4: erase baked eyes / brows / mouth directly in the base texture (UV-space inpaint from surrounding skin)
+uvl0=me.data.uv_layers.active.data
+def in_erase(c):
+    for sx in (-1,1):
+        if ((c.x-sx*.053)/.037)**2+((c.z-.907)/.031)**2<1: return True
+        if .012<sx*c.x<.098 and .936<c.z<.99: return True
+    return abs(c.x)<.058 and .812<c.z<.86
+def in_face(c): return (c.x/.102)**2+((c.z-.89)/.105)**2<1
+M=np.zeros((h,w),bool);VA=np.zeros((h,w),bool)
+def rast(poly,tgt):
+    uv=[uvl0[li].uv for li in poly.loop_indices]
+    for k in range(1,len(uv)-1):
+        a,b,c=[np.array((q[0]*w,q[1]*h)) for q in (uv[0],uv[k],uv[k+1])]
+        x0,x1=int(max(0,min(a[0],b[0],c[0])-1)),int(min(w-1,max(a[0],b[0],c[0])+1));y0,y1=int(max(0,min(a[1],b[1],c[1])-1)),int(min(h-1,max(a[1],b[1],c[1])+1))
+        if x1<x0 or y1<y0: continue
+        X,Y=np.meshgrid(np.arange(x0,x1+1)+.5,np.arange(y0,y1+1)+.5)
+        d=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1])
+        if abs(d)<1e-9: continue
+        l1=((b[1]-c[1])*(X-c[0])+(c[0]-b[0])*(Y-c[1]))/d;l2=((c[1]-a[1])*(X-c[0])+(a[0]-c[0])*(Y-c[1]))/d;l3=1-l1-l2
+        e=-.08;tgt[y0:y1+1,x0:x1+1]|=(l1>e)&(l2>e)&(l3>e)
+for p in me.data.polygons:
+    c=p.center
+    if c.y>ymid+.01 or not in_face(c): continue
+    rast(p,M if in_erase(c) else VA)
+rgb=px[...,:3];skm=np.median(rgb[VA&~M],axis=0)
+VA&=~M&(np.abs(rgb-skm).sum(-1)<.22)
+def box(a,r):
+    for ax in (0,1):
+        c=np.cumsum(np.pad(a,[(r+1,r)] if a.ndim==1 else ([(r+1,r),(0,0)] if ax==0 else [(0,0),(r+1,r)])+([(0,0)] if a.ndim==3 else []),mode='edge'),axis=ax)
+        a=(np.take(c,range(2*r+1,c.shape[ax]),axis=ax)-np.take(c,range(0,c.shape[ax]-2*r-1),axis=ax))/(2*r+1)
+    return a
+fill=np.tile(skm,(h,w,1)).astype(np.float32);got=np.zeros((h,w),bool)
+for r in (10,20,40,80):
+    wv=box(box(VA.astype(np.float32),r),r);cv=box(box(rgb*VA[...,None],r),r)
+    ok=(wv>.02)&~got;fill[ok]=cv[ok]/wv[ok,None];got|=ok
+Md=box(box(M.astype(np.float32),2),2)>0.01
+soft=np.clip(box(Md.astype(np.float32),2),0,1)[...,None]
+px[...,:3]=rgb*(1-soft)+fill*soft
+FR=np.zeros((h,w),bool)
+for p in me.data.polygons:
+    if p.center.y<ymid+.01 and in_face(p.center) and not (abs(p.center.x)<.022 and .85<p.center.z<.9): rast(p,FR)
+FR&=VA|Md
+sm=box(box(px[...,:3]*FR[...,None],8),8)/np.maximum(box(box(FR.astype(np.float32),8),8),1e-3)[...,None]
+px[FR,:3]=px[FR,:3]*.35+sm[FR]*.65
+img.pixels.foreach_set(px.ravel());img.update()
+print('ERASED px',int(Md.sum()),'valid',int(VA.sum()),'skin',skm)
+# ---------- v4: colour transfer to key-art palette (skin warm peach, hoodie terracotta-orange)
+def regmed(sel):
+    T=np.zeros((h,w),bool)
+    for p in me.data.polygons:
+        if sel(p.center) and p.center.y<ymid+.02: rast(p,T)
+    return T
+HO=regmed(lambda c:abs(c.x)<.09 and .5<c.z<.62)
+rgb=px[...,:3];hom=np.median(rgb[HO],axis=0);print('HOODIE',hom)
+SK_T=np.array([.95,.70,.55],np.float32);HO_T=np.array([.90,.42,.16],np.float32)
+def near(m,sc): return np.exp(-((rgb-m)**2).sum(-1)/sc)[...,None]
+ws=near(skm,.012);wh=near(hom,.02)*(1-ws)
+rgb=rgb+ws*(SK_T-skm)*.85+wh*(HO_T-hom)*.8
+px[...,:3]=np.clip(rgb,0,1);img.pixels.foreach_set(px.ravel());img.update()
 def make_patch(name,sel,uvf):
     d=me.data.copy();ob=bpy.data.objects.new(name,d);bpy.context.scene.collection.objects.link(ob)
     bm=bmesh.new();bm.from_mesh(d);bm.normal_update()
@@ -68,11 +127,11 @@ fm=face.data.materials[0]
 fm['skinR']=ring(-.053,.907,.027,.036);fm['skinL']=ring(.053,.907,.027,.036);fm['skinM']=ring(0,.835,.012,.02,3.0)
 print('SKIN',fm['skinR'],fm['skinL'],fm['skinM'])
 # ---------- right fist: fold fingers toward palm centre
-wr=B(-.255,-.064);ht=B(-.31,-.12);dh=(ht-wr).normalized()
+wr=Vector((-.345,-.01,.468));ht=Vector((-.392,-.01,.388));dh=(ht-wr).normalized()
 for v in me.data.vertices:
     t=(v.co-wr).dot(dh)
-    if v.co.x<-.2 and t>-.005 and (v.co-wr).length<.09:
-        c=wr+dh*.022;k=1-.45*sst(0,.03,t);v.co=c+(v.co-c)*k
+    if v.co.x<-.3 and t>-.005 and (v.co-wr).length<.10:
+        c=wr+dh*.03;k=1-.62*sst(.0,.035,t);v.co=c+(v.co-c)*k
 # ---------- bigger head (cartoon proportions), pivot under chin
 HS=1.12;yh=statistics.median([q.y for q in V if .88<q.z<.92 and abs(q.x)<.06]);piv=Vector((0,yh,.80))
 for ob in (me,face):
