@@ -70,10 +70,10 @@ function queenAside(){const q=QUEEN;if(!q||CUT||!q.root.visible||!q.root.parent|
 // ---- титры ----
 const CREDITS=['Даня и Королевство Фигур','','Даня — Мастер фигур','Кругляш — лучший круг на свете','Королева Циркуль','Кривуля — теперь шестиугольник','','Точка, отрезок, прямая','Ломаная и угол','Треугольник, квадрат, прямоугольник','Пятиугольник и шестиугольник','Круг и овал','','Сделано с любовью для Дани','','Конец'];
 SC.credits={hud:false,enter(){buildVillage();spawnHeroes({queen:true,kriv:true});place(DANIA,1.2,0,Math.PI);place(KRUG,0,-.3,Math.PI);place(QUEEN,-1.4,.4,Math.PI);place(KRIV,-3,.8,Math.PI);KRIV.F.mood='happy';KRUG.mode='idle';DANIA.anim='idle';
-  shot(0,1.8,-6,-.6,1.2,0,2);CAMS.snap=true;this.t=0;this.done=false;const me=this;
-  run(async()=>{await say('cr1');await until(()=>me.t>CREDITS.length*1.6+4);me.end()})},
+  shot(0,1.8,-6,-.6,1.2,0,2);CAMS.snap=true;this.t=0;this.done=false;{const v=vis();this.tEnd=(v.h/2+40+(CREDITS.length-1)*80)/70}const me=this;
+  run(async()=>{await say('cr1');await until(()=>me.t>this.tEnd+3);me.end()})},
  end(){if(this.done)return;this.done=true;go('map')},
  step3D(dt){this.t+=dt;CAMS.sp.set(Math.sin(this.t*.2)*1.2-.4,1.8,-6);if(Math.random()<.02)DANIA.cheerT=T;if(Math.random()<.02)KRUG.cheerT=T;if(Math.random()<.03)burst(V3(rnd(-4,4),rnd(2,4),rnd(0,3)),[0xffe066,0xff7aa0,0x7ad0ff][Math.floor(Math.random()*3)],12,3)},
- draw(){const v=vis(),cx=v.x0+v.w/2;X.fillStyle='rgba(30,15,70,.35)';X.fillRect(v.x0,v.y0,v.w,v.h);const y0=v.y0+v.h+40-this.t*70;
+ draw(){const v=vis(),cx=v.x0+v.w/2;X.fillStyle='rgba(30,15,70,.35)';X.fillRect(v.x0,v.y0,v.w,v.h);const y0=v.y0+v.h+40-Math.min(this.t,this.tEnd)*70;
   CREDITS.forEach((l,i)=>{const y=y0+i*80;if(y<v.y0-60||y>v.y0+v.h+60||!l)return;txt(l,cx,y,i===0||i===CREDITS.length-1?64:42,i===0?'#ffe08a':'#fff6dc',{f:FONT,st:'#4a1f8a',lw:9,id:'cr'+i})});
   if(SV.medal)drawMedal(safeR()-70,safeT()+70,50);labelBtn('skip',safeR()-120,safeB()-48,210,74,'Дальше',()=>this.end(),{size:34})}};

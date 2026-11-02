@@ -42,6 +42,7 @@ function popSpark(id,x,y,w,h){const p=POPS.get(id);if(!p)return;const u=T-p.t0;i
 // ---- сохранение ----
 let SV;try{SV=JSON.parse(localStorage.getItem('figur59'))}catch(e){}
 if(!SV||!SV.done)SV={done:[0,0,0,0,0,0,0],intro:0,medal:0};
+if(!Array.isArray(SV.done))SV.done=[];while(SV.done.length<7)SV.done.push(0);
 function save(){try{localStorage.setItem('figur59',JSON.stringify(SV))}catch(e){}}
 // ---- звук ----
 var AC=null;function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});return AC}
