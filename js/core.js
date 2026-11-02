@@ -300,5 +300,5 @@ function loop(now){requestAnimationFrame(loop);DT=clamp((now-last)/1000,0,.05);l
  if(SCN&&SCN.hud!==false&&scene!=='title')hudButtons();
  if(typeof drawAim==='function')drawAim();drawJoy();drawGoal();drawBig();drawTalk();drawHand();
  if(SCN&&SCN.cut)cutButtons(SCN.skip);
- if(fade>0){fade=Math.max(0,fade-DT*2.5);const v=vis();X.fillStyle=`rgba(20,10,50,${fade})`;X.fillRect(v.x0,v.y0,v.w,v.h)}
+ if(fade>0){fade=Math.max(0,fade-DT*3);const v=vis();X.fillStyle=`rgba(255,246,228,${Math.min(1,fade)*.9})`;X.fillRect(v.x0,v.y0,v.w,v.h)}
  if(AUD)G.lastAudit=AUD}

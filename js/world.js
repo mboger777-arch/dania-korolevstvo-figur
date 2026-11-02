@@ -231,7 +231,7 @@ function occStep(dt){if(typeof HERO==='undefined'||!WORLD)return;if(OCC.w!==WORL
  for(const c of CHARS){if(c===DANIA||c===tk||!c.root.visible)continue;const p=c.root.position;let want=1;const dn=Math.hypot(p.x-C.x,p.z-C.z);
   if(dn<1.5)want=.15;else if(dn<2.3)want=.6;else if(!CUT){_ohit.set(p.x,p.y+c.h*.5,p.z);const t=_ohit.clone().sub(C).dot(_oray.direction);if(t>0&&t<L-.8){const q=C.clone().addScaledVector(_oray.direction,t);if(Math.hypot(q.x-p.x,q.z-p.z)<.55)want=.5}}
   const f0=c.mat.opacity;let f=f0+(want-f0)*Math.min(1,dt*8);if(Math.abs(f-want)<.01)f=want;if(f!==f0){c.mat.opacity=f;c.mat.depthWrite=f>.9}}}
-function camStep(dt){let P,L;
+const _cbx=new THREE.Box3();function camStep(dt){let P,L;
  if(CAMS.mode==='follow'){const h=HERO;if(h.mode==='walk'&&h.sp>1){let d=h.yaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));const ad=Math.abs(d);if(ad<1.25)CAMS.yaw+=d*Math.min(1,dt*1.1*(1-ad/1.25))}// бег вбок не крутит камеру по кругу
   if(h.camYaw!=null){let d=h.camYaw-CAMS.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));CAMS.yaw+=d*Math.min(1,dt*3)}
   const fx=Math.sin(CAMS.yaw),fz=Math.cos(CAMS.yaw);if(h.cy==null||Math.abs(h.cy-h.y)>3)h.cy=h.y;h.cy+=(h.y-h.cy)*Math.min(1,dt*(h.y>h.cy?7:12));const hy=h.cy;P=V3(h.x-fx*CAMS.dist,hy+CAMS.h,h.z-fz*CAMS.dist);L=V3(h.x+fx*1.2,hy+CAMS.look,h.z+fz*1.2);
@@ -244,9 +244,14 @@ function camStep(dt){let P,L;
    if(Math.hypot(cx-h.x,cz-h.z)<mn){const k=mn/(Math.hypot(P.x-h.x,P.z-h.z)||1);cx=h.x+(P.x-h.x)*k;cz=h.z+(P.z-h.z)*k}// не ближе 2.6 м к герою (тогда чуть за краем)
    const c=Math.hypot(cx-P.x,cz-P.z);if(c>.01){P.x=cx;P.z=cz;L.lerp(V3(h.x,hy+1.1,h.z),Math.min(1,c/3))}}
   {const hd=Math.hypot(P.x-L.x,P.z-L.z),my=L.y+Math.tan(.44)*Math.max(hd,1);if(P.y>my)P.y=my}// наклон камеры не круче ~25°
+  // v6.2 упреждение: точка взгляда сдвигается по ходу движения (плавно)
+  {const la=h.mode==='walk'?Math.min(1.6,(h.sp||0)*.3):0,tx=Math.sin(h.yaw)*la,tz=Math.cos(h.yaw)*la;CAMS.lx=(CAMS.lx||0)+(tx-(CAMS.lx||0))*Math.min(1,dt*2);CAMS.lz=(CAMS.lz||0)+(tz-(CAMS.lz||0))*Math.min(1,dt*2);L.x+=CAMS.lx;L.z+=CAMS.lz;P.x+=CAMS.lx*.5;P.z+=CAMS.lz*.5}
+  // v6.2 пружинная штанга: стена между героем и камерой -> камера подъезжает ближе (быстро внутрь, медленно наружу)
+  {const O=V3(h.x,hy+1.2,h.z),dv=P.clone().sub(O),Ld=dv.length();let lim=Ld;if(Ld>.1){dv.divideScalar(Ld);_oray.set(O,dv);for(const b of BLOCKS){if(!b.on||b.y1-b.y0<.6)continue;const e=Math.abs(b.ang)>.01?Math.hypot(b.hx,b.hz):0,ex=e||b.hx,ez=e||b.hz;_cbx.min.set(b.cx-ex,b.y0,b.cz-ez);_cbx.max.set(b.cx+ex,b.y1,b.cz+ez);const bb=_cbx;if(bb.containsPoint(O))continue;if(_oray.intersectBox(bb,_ohit)){const t=_ohit.distanceTo(O)-.35;if(t<lim)lim=Math.max(1.6,t)}}
+   if(CAMS.snap)CAMS.arm=null;const cur=CAMS.arm==null?lim:CAMS.arm;CAMS.arm=lim<cur?lim:cur+(lim-cur)*Math.min(1,dt*1.5);if(CAMS.arm<Ld-.01)P.copy(O).addScaledVector(dv,CAMS.arm)}}
   const gp=groundAt(P.x,P.z)+.6;if(P.y<gp)P.y=gp}
  else{P=CAMS.sp;L=CAMS.sl;const tf=talkFrame();if(tf){P=tf[0];L=tf[1]}}
- const k=CAMS.snap?1:1-Math.exp(-dt*CAMS.k);CAMS.pos.lerp(P,k);CAMS.tgt.lerp(L,k);CAMS.snap=false;CAM.position.copy(CAMS.pos);CAM.lookAt(CAMS.tgt);
+ const k=CAMS.snap?1:1-Math.exp(-dt*CAMS.k);if(CAMS.snap||!CAMS.vel){CAMS.vel=V3(0,0,0);CAMS.pos.copy(P)}else{const w=CAMS.k*1.1,ax=P.clone().sub(CAMS.pos).multiplyScalar(w*w).addScaledVector(CAMS.vel,-2*w);CAMS.vel.addScaledVector(ax,Math.min(dt,.05));CAMS.pos.addScaledVector(CAMS.vel,Math.min(dt,.05))}CAMS.tgt.lerp(L,k);CAMS.snap=false;CAM.position.copy(CAMS.pos);CAM.lookAt(CAMS.tgt);
  if(Math.abs(CAM.fov-CAMS.fov)>.05){CAM.fov=lerp(CAM.fov,CAMS.fov,.1);CAM.updateProjectionMatrix()}}
 // ---- проекция на экран (дизайн-координаты оверлея) ----
 const _pv=new THREE.Vector3();function toScreen(x,y,z){_pv.set(x,y,z).project(CAM);const v=vis();return{x:v.x0+(_pv.x*.5+.5)*v.w,y:v.y0+(-_pv.y*.5+.5)*v.h,vis:_pv.z<1&&Math.abs(_pv.x)<1.05&&Math.abs(_pv.y)<1.05}}
