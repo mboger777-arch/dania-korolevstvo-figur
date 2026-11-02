@@ -265,3 +265,5 @@
 - 19:06 предзагрузка VFIRST/VNEXT (js/vpre.js). smoke: out/smoke3.log. voicetest один: out/voicetest3.log (8059).
 
 - 19:11 voicetest3 ещё идёт (сад, c0 ok; на c1). Часы бокса почти стояли во время ожидания — похоже на приостановку бокса. Сервер 8059 оставлен для voicetest.
+
+- 19:12 voicetest3 остановлен на c1 (шёл медленно; сад/пролог PASS, c0 c1_s 0.63с). Вариант 1: VHOLD — реплики главы ждут 2×rAF после постройки, tr = момент снятия. smoke: out/smoke4.log; voicetest: out/voicetest4.log.
