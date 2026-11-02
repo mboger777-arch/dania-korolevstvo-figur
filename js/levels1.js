@@ -128,7 +128,7 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
  terrain(160,90,0,165,(x,z)=>-23+(Math.abs(x)>16?(Math.abs(x)-16)*.4:0),new THREE.MeshLambertMaterial({color:0xcfe8ff}),20);
  for(let i=0;i<40;i++){const z=rnd(-8,150),s=Math.random()<.5?-1:1;const x=s*rnd(13,24);pine(x,z,rnd(1.2,1.8),true)}
  for(let i=0;i<8;i++){const a=i/8*Math.PI-Math.PI;mesh(GEO.cone,M(0xb8c8e8),Math.cos(a)*110,-14,230+Math.sin(a)*30,null,[22,44,22])}
- BOUNDS=[-11,11,-6,128];this.chasm=true;{const pit=mesh(new THREE.PlaneGeometry(80,13),M(0x1a2650,{basic:1}),0,-31,103);pit.rotation.x=-Math.PI/2}const lb=[[0,95],[3,100],[-3,105],[0,111]];this.lb=lb;
+ BOUNDS=[-11,11,-6,128];this.chasm=true;{const pit=mesh(new THREE.PlaneGeometry(80,13),M(0x1a2650,{basic:1}),0,-31,103);pit.rotation.x=-Math.PI/2}const lb=[[-4,95],[-1,100],[-7,105],[-4,111]];this.lb=lb;
  NOGO.push((x,z)=>{if(z<96||z>110)return false;if(!this.chasm)return false;for(let i=0;i<3;i++){const[a,b]=[lb[i],lb[i+1]];const dx=b[0]-a[0],dz=b[1]-a[1];const t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);if(Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)<1.05&&this.bridge)return false}return true});
  
  this.sled=new THREE.Group();mesh(GEO.box,0xe0303a,0,.22,0,this.sled,[1,.14,1.9]);for(const s of [-.42,.42]){mesh(GEO.box,0x888899,s,.06,0,this.sled,[.08,.08,2]);const t=mesh(GEO.cylL,0x888899,s,.14,1,this.sled,[.05,.25,.05]);t.rotation.x=.6}WORLD.add(this.sled);this.sled.position.set(3.4,baseAt(3.4,-4.6),-4.6);this.sled.rotation.y=.5;// ждут сбоку, не перед камерой разговора
@@ -148,6 +148,14 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
   HERO.mode='walk';KRUG.mode='follow';place(KRUG,HERO.x-1.2,HERO.z-.8);CAMS.dist=5.0;CAMS.h=2.4;L.sled.position.set(-2,SLOPE(92),92);L.sled.rotation.set(0,.4,0);return 'ok'},
  async play(){const L=this;
   await cutscene(async()=>{shot(4,3,-6,0,-6,30,2);await say('c2_s');shot(-1,2.4,-5,-3,1.7,-1,3);await say('c2_r')});
+  // --- 1. знакомство: ломаная дорожка от флажка к флажку (звенья) ---
+  {const pts=[[0,-3],[-5,2],[4,7],[-3,12]];const gs=[];for(let k=1;k<4;k++){const [x,z]=pts[k];const g=new THREE.Group();g.position.set(x,SLOPE(z),z);mesh(GEO.cylL,0x5a4030,0,1.2,0,g,[.06,2.4,.06]);mesh(GEO.box,M(0xffa030,{em:0xff8000,ei:.5}),.45,2.1,0,g,[.9,.55,.05]);WORLD.add(g);gs.push(g)}
+   const ghost=[];for(let k=0;k<3;k++){const a=V3(pts[k][0],SLOPE(pts[k][1])+.08,pts[k][1]),b=V3(pts[k+1][0],SLOPE(pts[k+1][1])+.08,pts[k+1][1]);ghost.push(segMesh(a,b,.1,0xffffff,{op:.35}))}
+   await cutscene(async()=>{shot(5,4,-7,-1,-2,9,2);await say('c2_w1')});
+   newTask('Пройди 3 звена','move');needGesture('move');let mk=marker(pts[1][0],pts[1][1]);
+   botTask(async()=>{for(let k=1;k<4;k++)await bGo(pts[k][0],pts[k][1],.7)});
+   for(let k=1;k<4;k++){mk.position.set(pts[k][0],SLOPE(pts[k][1]),pts[k][1]);await until(()=>hd(pts[k][0],pts[k][1])<1.2);ghost[k-1].material=M(0xffe066,{em:0xffc000,ei:1});setSeg(ghost[k-1],V3(pts[k-1][0],SLOPE(pts[k-1][1])+.08,pts[k-1][1]),V3(pts[k][0],SLOPE(pts[k][1])+.08,pts[k][1]),.14);SFX.ding();burst(V3(pts[k][0],SLOPE(pts[k][1])+1.5,pts[k][1]),0xffe066,24);bigNum(k)}
+   mk.visible=false;clearGesture();GOAL='';await good('c2_wk');for(const g of gs)g.visible=false;for(const g of ghost)g.visible=false}
   // поездка 1: четыре флажка = четыре звена
   const run1=[[-5,20,0x3d7be0],[5,38,0x3d7be0],[-5,56,0x3d7be0],[5,74,0x3d7be0]];
   newTask('Проедь все 4 флажка','move');run(()=>say('c2_t1'));needGesture('move');
@@ -155,17 +163,27 @@ LEVELS[1]={cast:{queen:true},build(){SCENE.fog.color.set(0xe8f2ff);SKY.material.
   botTask(async()=>{let first=true;while(true){const e0=TASK.err;await bUntil(()=>HERO.mode==='sled',20);await bSled(L,first?2:-1);if(!first)break;await bUntil(()=>TASK.err>e0||HERO.mode!=='sled',30);first=false}});
   for(;;){const r=await L.ride(1,run1);if(r==='ok')break;mistake('c2_miss');await wait(1.4)}
   clearGesture();GOAL='';await good('c2_k1');
-  // поездка 2: три синих, красные объезжать
-  const run2=[[6,25,0x3d7be0],[-6,25,0xff3030],[-6,50,0x3d7be0],[6,50,0xff3030],[5,75,0x3d7be0],[-5,75,0xff3030]];
-  newTask('Синие флажки — три звена');await say('c2_t2');
-  botTask(async()=>{let first=true;while(true){const e0=TASK.err;await bUntil(()=>HERO.mode==='sled',20);await bSled(L,first?'red':-1);if(!first)break;await bUntil(()=>TASK.err>e0||HERO.mode!=='sled',30);first=false}});
-  for(;;){const r=await L.ride(2,run2);if(r==='ok')break;mistake(r==='red'?'c2_red':'c2_miss');await wait(1.4)}
-  GOAL='';await good();
-  // молния-мост через пропасть
-  await cutscene(async()=>{heroAt(0,92,0);shot(7,-18,90,0,-22,104,2);const lb=L.lb;for(let i=0;i<3;i++){const a=V3(lb[i][0],-23.3,lb[i][1]),b=V3(lb[i+1][0],-23.3,lb[i+1][1]);const s=segMesh(a,b,.3,0xffe066,{mat:M(0xffe066,{em:0xffb000,ei:.9})});s.scale.z=s.scale.x=.01;const t0=T;TICK.push(()=>{const k=clamp((T-t0)*3,0.01,1)*.3;s.scale.x=s.scale.z=k});SFX.zap();burst(b,0xffe066,30,4);bigNum(i+1);await wait(.6)}
-   L.bridge=true;await say('c2_k2')});
-  newTask('Беги по молнии на ту сторону');L.goal.visible=true;run(()=>say('u_go'));
+  // --- 3. поворот: «почти-ломаная» — мост с кривым звеном не держит ---
+  const Y=-23.25,mat=M(0xffe066,{em:0xffb000,ei:.9}),mat2=M(0xffb0e0,{em:0xff60c0,ei:.7});
+  const good1=new THREE.Group(),bad=new THREE.Group();WORLD.add(good1);WORLD.add(bad);
+  for(let i=0;i<3;i++){const [a,b]=[L.lb[i],L.lb[i+1]];const m=segMesh(V3(a[0],Y,a[1]),V3(b[0],Y,b[1]),.3,0xffe066,{mat});good1.add(m)}
+  {const P=[[4,95],[7,100]],cv=[];for(let t=0;t<=1.001;t+=.125)cv.push([7-6*t+Math.sin(t*Math.PI)*4.5,100+5*t]);const all=[...P,...cv.slice(1),[4,111]];for(let i=0;i<all.length-1;i++){const [a,b]=[all[i],all[i+1]];bad.add(segMesh(V3(a[0],Y,a[1]),V3(b[0],Y,b[1]),.3,0xffb0e0,{mat:mat2}))}}
+  await cutscene(async()=>{heroAt(0,91.5,0);shot(0,-17,88,0,-23,104,2);await wait(.5);await say('c2_c1')});
+  newTask('Выбери прочный мост','hold');let pick=null;
+  const pads=[[-4,93.6],[4,93.6]].map(([x,z])=>holdSpot(x,z,0xffd23a));
+  TASK.help=async()=>{await say('c2_c1')};
+  botTask(async()=>{await pads[1].bot();await bWait(3);await pads[0].bot()});
+  pads[1].p.then(async()=>{pick='bad'});
+  for(;;){await until(()=>pads[0].lit||pick==='bad');if(pads[0].lit)break;
+   // кривое звено провисает и мост падает
+   SFX.bump();let t=0;const f=dt=>{t+=dt;bad.position.y=-t*t*6;bad.rotation.z=t*.4;if(t>1.6){bad.visible=false;TICK.splice(TICK.indexOf(f),1)}};TICK.push(f);
+   mistake('c2_cbad');pick='done';pads[1].g.visible=false;await wait(1.2)}
+  pads.forEach(q=>q.g.visible=false);L.bridge=true;bad.visible=false;SFX.magic();burst(V3(-4,-22,103),0xffe066,50,6);clearGesture();GOAL='';await good('c2_ck');
+  // --- 4. финал: по молнии, наступая на каждый уголок — считаем звенья ---
+  newTask('Беги по молнии, наступи на уголки','move');run(()=>say('c2_x1'));L.goal.visible=true;
   botTask(async()=>{for(const [x,z] of L.lb)await bGo(x,z,.6);await bGo(0,118,.6)});
+  for(let n=1;n<4;n++){const [x,z]=L.lb[n];await until(()=>hd(x,z)<1.3);SFX.ding();burst(V3(x,-22,z),0xffe066,30);bigNum(n)}
+  await say('c2_k2');
   await until(()=>hd(0,118)<1.3);L.goal.visible=false}};
 
 // ===================== Глава 3: Кузница углов =====================
