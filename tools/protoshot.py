@@ -9,9 +9,9 @@ async def main():
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
     await pg.goto(URL);await pg.wait_for_function('window.PROTO&&window.PROTO_READY',timeout=120000);await pg.wait_for_timeout(2500);await pg.evaluate('window.MANUAL=1;PROTO.step(30)')
     F='PROTO.CAM.lock=1;PROTO.CAM.yaw=PROTO.H.yaw+.75;'
-    async def s(n):await pg.screenshot(path=f'shots/proto/{n}.png');print(n,flush=True)
+    async def s(n):await pg.screenshot(path=f'shots/proto/{n}.png');print(n,await pg.evaluate('[PROTO.H.pos.toArray().map(v=>+v.toFixed(2)),PROTO.CAM.pos.toArray().map(v=>+v.toFixed(2)),+PROTO.CAM.yaw.toFixed(2)]'),flush=True)
     print('fps',await pg.evaluate('PROTO.fps'));await s('idle')
-    await pg.evaluate(F+'PROTO.IN.y=.7;PROTO.IN.x=.7;PROTO.step(45);'+F+'PROTO.CAM.look.set(PROTO.H.pos.x,.66,PROTO.H.pos.z);PROTO.step(1)');await s('run');await pg.evaluate('PROTO.IN.y=0;PROTO.step(30);'+F+'PROTO.step(20)')
+    await pg.evaluate(F+'PROTO.IN.y=.7;PROTO.IN.x=-.7;PROTO.step(45);'+F+'PROTO.CAM.look.set(PROTO.H.pos.x,.66,PROTO.H.pos.z);PROTO.step(1)');await s('run');await pg.evaluate('PROTO.IN.y=0;PROTO.step(30);'+F+'PROTO.step(20)')
     await pg.evaluate('PROTO.jump(0);PROTO.IN.jump=true;PROTO.step(2)');await s('jump0');await pg.evaluate('PROTO.step(6)');await s('jump1');await pg.evaluate('PROTO.IN.jump=false;PROTO.step(16)');await s('jump2')
     for i in range(40):
       if await pg.evaluate('PROTO.H.state')=='land':break
