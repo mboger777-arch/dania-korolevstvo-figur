@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Даня и Пропавшие Уголки</title><style>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><title>Даня и Пропавшие Уголки</title><style>
 @font-face{font-family:N;src:url(fonts/Nunito.ttf);font-weight:100 1000}
 html,body{margin:0;height:100%;background:#2b1a10;font-family:N;font-weight:900;overflow:hidden}
 iframe{position:absolute;inset:0;width:100%;height:100%;border:0;transition:opacity .5s,transform .5s}
@@ -10,16 +10,27 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;transition:opac
 #nav div{background:#fff8e8;border:4px solid #2b1a10;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer}
 #prog{position:absolute;top:0;left:0;height:8px;background:#ff7a2a;transition:width .5s;z-index:9}
 #num{position:absolute;top:14px;right:20px;color:#fff;font-size:22px;z-index:9;text-shadow:0 2px 4px #000}
+html,body{height:100dvh;overscroll-behavior:none;touch-action:none}
+#rot{display:none;position:fixed;inset:0;z-index:99;background:radial-gradient(#4a2a14,#1a0e06);color:#ffe9b0;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:26px;gap:22px}
+#rot .ph{width:70px;height:120px;border:6px solid #ffe58f;border-radius:14px;position:relative;animation:rt 2.2s ease-in-out infinite}
+#rot .ph:after{content:'';position:absolute;bottom:6px;left:50%;width:14px;height:4px;margin-left:-7px;background:#ffe58f;border-radius:2px}
+@keyframes rt{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+@media (orientation:portrait){#rot{display:flex}body>*:not(#rot){visibility:hidden}}
 </style></head><body>
-<iframe id="f"></iframe><div id="prog"></div><div id="num"></div>
+<div id="rot"><div class="ph"></div><div>Поверни телефон<br>горизонтально</div><div style="font-size:40px">📱↻</div></div><iframe id="f"></iframe><div id="prog"></div><div id="num"></div>
 <div id="nav" class="hide"><div id="pv">⏮</div><div id="nx">⏭</div></div>
 <div class="scr" id="cover" style="background-image:linear-gradient(#0006,#0003),url(img/p10_1.jpg)"><h1>Даня и Пропавшие Уголки</h1><p>Комикс о точках, линиях и фигурах</p><div class="btn" id="go">Читать ▶</div><a class="pdf" href="dania_comic.pdf" download style="display:block;margin-top:14px;color:#ffe9b0;font-size:18px">⬇ Скачать PDF</a></div>
 <div class="scr hide" id="fin" style="background-image:linear-gradient(#0007,#0004),url(img/p10_2.jpg)"><h1>А какие фигуры видишь ты дома?</h1><p>🔺 Треугольник? ⬛ Квадрат? ⚪ Круг? Найди и покажи!</p><div class="btn" id="again">Читать снова ↺</div><a class="pdf" href="dania_comic.pdf" download style="display:block;margin-top:14px;color:#ffe9b0;font-size:18px">⬇ Скачать PDF</a></div>
 <script>
+let fs=0;function full(){if(fs)return;fs=1;const d=document.documentElement;try{const r=(d.requestFullscreen||d.webkitRequestFullscreen)?.call(d);r&&r.then&&r.then(()=>screen.orientation?.lock?.('landscape').catch(()=>{})).catch(()=>{})}catch(e){}scrollTo(0,1)}
+addEventListener('pointerdown',full,{capture:true});addEventListener('message',e=>{if(e.data=='tap')full()});
 const N=10;let p=0;const f=document.getElementById('f'),$=id=>document.getElementById(id);
-function show(n){p=n;$('cover').classList.toggle('hide',n!=0);$('fin').classList.toggle('hide',n!=N+1);$('nav').classList.toggle('hide',n==0);
- if(n>=1&&n<=N){f.src='page'+n+'.html';$('num').textContent='стр. '+n+' / '+N}else $('num').textContent='';
+function show(n,end){const d=n<p?1:-1;p=n;$('cover').classList.toggle('hide',n!=0);$('fin').classList.toggle('hide',n!=N+1);$('nav').classList.toggle('hide',n==0);
+ if(n>=1&&n<=N){f.style.transition='none';f.style.transform=`translateX(${d*-100}%)`;f.style.opacity=0;f.src='page'+n+'.html'+(end?'?end':'');f.onload=()=>{requestAnimationFrame(()=>{f.style.transition='';f.style.transform='none';f.style.opacity=1})};$('num').textContent='стр. '+n+' / '+N}else $('num').textContent='';
  $('prog').style.width=(Math.min(n,N)/N*100)+'%'}
 $('go').onclick=()=>show(1);$('again').onclick=()=>show(1);$('nx').onclick=()=>show(Math.min(N+1,p+1));$('pv').onclick=()=>show(Math.max(0,p-1));
+addEventListener('message',e=>{if(e.data=='next')show(Math.min(N+1,p+1));if(e.data=='prev'&&p>1)show(p-1,true)});
+// свайп на обложке/финале
+let tx=null;addEventListener('pointerdown',e=>tx=e.clientX);addEventListener('pointerup',e=>{if(tx===null)return;const dx=e.clientX-tx;tx=null;if(dx<-45&&p==0)show(1);if(dx>45&&p==N+1)show(N,true)});
 addEventListener('keydown',e=>{if(e.key=='ArrowRight')$('nx').onclick();if(e.key=='ArrowLeft')$('pv').onclick()});
 </script></body></html>

@@ -117,11 +117,22 @@ function render(i,instant){// показать состояние после ш�
  let k=0;setTimeout(()=>{typing=setInterval(()=>{if(k<L.words.length)L.words[k++].classList.add('on');else clearTyping()},150)},380);
  const chars=L.t.replace(/[*|]/g,'').length;return 380+L.words.length*150+700+chars*42}
 function go(d){if(d>0&&typing){const s=steps[cur];finishLine(s.L);clearTyping();schedule(900);return}
- const n=Math.max(0,Math.min(steps.length-1,cur+d));if(n==cur&&d>0)return;cur=n;const t=render(cur);schedule(t)}
+ const n=Math.max(0,Math.min(steps.length-1,cur+d));if(n==cur)return;cur=n;const t=render(cur);schedule(t)}
 function schedule(t){clearTimeout(timer);hand(false);timer=setTimeout(()=>{if(auto&&cur<steps.length-1)go(1);else if(cur<steps.length-1)hand(true)},auto?t:Math.max(t,2500))}
 function hand(on){document.getElementById('hand').classList.toggle('on',on)}
 document.getElementById('back').onpointerdown=e=>{e.stopPropagation();go(-1)};
 const ab=document.getElementById('auto');ab.onpointerdown=e=>{e.stopPropagation();auto=!auto;ab.textContent=auto?'❚❚':'▶';if(auto)go(1)};ab.textContent=auto?'❚❚':'▶';
-st.addEventListener('pointerdown',()=>go(1));
-document.fonts.ready.then(()=>{build();if(q.has('all')){cur=steps.length-1;render(cur,true)}else go(1);window.READY=true});
+// свайп: влево — дальше, вправо — назад; тап — дальше
+function toParent(m){try{parent.postMessage(m,'*')}catch(e){}}
+function fwd(){if(cur>=steps.length-1&&!typing){toParent('next');return}go(1)}
+function bwd(){if(cur<=0){toParent('prev');return}go(-1)}
+let sx=null,sy=0,dx=0;st.style.touchAction='none';document.documentElement.style.touchAction='none';
+st.addEventListener('pointerdown',e=>{toParent('tap');sx=e.clientX;sy=e.clientY;dx=0;st.style.transition='none'});
+addEventListener('pointermove',e=>{if(sx===null)return;dx=e.clientX-sx;st.style.translate=(dx*.6)+'px 0'});
+function up(e){if(sx===null)return;const ady=Math.abs(e.clientY-sy);sx=null;st.style.transition='translate .35s cubic-bezier(.2,.8,.3,1)';
+ if(Math.abs(dx)>45&&Math.abs(dx)>ady){const d=dx<0?1:-1;st.style.translate=(d>0?-90:90)+'px 0';setTimeout(()=>{st.style.transition='none';st.style.translate=(d>0?90:-90)+'px 0';requestAnimationFrame(()=>{st.style.transition='translate .35s cubic-bezier(.2,.8,.3,1)';st.style.translate='0 0'});d>0?fwd():bwd()},160)}
+ else{st.style.translate='0 0';if(Math.abs(dx)<10)fwd()}}
+addEventListener('pointerup',up);addEventListener('pointercancel',e=>{sx=null;st.style.translate='0 0'});
+addEventListener('message',e=>{if(e.data=='fwd')fwd();if(e.data=='bwd')bwd()});
+document.fonts.ready.then(()=>{build();if(q.has('all')||q.has('end')){cur=steps.length-1;render(cur,true)}else go(1);window.READY=true});
 </script></body></html>
